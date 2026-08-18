@@ -140,7 +140,7 @@ export class Room {
     if (!this.allReady()) return '所有玩家准备后才能开始';
     if (this.round === 0) this.dealer = this.hostSeat;
     this.round += 1;
-    this.game = new PizhouGame({ dealer: this.dealer });
+    this.game = new PizhouGame({ dealer: this.dealer, timeoutMs: this.solo ? 18_000 : undefined });
     this.phase = 'playing';
     return null;
   }

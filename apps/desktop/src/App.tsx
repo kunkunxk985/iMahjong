@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { DEFAULT_WS_URL, type ClientView, type GameAction, type Settlement } from '@pizhou/shared';
 import { RulesModal } from './components/RulesModal';
 import { SettingsModal } from './components/SettingsModal';
-import { LocalTable } from './game/localTable';
 import { GameClient } from './ws/client';
 import { Lobby, type NetworkStatus } from './views/Lobby';
 import { SettlementModal } from './views/Settlement';
@@ -41,28 +40,19 @@ export function App() {
   const [rulesOpen, setRulesOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const localTableRef = useRef<LocalTable | null>(null);
   const clientRef = useRef<GameClient | null>(null);
-
-  if (!localTableRef.current) {
-    localTableRef.current = new LocalTable((next) => {
-      setMode('local');
-      setView(next);
-      setSettlement(next.settlement);
-      setError('');
-    });
-  }
+  const requestedModeRef = useRef<Mode>('home');
 
   if (!clientRef.current) {
     clientRef.current = new GameClient({
       onView: (next) => {
-        setMode('online');
+        setMode(requestedModeRef.current === 'local' ? 'local' : 'online');
         setView(next);
         setSettlement(next.settlement);
         setError('');
       },
       onSettlement: (nextSettlement, nextView) => {
-        setMode('online');
+        setMode(requestedModeRef.current === 'local' ? 'local' : 'online');
         setView(nextView);
         setSettlement(nextSettlement);
         setError('');
@@ -70,6 +60,7 @@ export function App() {
       onError: (message) => setError(message),
       onStatus: (status) => setNetworkStatus(status),
       onLeft: () => {
+        requestedModeRef.current = 'home';
         setMode('home');
         setView(null);
         setSettlement(null);
@@ -109,10 +100,7 @@ export function App() {
     return () => clientRef.current?.disconnect();
   }, [serverUrl, serverUrlReady]);
 
-  useEffect(() => () => {
-    localTableRef.current?.dispose();
-    clientRef.current?.disconnect();
-  }, []);
+  useEffect(() => () => clientRef.current?.disconnect(), []);
 
   const setNickname = (value: string) => {
     setNicknameState(value);
@@ -138,47 +126,38 @@ export function App() {
 
   const createRoom = () => {
     if (!requireOnline()) return;
+    requestedModeRef.current = 'online';
     clientRef.current?.createRoom(nickname.trim());
   };
 
   const joinRoom = (roomCode: string) => {
     if (!requireOnline()) return;
+    requestedModeRef.current = 'online';
     clientRef.current?.joinRoom(roomCode, nickname.trim());
   };
 
   const startLocal = () => {
-    if (!nickname.trim()) {
-      setError('请先输入昵称');
-      return;
-    }
+    if (!requireOnline()) return;
     setError('');
-    setMode('local');
-    localTableRef.current?.start(nickname.trim());
+    requestedModeRef.current = 'local';
+    clientRef.current?.createRoom(nickname.trim(), true);
   };
 
   const sendAction = (action: GameAction) => {
     if (!view) return;
-    if (mode === 'online') {
-      clientRef.current?.action(view.sequence, action);
-      return;
-    }
-    const message = localTableRef.current?.act(action);
-    if (message) setError(message);
+    clientRef.current?.action(view.sequence, action);
   };
 
   const leave = () => {
-    if (mode === 'online') clientRef.current?.leave();
-    localTableRef.current?.leave();
+    clientRef.current?.leave();
+    requestedModeRef.current = 'home';
     setMode('home');
     setView(null);
     setSettlement(null);
     setError('');
   };
 
-  const again = () => {
-    if (mode === 'online') clientRef.current?.again();
-    else localTableRef.current?.again();
-  };
+  const again = () => clientRef.current?.again();
 
   const saveServerUrl = (value: string) => {
     const next = value.trim() || DEFAULT_WS_URL;
@@ -204,7 +183,8 @@ export function App() {
             onAction={sendAction}
             onRules={() => setRulesOpen(true)}
             onLeave={leave}
-            networkStatus={mode === 'online' ? networkStatus : undefined}
+            networkStatus={networkStatus}
+            practice={mode === 'local'}
           />
         ) : inWaitingRoom && view ? (
           <WaitingRoom
@@ -235,7 +215,7 @@ export function App() {
             onAgain={again}
             onLeave={leave}
             readyCount={view.players.filter((player) => player.ready).length}
-            alreadyReady={mode === 'online' && Boolean(view.players[view.mySeat]?.ready)}
+            alreadyReady={Boolean(view.players[view.mySeat]?.ready)}
           />
         ) : null}
         {rulesOpen ? <RulesModal onClose={() => setRulesOpen(false)} /> : null}

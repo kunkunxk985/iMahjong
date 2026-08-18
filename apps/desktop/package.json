@@ -7,6 +7,7 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "typecheck": "tsc --noEmit",
     "clean": "node scripts/clean.mjs",
     "build": "node scripts/build.mjs",
     "package:win": "npm run build && electron-builder --win --x64 --dir",
@@ -15,12 +16,10 @@
   },
   "dependencies": {
     "@pizhou/rules": "*",
+    "@pizhou/server-core": "*",
     "@pizhou/shared": "*",
-    "@react-three/drei": "^9.121.4",
-    "@react-three/fiber": "^8.17.14",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "three": "^0.170.0"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.18",
@@ -46,7 +45,7 @@
       "dist-electron/**/*",
       "package.json"
     ],
-    "electronVersion": "33.4.11",
+    "electronVersion": "33.4.5",
     "electronDist": "../../node_modules/electron/dist",
     "asar": true,
     "win": {

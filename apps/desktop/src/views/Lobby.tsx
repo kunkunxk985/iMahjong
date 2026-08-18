@@ -19,7 +19,7 @@ interface LobbyProps {
 const STATUS_TEXT: Record<NetworkStatus, string> = {
   connecting: '正在连接牌桌服务器…',
   open: '服务器已连接，可以创建或加入房间',
-  closed: '服务器未连接，可以检查地址或先玩单机',
+  closed: '服务器未连接，请检查本机服务或服务器地址',
 };
 
 export function Lobby({
@@ -107,11 +107,11 @@ export function Lobby({
           </div>
         ) : (
           <div role="tabpanel">
-            <button type="button" className="btn-action hero" disabled={!nickname.trim()} onClick={onStartLocal}>
+            <button type="button" className="btn-action hero" disabled={!onlineReady} onClick={onStartLocal}>
               开始单机对局
-              <small>和三位陪练熟悉手感</small>
+              <small>{networkStatus === 'open' ? '和三位陪练熟悉手感' : '正在启动本机牌桌'}</small>
             </button>
-            <p className="hint">没有服务器时也可以练牌；单机规则与联机一致。</p>
+            <p className="hint">单机通过内置本机服务运行，与联机共用同一套规则和对局流程。</p>
           </div>
         )}
 

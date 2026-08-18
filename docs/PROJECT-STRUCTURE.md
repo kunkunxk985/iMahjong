@@ -10,13 +10,15 @@ React 页面
        ├─ Table.tsx          当前正式牌桌：俯视 2D 绿绒布布局
        └─ Settlement.tsx     结算弹层
             │
-            ├─ apps/desktop/src/game/localTable.ts   单机陪练
-            └─ apps/desktop/src/ws/client.ts          WebSocket 联机
+            └─ apps/desktop/src/ws/client.ts         单机与联机统一走 WebSocket
                          │
-                         └─ apps/server/src/                      联机服务端
-                              ├─ room.ts                            房间与座位
-                              ├─ createServer.ts                    WebSocket 服务
-                              └─ bots.ts                            陪练逻辑
+                         └─ packages/server-core/src/
+                              ├─ room.ts             房间、座位与对局编排
+                              ├─ createServer.ts     WebSocket 服务
+                              └─ bots.ts             陪练调度
+                                   │
+                                   ├─ apps/server/   独立局域网服务入口
+                                   └─ Electron       桌面内置本机服务入口
 
 共享规则与协议
   ├─ packages/shared/   牌、座位、事件、网络协议类型
@@ -32,6 +34,7 @@ React 页面
 | `apps/desktop/public/assets/` | 客户端运行时真正加载的牌面和桌面材质 |
 | `apps/desktop/scripts/` | 开发、构建、打包和牌面生成脚本 |
 | `apps/server/src/` | 四人联机服务端 |
+| `packages/server-core/` | 独立服务与桌面内置服务共用的服务器核心 |
 | `packages/shared/` | 客户端与服务端共用的数据类型 |
 | `packages/rules/` | 规则引擎与测试 |
 | `assets/tiles/` | 牌面源素材；不直接参与打包 |
@@ -41,7 +44,7 @@ React 页面
 
 ## 关于旧 3D 文件
 
-`apps/desktop/src/legacy/scene-3d/` 是 Antigravity 之前做的 3D 牌桌实现。它没有被删除，方便以后继续试验 3D；但当前正式界面不再从这里渲染，当前牌桌入口是 `apps/desktop/src/views/Table.tsx`。
+`archive/legacy-3d/` 是 Antigravity 之前做的 3D 牌桌实现。它没有被删除，但已移出 TypeScript 编译目录，也不会再把 Three.js 依赖打进安装包。当前牌桌入口是 `apps/desktop/src/views/Table.tsx`。
 
 ## 生成目录
 
@@ -60,8 +63,7 @@ apps/desktop/release/
 ```bash
 npm install
 npm run dev                 # 服务端 + Electron 开发客户端
-npm test                    # 规则测试
-npx tsx apps/server/scripts/smoke.mts  # 联机全流程测试
+npm run verify              # 类型检查、规则测试、联机全流程和桌面构建
 npm run build               # 构建桌面端，不打包安装文件
 npm run package:mac        # 生成 macOS DMG 和 release/mac-arm64/
 npm run clean               # 清理桌面端生成目录
