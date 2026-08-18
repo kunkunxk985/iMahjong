@@ -301,7 +301,8 @@
 
 .board-concealed-top {
   top: 142px;
-  left: 10.5%;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .board-concealed-left {
