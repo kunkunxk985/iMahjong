@@ -31,13 +31,20 @@ export function App() {
     if (message) setError(message);
   };
 
+  const leave = () => {
+    tableRef.current?.leave();
+    setView(null);
+    setSettlement(null);
+    setError('');
+  };
+
   const inGame = view && (view.phase === 'playing' || view.phase === 'settlement');
 
   return (
     <div className="viewport">
       <div className="stage">
         {inGame && view ? (
-          <Table view={view} onAction={sendAction} onRules={() => setRulesOpen(true)} />
+          <Table view={view} onAction={sendAction} onRules={() => setRulesOpen(true)} onLeave={leave} />
         ) : (
           <Lobby
             nickname={nickname}
@@ -51,6 +58,7 @@ export function App() {
           <SettlementModal
             settlement={settlement}
             onAgain={() => tableRef.current?.again()}
+            onLeave={leave}
             readyCount={4}
           />
         ) : null}

@@ -255,25 +255,31 @@ button, input { font: inherit; }
   width: 100%;
   height: 100%;
   position: relative;
-  padding: 18px;
+  padding: 16px;
   background:
-    linear-gradient(180deg, rgba(28, 16, 6, 0.18), rgba(0, 0, 0, 0.28)),
-    url('/assets/wood.jpg') center / 420px auto;
-  box-shadow: inset 0 0 0 1px rgba(232, 207, 122, 0.35);
+    linear-gradient(155deg, #c4893c 0%, #8a5528 28%, #5c3214 70%, #3a1e0c 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 230, 176, 0.45),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.35),
+    0 10px 0 #2a1608,
+    0 16px 28px rgba(0, 0, 0, 0.45);
 }
 
 .table-felt {
   width: 100%;
   height: 100%;
   position: relative;
-  border-radius: 20px;
+  border-radius: 16px;
   overflow: hidden;
   background:
-    radial-gradient(ellipse at 50% 42%, rgba(255, 236, 180, 0.07), transparent 26%),
+    radial-gradient(ellipse at 36% 24%, rgba(90, 200, 130, 0.18) 0%, transparent 42%),
+    radial-gradient(ellipse at 50% 42%, rgba(255, 236, 180, 0.06), transparent 26%),
     url('/assets/felt.jpg') center / 280px 280px;
   box-shadow:
-    inset 0 0 0 2px rgba(212, 176, 82, 0.45),
-    inset 0 0 90px rgba(0, 0, 0, 0.22);
+    inset 0 0 0 2px #e2b85c,
+    inset 0 0 0 6px #5a3014,
+    inset 0 12px 22px rgba(255, 255, 220, 0.06),
+    inset 0 -28px 40px rgba(0, 0, 0, 0.35);
 }
 
 .table-hud {
@@ -316,6 +322,23 @@ button, input { font: inherit; }
 
 .hud-btn { min-width: 60px; height: 32px; font-size: 13px; letter-spacing: 0.08em; }
 
+.turn-banner {
+  min-width: 168px;
+  text-align: center;
+  padding: 6px 14px;
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  background: rgba(6, 24, 20, 0.62);
+  letter-spacing: 0.08em;
+  font-size: 14px;
+}
+.turn-banner.mine {
+  color: #1a1204;
+  background: linear-gradient(180deg, #f0d070, #d4a017);
+  border-color: #ffe27a;
+  box-shadow: 0 0 16px rgba(232, 193, 90, 0.45);
+  font-weight: 700;
+}
+
 .seat-area, .self-area { position: absolute; }
 .seat-area.top {
   top: 66px;
@@ -336,6 +359,12 @@ button, input { font: inherit; }
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  padding: 6px 8px 8px;
+  border-radius: 10px;
+}
+.self-area.my-turn {
+  background: rgba(8, 28, 18, 0.35);
+  box-shadow: 0 0 0 1px rgba(240, 208, 112, 0.28), 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .plaque-card {
@@ -500,6 +529,10 @@ button.tile { cursor: pointer; }
   pointer-events: none;
 }
 .tile.dim { opacity: 0.55; }
+.tile.last-out {
+  z-index: 3;
+  filter: drop-shadow(0 0 6px #ffe27a) drop-shadow(2px 4px 3px rgba(0, 0, 0, 0.4));
+}
 
 .glyph {
   font-family: var(--serif);

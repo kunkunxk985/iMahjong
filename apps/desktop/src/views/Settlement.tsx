@@ -20,9 +20,11 @@ const DRAW_LABEL: Record<string, string> = {
 export function SettlementModal({
   settlement,
   onAgain,
+  onLeave,
 }: {
   settlement: Settlement;
   onAgain: () => void;
+  onLeave?: () => void;
   readyCount: number;
 }) {
   const bao = settlement.baoZhuang
@@ -115,9 +117,16 @@ export function SettlementModal({
             )}
           </ul>
         ) : null}
-        <button type="button" className="btn-action primary wide" onClick={onAgain}>
-          再来一局
-        </button>
+        <div className="split slim">
+          <button type="button" className="btn-action primary" onClick={onAgain}>
+            再来一局
+          </button>
+          {onLeave ? (
+            <button type="button" className="btn-action ghost" onClick={onLeave}>
+              回大厅
+            </button>
+          ) : null}
+        </div>
       </div>
     </div>
   );

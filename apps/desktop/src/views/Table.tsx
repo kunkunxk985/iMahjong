@@ -15,7 +15,7 @@ interface TableProps {
   view: ClientView;
   onAction: (action: GameAction) => void;
   onRules?: () => void;
-  onSettings?: () => void;
+  onLeave?: () => void;
 }
 
 function relative(seat: number, me: number): number {
@@ -70,10 +70,12 @@ function SeatRack({
   player,
   area,
   current,
+  lastDiscardId,
 }: {
   player: PublicPlayerView;
   area: 'top' | 'left' | 'right';
   current: boolean;
+  lastDiscardId?: string;
 }) {
   const backs = Array.from({ length: player.handCount });
   return (
@@ -87,20 +89,28 @@ function SeatRack({
       <Melds melds={player.melds} vertical={area !== 'top'} />
       <div className="discards">
         {player.discards.map((tile) => (
-          <TileView key={tile.id} tile={tile} small />
+          <TileView key={tile.id} tile={tile} small last={tile.id === lastDiscardId} />
         ))}
       </div>
     </div>
   );
 }
 
-export function Table({ view, onAction, onRules, onSettings }: TableProps) {
+export function Table({ view, onAction, onRules, onLeave }: TableProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const left = useCountdown(view.turnDeadline);
   const me = view.players.find((player) => player.seat === view.mySeat);
   const myHand = me && isPrivatePlayerView(me) ? me.hand : [];
   const lastDrawnId = me && isPrivatePlayerView(me) ? me.lastDrawnId : undefined;
   const canDiscard = view.availableActions.some((action) => action.kind === 'discard');
+  const lastDiscardId = view.lastDiscard?.tile.id;
+  const currentPlayer = view.players.find((player) => player.seat === view.currentSeat);
+  const myTurn = view.gamePhase === 'self-turn' && view.currentSeat === view.mySeat;
+  const claiming = view.gamePhase === 'claim-window' && view.availableActions.some((item) => item.kind !== 'discard');
+
+  useEffect(() => {
+    if (lastDrawnId && canDiscard) setSelectedId(lastDrawnId);
+  }, [lastDrawnId, canDiscard, view.sequence]);
   const byRel = useMemo(() => {
     const map: Record<number, (typeof view.players)[number] | undefined> = {};
     for (const player of view.players) {
@@ -128,15 +138,23 @@ export function Table({ view, onAction, onRules, onSettings }: TableProps) {
     });
   };
 
-  const ring = Math.max(0, Math.min(100, (left / 30) * 100));
+  const ring = Math.max(0, Math.min(100, (left / 18) * 100));
+  const phaseText =
+    view.gamePhase === 'qidong'
+      ? '起手杠：可胡可过'
+      : claiming
+        ? '有人打出，要不要'
+        : myTurn
+          ? '轮到你出牌'
+          : `${currentPlayer?.nickname ?? '下家'} 出牌`;
 
   return (
     <div className="table-shell">
       <div className="table-felt">
         <header className="table-hud">
-          <div className="plaque">房间 {view.roomCode}</div>
           <div className="hud-chip">第 {view.round || 1} 局</div>
           <div className="hud-chip">余牌 {view.wallCount}</div>
+          <div className={`turn-banner ${myTurn || claiming ? 'mine' : ''}`}>{phaseText}</div>
           <div className={`timer ${left <= 5 ? 'urgent' : ''}`} style={{ background: `conic-gradient(#e0c36a ${ring}%, rgba(0,0,0,.28) 0)` }}>
             <span>{left > 0 ? left : '--'}</span>
           </div>
@@ -145,25 +163,25 @@ export function Table({ view, onAction, onRules, onSettings }: TableProps) {
               规则
             </button>
           ) : null}
-          {onSettings ? (
-            <button type="button" className="btn-action ghost hud-btn" onClick={onSettings}>
-              设置
+          {onLeave ? (
+            <button type="button" className="btn-action ghost hud-btn" onClick={onLeave}>
+              回大厅
             </button>
           ) : null}
         </header>
 
-        {byRel[2] ? <SeatRack player={byRel[2]} area="top" current={view.currentSeat === byRel[2].seat} /> : null}
-        {byRel[3] ? <SeatRack player={byRel[3]} area="left" current={view.currentSeat === byRel[3].seat} /> : null}
-        {byRel[1] ? <SeatRack player={byRel[1]} area="right" current={view.currentSeat === byRel[1].seat} /> : null}
+        {byRel[2] ? <SeatRack player={byRel[2]} area="top" current={view.currentSeat === byRel[2].seat} lastDiscardId={lastDiscardId} /> : null}
+        {byRel[3] ? <SeatRack player={byRel[3]} area="left" current={view.currentSeat === byRel[3].seat} lastDiscardId={lastDiscardId} /> : null}
+        {byRel[1] ? <SeatRack player={byRel[1]} area="right" current={view.currentSeat === byRel[1].seat} lastDiscardId={lastDiscardId} /> : null}
 
         <div className="center-well">
           <div className="compass">
-            <span>对</span>
-            <b>{view.gamePhase === 'qidong' ? '起手杠' : view.gamePhase === 'claim-window' ? '等人应牌' : '出牌中'}</b>
+            <span>{myTurn ? '请出牌' : claiming ? '应牌' : '牌河'}</span>
+            <b>{phaseText}</b>
           </div>
           {view.lastDiscard ? (
             <div className="last-discard pop">
-              <span>打出</span>
+              <span>{view.players.find((p) => p.seat === view.lastDiscard?.fromSeat)?.nickname ?? '刚打'}</span>
               <TileView tile={view.lastDiscard.tile} />
             </div>
           ) : (
@@ -172,12 +190,12 @@ export function Table({ view, onAction, onRules, onSettings }: TableProps) {
         </div>
 
         {me ? (
-          <div className="self-area">
+          <div className={`self-area ${myTurn ? 'my-turn' : ''}`}>
             <Plaque player={me} you current={view.currentSeat === me.seat} />
             <Melds melds={me.melds} />
             <div className="discards self-discards">
               {me.discards.map((tile) => (
-                <TileView key={tile.id} tile={tile} small />
+                <TileView key={tile.id} tile={tile} small last={tile.id === lastDiscardId} />
               ))}
             </div>
             <div className="own-hand">

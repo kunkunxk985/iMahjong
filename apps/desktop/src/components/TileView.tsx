@@ -7,6 +7,7 @@ interface TileViewProps {
   selected?: boolean;
   drawn?: boolean;
   dim?: boolean;
+  last?: boolean;
   onClick?: () => void;
   onDoubleClick?: () => void;
 }
@@ -15,13 +16,14 @@ function faceSrc(tile: Tile): string {
   return `/assets/tiles/${tile.suit}-${tile.rank}.png`;
 }
 
-export function TileView({ tile, back, small, selected, drawn, dim, onClick, onDoubleClick }: TileViewProps) {
+export function TileView({ tile, back, small, selected, drawn, dim, last, onClick, onDoubleClick }: TileViewProps) {
   const className = [
     'tile',
     small ? 'small' : '',
     selected ? 'selected' : '',
     drawn ? 'drawn' : '',
     dim ? 'dim' : '',
+    last ? 'last-out' : '',
     back || !tile ? 'is-back' : '',
   ]
     .filter(Boolean)

@@ -33,7 +33,7 @@ export function Lobby({ nickname, setNickname, error, onStart, onRules }: LobbyP
           规则说明
         </button>
 
-        <p className="hint">四人联机房间以后再加。这一版先把单机牌桌做稳。</p>
+        <p className="hint">双击手牌出牌。陪练会吃碰杠，出牌有思考时间。联网以后再加。</p>
         {error ? <p className="error">{error}</p> : null}
       </div>
     </div>

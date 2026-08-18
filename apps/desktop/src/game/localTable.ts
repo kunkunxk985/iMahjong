@@ -1,7 +1,8 @@
 import { newActionId, type ClientView, type GameAction, type Settlement } from '@pizhou/shared';
-import { nextDealer, PizhouGame, type PlayerMeta } from '@pizhou/rules';
+import { chooseCompanionAction, nextDealer, PizhouGame, type PlayerMeta } from '@pizhou/rules';
 
 const BOT_NAMES = ['陪练·南', '陪练·西', '陪练·北'];
+const LOCAL_TIMEOUT_MS = 18_000;
 
 export class LocalTable {
   private game: PizhouGame | null = null;
@@ -68,7 +69,7 @@ export class LocalTable {
 
   private nextHand(): void {
     this.round += 1;
-    this.game = new PizhouGame({ dealer: this.dealer });
+    this.game = new PizhouGame({ dealer: this.dealer, timeoutMs: LOCAL_TIMEOUT_MS });
     this.startTick();
     this.afterChange();
   }
@@ -116,44 +117,34 @@ export class LocalTable {
       if (!this.game || this.game.phase === 'settlement') return;
       const result = this.game.tick();
       if (result.changed) this.afterChange();
-    }, 400);
+    }, 250);
+  }
+
+  private botDelayMs(): number {
+    if (!this.game) return 1200;
+    const humanBusy = this.game.availableFor(0).length > 0;
+    if (this.game.phase === 'self-turn') return 1600 + Math.floor(Math.random() * 1200);
+    if (humanBusy) return 2200 + Math.floor(Math.random() * 900);
+    return 800 + Math.floor(Math.random() * 700);
   }
 
   private scheduleBots(): void {
     if (this.botTimer) clearTimeout(this.botTimer);
     if (!this.game || this.game.phase === 'settlement') return;
-    this.botTimer = setTimeout(() => this.stepBots(), 520);
+    this.botTimer = setTimeout(() => this.stepBots(), this.botDelayMs());
   }
 
   private stepBots(): void {
     if (!this.game || this.game.phase === 'settlement') return;
     for (const seat of [1, 2, 3]) {
-      const action = this.chooseBot(seat);
+      const actions = this.game.availableFor(seat);
+      const action = chooseCompanionAction(actions, this.game.seats[seat]!);
       if (!action) continue;
       const result = this.game.apply(seat, action, `bot-${Date.now()}-${seat}`, this.game.sequence);
       if (!result.ok && !result.duplicate) continue;
       this.afterChange();
       return;
     }
-  }
-
-  private chooseBot(seat: number): GameAction | null {
-    if (!this.game) return null;
-    const actions = this.game.availableFor(seat);
-    if (actions.length === 0) return null;
-    const hu = actions.find((item) => item.kind === 'hu');
-    if (hu?.key === 'qidong-gang-hu') {
-      return actions.some((item) => item.kind === 'pass') ? { kind: 'pass' } : { kind: 'hu', key: 'qidong-gang-hu' };
-    }
-    if (hu) return { kind: 'hu' };
-    if (actions.some((item) => item.kind === 'discard')) {
-      const runtime = this.game.seats[seat]!;
-      const tile =
-        runtime.hand.find((item) => item.id === runtime.lastDrawnId) ?? runtime.hand[runtime.hand.length - 1];
-      if (tile) return { kind: 'discard', tileId: tile.id };
-    }
-    if (actions.some((item) => item.kind === 'pass')) return { kind: 'pass' };
-    return null;
   }
 
   private clearTimers(): void {

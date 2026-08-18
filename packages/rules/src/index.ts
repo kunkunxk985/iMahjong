@@ -22,3 +22,4 @@ export {
   ACTION_RANK,
   isBetterAction,
 } from './actions.ts';
+export { chooseCompanionAction, pickDiscard, discardScore } from './companion.ts';
