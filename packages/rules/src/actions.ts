@@ -75,10 +75,32 @@ export function concealedAnGangActions(hand: Tile[]): AvailableAction[] {
   return actions;
 }
 
+/** 三张相同牌只有玩家主动“坎上”后才成为锁定坎。 */
+export function concealedKanActions(hand: Tile[]): AvailableAction[] {
+  const groups = new Map<string, Tile[]>();
+  for (const tile of hand) {
+    const list = groups.get(tile.key) ?? [];
+    list.push(tile);
+    groups.set(tile.key, list);
+  }
+  const actions: AvailableAction[] = [];
+  for (const [key, list] of groups) {
+    if (list.length >= 3) {
+      actions.push({
+        kind: 'kan',
+        key,
+        tileIds: list.slice(0, 3).map((tile) => tile.id),
+        tiles: list.slice(0, 3),
+      });
+    }
+  }
+  return actions;
+}
+
 export function buGangActions(seat: SeatRuntime): AvailableAction[] {
   const actions: AvailableAction[] = [];
   for (const meld of seat.melds) {
-    if (meld.type !== 'peng' || !meld.tiles[0]) continue;
+    if ((meld.type !== 'peng' && meld.type !== 'kan') || !meld.tiles[0]) continue;
     const key = meld.tiles[0].key;
     const extra = seat.hand.find((tile) => tile.key === key);
     if (extra) {
@@ -110,6 +132,7 @@ export function selfTurnActions(seat: SeatRuntime): AvailableAction[] {
     actions.push({ kind: 'close-gate' });
   }
   actions.push(...concealedAnGangActions(seat.hand));
+  actions.push(...concealedKanActions(seat.hand));
   actions.push(...buGangActions(seat));
   return actions;
 }
@@ -132,11 +155,12 @@ export function claimActions(input: {
   }
 
   const copies = tilesOfKey(input.seat.hand, input.discard.key);
-  if (copies.length >= 3) {
+  const lockedKan = input.seat.melds.find((meld) => meld.type === 'kan' && meld.tiles[0]?.key === input.discard.key);
+  if (lockedKan || copies.length >= 3) {
     actions.push({
       kind: 'ming-gang',
       key: input.discard.key,
-      tileIds: copies.slice(0, 3).map((tile) => tile.id),
+      tileIds: lockedKan ? lockedKan.tiles.map((tile) => tile.id) : copies.slice(0, 3).map((tile) => tile.id),
     });
   }
   if (copies.length >= 2) {
@@ -159,6 +183,7 @@ export const ACTION_RANK: Record<string, number> = {
   'ming-gang': 3,
   'an-gang': 3,
   'bu-gang': 3,
+  kan: 2,
   peng: 2,
   chi: 1,
   discard: 0,
@@ -188,6 +213,9 @@ export function actionMatchesAvailable(action: GameAction, available: AvailableA
   if (action.kind === 'pass') return available.some((item) => item.kind === 'pass');
   if (action.kind === 'discard') return available.some((item) => item.kind === 'discard');
   if (action.kind === 'hu') return available.some((item) => item.kind === 'hu');
+  if (action.kind === 'kan') {
+    return available.some((item) => item.kind === 'kan' && item.key === action.key);
+  }
   if (action.kind === 'peng' || action.kind === 'ming-gang') {
     return available.some((item) => item.kind === action.kind);
   }
