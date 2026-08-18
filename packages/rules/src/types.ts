@@ -5,4 +5,10 @@ export interface SeatRuntime {
   discards: Tile[];
   melds: Meld[];
   lastDrawnId?: string;
+  firstDiscardKey?: string;
+  changed: boolean;
+  closed: boolean;
+  closedTwoPair: boolean;
+  discardedBeforeClose: string[];
+  waitKey?: string;
 }

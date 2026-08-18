@@ -17,6 +17,9 @@ export const EMPTY_ROOM_TTL_MS = 30 * 60 * 1000;
 
 export const NICKNAME_MAX = 12;
 export const BASE_HU = 10;
+export const HU_RATE = 1;
+export const YAO_RATE = 10;
+export const HUN_DI = 30;
 
 export const WINDOW_DEFAULT_WIDTH = 1280;
 export const WINDOW_DEFAULT_HEIGHT = 800;
@@ -28,6 +31,6 @@ export const SEAT_NAMES = ['东', '南', '西', '北'] as const;
 export const ROOM_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 export const RULE_FLAGS = {
-  enablePiaoHun: false,
-  enableBaoZhuang: false,
+  enablePiaoHun: true,
+  enableBaoZhuang: true,
 } as const;

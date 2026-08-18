@@ -16,6 +16,7 @@ const LABELS: Record<string, string> = {
   chi: '吃',
   pass: '过',
   discard: '出牌',
+  'close-gate': '关门',
 };
 
 function actionLabel(action: AvailableAction): string {

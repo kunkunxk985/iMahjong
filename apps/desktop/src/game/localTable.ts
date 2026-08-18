@@ -27,7 +27,12 @@ export class LocalTable {
 
   again(): void {
     if (!this.game?.settlement) return;
-    this.dealer = nextDealer(this.dealer, this.game.settlement.winnerSeat, this.game.settlement.liuju);
+    this.dealer = nextDealer(
+      this.dealer,
+      this.game.settlement.winnerSeat,
+      this.game.settlement.liuju,
+      this.game.settlement.drawReason,
+    );
     this.nextHand();
   }
 

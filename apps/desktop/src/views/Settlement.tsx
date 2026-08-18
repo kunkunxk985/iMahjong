@@ -1,4 +1,4 @@
-import type { Settlement } from '@pizhou/shared';
+import type { BaoZhuangReason, Settlement } from '@pizhou/shared';
 
 const WIN_LABEL: Record<string, string> = {
   'ping-hu': '平胡',
@@ -6,21 +6,41 @@ const WIN_LABEL: Record<string, string> = {
   liuju: '流局',
 };
 
+const BAO_LABEL: Record<BaoZhuangReason, string> = {
+  four_wait_seq: '四坎听顺包庄',
+  chow_wait_seq: '吃牌听顺包庄',
+  xiang: '香牌包庄',
+};
+
+const DRAW_LABEL: Record<string, string> = {
+  four_same: '开局四同张流局',
+  wall: '牌墙摸完流局',
+};
+
 export function SettlementModal({
   settlement,
   onAgain,
-  readyCount,
 }: {
   settlement: Settlement;
   onAgain: () => void;
   readyCount: number;
 }) {
+  const bao = settlement.baoZhuang
+    ? BAO_LABEL[settlement.baoZhuang.reason]
+    : null;
+  const drawText = settlement.drawReason ? DRAW_LABEL[settlement.drawReason] ?? settlement.drawReason : null;
+
   return (
     <div className="overlay">
       <div className="settlement">
         <div className="gold-line" />
         <h2>{settlement.liuju ? '流局' : `${settlement.winnerNickname ?? '玩家'} 胡牌`}</h2>
-        <p className="sub">{WIN_LABEL[settlement.winType] ?? settlement.winType}</p>
+        <p className="sub">
+          {WIN_LABEL[settlement.winType] ?? settlement.winType}
+          {settlement.hunDi ? ' · 飘荤' : ''}
+          {bao ? ` · ${bao}` : ''}
+        </p>
+        {drawText ? <p className="sub">{drawText}</p> : null}
         {!settlement.liuju ? (
           <div className="score-grid">
             <div>
@@ -40,8 +60,8 @@ export function SettlementModal({
               <strong>×{settlement.dealerMultiplier}</strong>
             </div>
             <div>
-              <span>最终分数</span>
-              <strong>{settlement.hu + settlement.yao}</strong>
+              <span>本局分</span>
+              <strong>{settlement.hu + settlement.yao * 10}</strong>
             </div>
           </div>
         ) : (
@@ -60,14 +80,22 @@ export function SettlementModal({
           <thead>
             <tr>
               <th>玩家</th>
-              <th>变化</th>
-              <th>总分</th>
+              <th>胡</th>
+              <th>幺</th>
+              <th>本局</th>
+              <th>累计</th>
             </tr>
           </thead>
           <tbody>
             {settlement.scores.map((item) => (
               <tr key={item.seat} className={item.seat === settlement.winnerSeat ? 'winner' : ''}>
-                <td>{item.nickname}</td>
+                <td>
+                  {item.nickname}
+                  {item.isDealer ? ' 庄' : ''}
+                  {item.piaoHun ? ' 飘' : ''}
+                </td>
+                <td>{item.hu ?? 0}</td>
+                <td>{item.yao ?? 0}</td>
                 <td className={item.delta > 0 ? 'up' : item.delta < 0 ? 'down' : ''}>
                   {item.delta > 0 ? `+${item.delta}` : item.delta}
                 </td>
@@ -76,6 +104,17 @@ export function SettlementModal({
             ))}
           </tbody>
         </table>
+        {settlement.scores.some((item) => item.notes && item.notes.length > 0) ? (
+          <ul className="breakdown">
+            {settlement.scores.flatMap((item) =>
+              (item.notes ?? []).map((note, index) => (
+                <li key={`${item.seat}-${index}`}>
+                  {item.nickname} {note}
+                </li>
+              )),
+            )}
+          </ul>
+        ) : null}
         <button type="button" className="btn-action primary wide" onClick={onAgain}>
           再来一局
         </button>

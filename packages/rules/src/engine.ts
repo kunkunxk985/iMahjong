@@ -24,7 +24,7 @@ import {
   selfTurnActions,
   takeTiles,
 } from './actions.ts';
-import { finalPoints, scoreQidongGangHu, scoreWin, type ScoreResult } from './score.ts';
+import { settleChaHu, toSettlement, type SeatScoreInput } from './score.ts';
 import { canHuTiles } from './win.ts';
 import type { SeatRuntime } from './types.ts';
 
@@ -287,6 +287,9 @@ export class PizhouGame {
     if (action.kind === 'hu') {
       return this.declareHu(seat, runtime.hand, true);
     }
+    if (action.kind === 'close-gate') {
+      return this.closeGate(seat);
+    }
     if (action.kind === 'an-gang') {
       return this.declareAnGang(seat, action.key);
     }
@@ -317,8 +320,16 @@ export class PizhouGame {
     runtime.discards.push(tile);
     runtime.lastDrawnId = undefined;
     runtime.hand = sortTiles(runtime.hand);
+    if (!runtime.firstDiscardKey) runtime.firstDiscardKey = tile.key;
+    if (!runtime.closed && !runtime.discardedBeforeClose.includes(tile.key)) {
+      runtime.discardedBeforeClose.push(tile.key);
+    }
+    this.refreshWaitFlags(runtime);
     this.lastDiscard = { tile, fromSeat: seat };
     this.firstDiscardDone = true;
+    if (this.isFourSameOpening()) {
+      return this.finishDraw(true, 'four_same');
+    }
     const candidates = this.buildClaimCandidates(tile, seat, 'discard');
     if (candidates.length === 0) {
       return this.advanceDraw((seat + 1) % 4);
@@ -346,6 +357,7 @@ export class PizhouGame {
     const usedIds = new Set(used.map((tile) => tile.id));
     runtime.hand = runtime.hand.filter((tile) => !usedIds.has(tile.id));
     runtime.melds.push({ type: 'an-gang', tiles: used });
+    runtime.changed = true;
     if (!this.firstDiscardDone) this.hadOpeningKong = true;
     return this.drawReplacement(seat);
   }
@@ -385,6 +397,7 @@ export class PizhouGame {
     if (pengIndex < 0) return { ok: false, error: '补杠失败', changed: false };
     const peng = runtime.melds[pengIndex]!;
     runtime.melds[pengIndex] = { type: 'bu-gang', tiles: [...peng.tiles, extra], fromSeat: peng.fromSeat };
+    runtime.changed = true;
     this.pending = null;
     return this.drawReplacement(seat);
   }
@@ -530,6 +543,7 @@ export class PizhouGame {
     if (!taken) return;
     runtime.hand = sortTiles(taken.rest);
     runtime.melds.push({ type: 'peng', tiles: [...taken.taken, tile], fromSeat: this.currentSeat, claimedTileId: tile.id });
+    runtime.changed = true;
     runtime.lastDrawnId = undefined;
     this.currentSeat = seat;
     this.phase = 'self-turn';
@@ -543,6 +557,7 @@ export class PizhouGame {
     if (!taken) return;
     runtime.hand = taken.rest;
     runtime.melds.push({ type: 'ming-gang', tiles: [...taken.taken, tile], fromSeat: this.currentSeat, claimedTileId: tile.id });
+    runtime.changed = true;
     this.drawReplacement(seat);
   }
 
@@ -557,6 +572,7 @@ export class PizhouGame {
       fromSeat: this.currentSeat,
       claimedTileId: tile.id,
     });
+    runtime.changed = true;
     runtime.lastDrawnId = undefined;
     this.currentSeat = seat;
     this.phase = 'self-turn';
@@ -564,8 +580,7 @@ export class PizhouGame {
   }
 
   private declareQidongHu(seat: number): ApplyResult {
-    const scored = scoreQidongGangHu(this.seats[seat]!.hand, seat === this.dealer);
-    return this.finishWin(seat, scored, 'qidong-gang-hu', true);
+    return this.finishWin(seat, this.seats[seat]!.hand, 'qidong-gang-hu', true);
   }
 
   private declareHu(seat: number, concealed: Tile[], selfDraw: boolean): ApplyResult {
@@ -573,13 +588,6 @@ export class PizhouGame {
       return { ok: false, error: '还不能胡牌', changed: false };
     }
     const winType: WinType = !this.firstDiscardDone && this.hadOpeningKong ? 'qidong-gang-hu' : 'ping-hu';
-    const scored = scoreWin({
-      concealed,
-      exposed: this.seats[seat]!.melds,
-      isDealer: seat === this.dealer,
-      winType,
-    });
-    if (!scored) return { ok: false, error: '胡牌判定失败', changed: false };
 
     if (!selfDraw) {
       const winTile = concealed.find((tile) => !this.seats[seat]!.hand.some((own) => own.id === tile.id));
@@ -590,52 +598,82 @@ export class PizhouGame {
       }
     }
 
-    return this.finishWin(seat, scored, winType, selfDraw);
+    return this.finishWin(seat, concealed, winType, selfDraw);
   }
 
-  private finishWin(seat: number, scored: ScoreResult, winType: WinType, selfDraw: boolean): ApplyResult {
-    const points = finalPoints(scored.hu, scored.yao);
-    const scores = [0, 1, 2, 3].map((index) => ({
-      seat: index,
-      nickname: '',
-      delta: index === seat ? points : -points,
-      total: 0,
-    }));
+  private closeGate(seat: number): ApplyResult {
+    const runtime = this.seats[seat]!;
+    const counts: Record<string, number> = {};
+    for (const tile of runtime.hand) counts[tile.key] = (counts[tile.key] ?? 0) + 1;
+    if (runtime.hand.length !== 4 || Object.values(counts).filter((n) => n === 2).length !== 2) {
+      return { ok: false, error: '手里不是两对，不能关门', changed: false };
+    }
+    runtime.closed = true;
+    runtime.closedTwoPair = true;
+    runtime.discardedBeforeClose = this.seats.flatMap((item) => item.discards.map((tile) => tile.key));
+    this.bump();
+    return { ok: true, changed: true };
+  }
 
-    this.settlement = {
-      liuju: false,
+  private refreshWaitFlags(seat: SeatRuntime): void {
+    if (seat.hand.length === 1) {
+      const key = seat.hand[0]!.key;
+      if (!seat.waitKey) {
+        seat.waitKey = key;
+        seat.closed = true;
+      } else if (seat.waitKey !== key) {
+        seat.changed = true;
+      }
+      return;
+    }
+    const counts: Record<string, number> = {};
+    for (const tile of seat.hand) counts[tile.key] = (counts[tile.key] ?? 0) + 1;
+    if (seat.hand.length === 4 && Object.values(counts).filter((n) => n === 2).length === 2) return;
+    if (seat.waitKey) seat.changed = true;
+  }
+
+  private isFourSameOpening(): boolean {
+    const firsts = this.seats.map((item) => item.firstDiscardKey);
+    return firsts.every(Boolean) && new Set(firsts).size === 1;
+  }
+
+  private seatPayload(winnerSeat: number | null, winnerHand?: Tile[]): SeatScoreInput[] {
+    return this.seats.map((seat, index) => ({
+      hand: index === winnerSeat && winnerHand ? winnerHand : seat.hand,
+      exposed: seat.melds,
+      changed: seat.changed,
+      closedTwoPair: seat.closedTwoPair,
+      discardedBeforeClose: seat.discardedBeforeClose.slice(),
+    }));
+  }
+
+  private finishWin(seat: number, concealed: Tile[], winType: WinType, selfDraw: boolean): ApplyResult {
+    const result = settleChaHu({
+      seats: this.seatPayload(seat, concealed),
       winnerSeat: seat,
-      winnerNickname: null,
+      dealer: this.dealer,
+      ron: !selfDraw,
+      discardKey: selfDraw ? null : this.lastDiscard?.tile.key ?? concealed[concealed.length - 1]?.key,
+      discarderSeat: selfDraw ? null : this.lastDiscard?.fromSeat ?? null,
+      openingGang: winType === 'qidong-gang-hu',
       winType,
-      hu: scored.hu,
-      huBeforeDealer: scored.huBeforeDealer,
-      yao: scored.yao,
-      dealerMultiplier: scored.dealerMultiplier,
-      selfDraw,
-      breakdown: scored.breakdown,
-      scores,
-    };
+    });
+    this.settlement = toSettlement(result, { winType, selfDraw });
     this.phase = 'settlement';
     this.pending = null;
     this.bump(false);
     return { ok: true, changed: true };
   }
 
-  private finishDraw(liuju: boolean): ApplyResult {
+  private finishDraw(liuju: boolean, reason = 'wall'): ApplyResult {
     if (!liuju) return { ok: true, changed: false };
-    this.settlement = {
-      liuju: true,
+    const result = settleChaHu({
+      seats: this.seatPayload(null),
       winnerSeat: null,
-      winnerNickname: null,
-      winType: 'liuju',
-      hu: 0,
-      huBeforeDealer: 0,
-      yao: 0,
-      dealerMultiplier: 1,
-      selfDraw: false,
-      breakdown: [],
-      scores: [0, 1, 2, 3].map((seat) => ({ seat, nickname: '', delta: 0, total: 0 })),
-    };
+      dealer: this.dealer,
+      drawReason: reason,
+    });
+    this.settlement = toSettlement(result, { winType: 'liuju', selfDraw: false });
     this.phase = 'settlement';
     this.pending = null;
     this.bump(false);
@@ -653,7 +691,15 @@ export class PizhouGame {
 }
 
 function emptySeat(): SeatRuntime {
-  return { hand: [], discards: [], melds: [] };
+  return {
+    hand: [],
+    discards: [],
+    melds: [],
+    changed: false,
+    closed: false,
+    closedTwoPair: false,
+    discardedBeforeClose: [],
+  };
 }
 
 export function legalBuGangKeys(seat: SeatRuntime): string[] {

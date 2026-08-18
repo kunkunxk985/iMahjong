@@ -93,10 +93,21 @@ export function buGangActions(seat: SeatRuntime): AvailableAction[] {
   return actions;
 }
 
+export function canCloseGate(seat: SeatRuntime): boolean {
+  if (seat.closedTwoPair) return false;
+  if (seat.hand.length !== 4) return false;
+  const counts: Record<string, number> = {};
+  for (const tile of seat.hand) counts[tile.key] = (counts[tile.key] ?? 0) + 1;
+  return Object.values(counts).filter((n) => n === 2).length === 2;
+}
+
 export function selfTurnActions(seat: SeatRuntime): AvailableAction[] {
   const actions: AvailableAction[] = [{ kind: 'discard' }];
   if (canHuTiles(seat.hand, seat.melds.length)) {
     actions.push({ kind: 'hu' });
+  }
+  if (canCloseGate(seat)) {
+    actions.push({ kind: 'close-gate' });
   }
   actions.push(...concealedAnGangActions(seat.hand));
   actions.push(...buGangActions(seat));
@@ -190,5 +201,6 @@ export function actionMatchesAvailable(action: GameAction, available: AvailableA
     const want = (action.tileIds ?? []).slice().sort().join(',');
     return available.some((item) => item.kind === 'chi' && (item.tileIds ?? []).slice().sort().join(',') === want);
   }
+  if (action.kind === 'close-gate') return available.some((item) => item.kind === 'close-gate');
   return false;
 }

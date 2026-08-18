@@ -16,7 +16,8 @@ export type ActionKind =
   | 'an-gang'
   | 'bu-gang'
   | 'hu'
-  | 'pass';
+  | 'pass'
+  | 'close-gate';
 
 export type WinType = 'ping-hu' | 'qidong-gang-hu' | 'liuju';
 
@@ -36,8 +37,23 @@ export interface ScoreBreakdownItem {
 export interface SettlementScore {
   seat: number;
   nickname: string;
+  hu: number;
+  yao: number;
+  fen: number;
   delta: number;
   total: number;
+  piaoHun?: boolean;
+  isWinner?: boolean;
+  isDealer?: boolean;
+  notes?: string[];
+}
+
+export type BaoZhuangReason = 'four_wait_seq' | 'chow_wait_seq' | 'xiang';
+
+export interface BaoZhuang {
+  reason: BaoZhuangReason;
+  payerSeat: number;
+  winnerSeat: number;
 }
 
 export interface Settlement {
@@ -52,6 +68,9 @@ export interface Settlement {
   selfDraw: boolean;
   breakdown: ScoreBreakdownItem[];
   scores: SettlementScore[];
+  hunDi: boolean;
+  baoZhuang: BaoZhuang | null;
+  drawReason: string | null;
 }
 
 export interface GameAction {

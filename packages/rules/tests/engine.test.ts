@@ -38,16 +38,14 @@ test('牌墙正好120张且不含风牌花牌', () => {
   assert.equal(deck.filter((tile) => tile.suit === 'dragon').length, 12);
 });
 
-test('胡牌者得最终分，其余三人各扣相同分', () => {
+test('查胡两两结：四家分差之和为 0', () => {
   const game = new PizhouGame({ dealer: 0, wall: placeWinningDealerWall() });
   const result = game.apply(0, { kind: 'hu' }, 'hu-score', 1);
   assert.equal(result.ok, true);
   const settlement = game.settlement!;
-  const points = settlement.hu + settlement.yao;
-  assert.equal(settlement.scores[0]?.delta, points);
-  assert.equal(settlement.scores[1]?.delta, -points);
-  assert.equal(settlement.scores[2]?.delta, -points);
-  assert.equal(settlement.scores[3]?.delta, -points);
+  const sum = settlement.scores.reduce((total, item) => total + item.delta, 0);
+  assert.equal(sum, 0);
+  assert.ok((settlement.scores[0]?.delta ?? 0) > 0);
 });
 
 function placeOpeningKongWall(): Tile[] {
@@ -211,6 +209,20 @@ function mulberry(seed: number): () => number {
     return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+test('开局四家第一张相同则流局', () => {
+  const game = new PizhouGame({ dealer: 0, wall: createPizhouDeck() });
+  assert.equal(game.phase, 'self-turn');
+  const tile = game.seats[0]!.hand.find((item) => item.key === 'wan-1');
+  assert.ok(tile);
+  game.seats[1]!.firstDiscardKey = 'wan-1';
+  game.seats[2]!.firstDiscardKey = 'wan-1';
+  game.seats[3]!.firstDiscardKey = 'wan-1';
+  const result = game.apply(0, { kind: 'discard', tileId: tile!.id }, 'four-same', game.sequence);
+  assert.equal(result.ok, true, result.error);
+  assert.equal(game.settlement?.liuju, true);
+  assert.equal(game.settlement?.drawReason, 'four_same');
+});
 
 test('流局不结算分数', () => {
   const tinyWall = [
