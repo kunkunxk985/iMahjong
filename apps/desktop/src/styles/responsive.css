@@ -1,0 +1,126 @@
+@media (max-width: 760px) {
+  .hall-card,
+  .waiting-card,
+  .settlement,
+  .modal {
+    width: calc(100% - 32px);
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
+  .seat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .room-code-num {
+    font-size: 23px;
+  }
+
+  .board-topbar {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+  }
+
+  .board-title,
+  .board-player-copy span,
+  .board-player > em {
+    display: none;
+  }
+
+  .board-room-info,
+  .board-top-tools {
+    gap: 3px;
+    font-size: 11px;
+  }
+
+  .board-player-top {
+    top: 54px;
+    left: 8px;
+  }
+
+  .board-player-left {
+    top: 38%;
+    left: 5px;
+  }
+
+  .board-player-right {
+    top: 38%;
+    right: 5px;
+  }
+
+  .board-player-bottom {
+    bottom: 110px;
+    left: 6px;
+  }
+
+  .board-concealed-top {
+    top: 104px;
+    left: 8px;
+  }
+
+  .board-concealed-left {
+    left: 58px;
+  }
+
+  .board-concealed-right {
+    right: 58px;
+  }
+
+  .board-wall-left { left: 2%; }
+  .board-wall-right { right: 2%; }
+
+  .board-discard-top,
+  .board-discard-bottom {
+    width: min(330px, calc(100% - 120px));
+  }
+
+  .board-discard-left,
+  .board-discard-right {
+    display: none;
+  }
+
+  .board-discard-tile {
+    width: 28px !important;
+    height: 40px !important;
+  }
+
+  .board-controller {
+    gap: 5px;
+  }
+
+  .board-counter b {
+    font-size: 24px;
+  }
+
+  .board-hand-area {
+    right: 3%;
+    bottom: 8px;
+    left: 10%;
+  }
+
+  .board-own-hand {
+    gap: 2px;
+  }
+
+  .board-own-hand .tile {
+    width: clamp(34px, 7.2vw, 58px);
+    height: clamp(49px, 10vw, 82px);
+  }
+
+  .board-action-area {
+    right: 0;
+    bottom: calc(100% + 4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

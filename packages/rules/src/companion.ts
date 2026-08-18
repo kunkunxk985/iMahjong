@@ -64,6 +64,9 @@ export function chooseCompanionAction(
   }
   if (hu) return { kind: 'hu' };
 
+  const kan = actions.find((item) => item.kind === 'kan');
+  if (kan && rng() < 0.85) return { kind: 'kan', key: kan.key, tileIds: kan.tileIds };
+
   const anGang = actions.find((item) => item.kind === 'an-gang');
   if (anGang) return { kind: 'an-gang', key: anGang.key, tileIds: anGang.tileIds };
 

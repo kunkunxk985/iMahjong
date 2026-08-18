@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@pizhou/rules": "*",
+    "@pizhou/server-core": "*",
     "@pizhou/shared": "*",
     "ws": "^8.18.1"
   },

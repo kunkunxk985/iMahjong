@@ -2,6 +2,7 @@
 
 interface PizhouBridge {
   newWindow: () => Promise<void>;
+  getLocalServerUrl: () => Promise<string | null>;
 }
 
 interface Window {

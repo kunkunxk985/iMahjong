@@ -290,6 +290,9 @@ export class PizhouGame {
     if (action.kind === 'close-gate') {
       return this.closeGate(seat);
     }
+    if (action.kind === 'kan') {
+      return this.declareKan(seat, action.key);
+    }
     if (action.kind === 'an-gang') {
       return this.declareAnGang(seat, action.key);
     }
@@ -362,10 +365,24 @@ export class PizhouGame {
     return this.drawReplacement(seat);
   }
 
+  private declareKan(seat: number, key?: string): ApplyResult {
+    if (!key) return { ok: false, error: '请选择要坎上的牌', changed: false };
+    const runtime = this.seats[seat]!;
+    const copies = runtime.hand.filter((tile) => tile.key === key).slice(0, 3);
+    if (copies.length < 3) return { ok: false, error: '坎上需要手里三张相同牌', changed: false };
+    const usedIds = new Set(copies.map((tile) => tile.id));
+    runtime.hand = runtime.hand.filter((tile) => !usedIds.has(tile.id));
+    runtime.melds.push({ type: 'kan', tiles: copies });
+    if (runtime.lastDrawnId && usedIds.has(runtime.lastDrawnId)) runtime.lastDrawnId = undefined;
+    runtime.hand = sortTiles(runtime.hand);
+    this.bump();
+    return { ok: true, changed: true };
+  }
+
   private declareBuGang(seat: number, key?: string, tileId?: string): ApplyResult {
     const runtime = this.seats[seat]!;
-    const peng = runtime.melds.find((meld) => meld.type === 'peng' && meld.tiles[0]?.key === key);
-    if (!peng) return { ok: false, error: '没有可以补杠的碰', changed: false };
+    const peng = runtime.melds.find((meld) => (meld.type === 'peng' || meld.type === 'kan') && meld.tiles[0]?.key === key);
+    if (!peng) return { ok: false, error: '没有可以升级的碰或坎', changed: false };
     const extra = runtime.hand.find((tile) => tile.id === tileId || tile.key === key);
     if (!extra) return { ok: false, error: '手牌中没有补杠的牌', changed: false };
     const candidates = this.buildClaimCandidates(extra, seat, 'bu-gang');
@@ -393,7 +410,7 @@ export class PizhouGame {
     const extraIndex = runtime.hand.findIndex((tile) => tile.id === tileId);
     if (extraIndex < 0) return { ok: false, error: '补杠失败', changed: false };
     const extra = runtime.hand.splice(extraIndex, 1)[0]!;
-    const pengIndex = runtime.melds.findIndex((meld) => meld.type === 'peng' && meld.tiles[0]?.key === extra.key);
+    const pengIndex = runtime.melds.findIndex((meld) => (meld.type === 'peng' || meld.type === 'kan') && meld.tiles[0]?.key === extra.key);
     if (pengIndex < 0) return { ok: false, error: '补杠失败', changed: false };
     const peng = runtime.melds[pengIndex]!;
     runtime.melds[pengIndex] = { type: 'bu-gang', tiles: [...peng.tiles, extra], fromSeat: peng.fromSeat };
@@ -552,6 +569,14 @@ export class PizhouGame {
 
   private applyMingGang(seat: number, tile: Tile): void {
     const runtime = this.seats[seat]!;
+    const kanIndex = runtime.melds.findIndex((meld) => meld.type === 'kan' && meld.tiles[0]?.key === tile.key);
+    if (kanIndex >= 0) {
+      const kan = runtime.melds[kanIndex]!;
+      runtime.melds[kanIndex] = { type: 'ming-gang', tiles: [...kan.tiles, tile], fromSeat: this.currentSeat, claimedTileId: tile.id };
+      runtime.changed = true;
+      this.drawReplacement(seat);
+      return;
+    }
     const copies = runtime.hand.filter((item) => item.key === tile.key).slice(0, 3);
     const taken = takeTiles(runtime.hand, copies.map((item) => item.id));
     if (!taken) return;
@@ -637,10 +662,11 @@ export class PizhouGame {
     return firsts.every(Boolean) && new Set(firsts).size === 1;
   }
 
-  private seatPayload(winnerSeat: number | null, winnerHand?: Tile[]): SeatScoreInput[] {
+  private seatPayload(winnerSeat: number | null, winnerHand?: Tile[], winningDiscardId?: string): SeatScoreInput[] {
     return this.seats.map((seat, index) => ({
       hand: index === winnerSeat && winnerHand ? winnerHand : seat.hand,
       exposed: seat.melds,
+      winningDiscardId: index === winnerSeat ? winningDiscardId : undefined,
       changed: seat.changed,
       closedTwoPair: seat.closedTwoPair,
       discardedBeforeClose: seat.discardedBeforeClose.slice(),
@@ -649,7 +675,7 @@ export class PizhouGame {
 
   private finishWin(seat: number, concealed: Tile[], winType: WinType, selfDraw: boolean): ApplyResult {
     const result = settleChaHu({
-      seats: this.seatPayload(seat, concealed),
+      seats: this.seatPayload(seat, concealed, selfDraw ? undefined : this.lastDiscard?.tile.id),
       winnerSeat: seat,
       dealer: this.dealer,
       ron: !selfDraw,

@@ -21,11 +21,14 @@ export function SettlementModal({
   settlement,
   onAgain,
   onLeave,
+  readyCount,
+  alreadyReady = false,
 }: {
   settlement: Settlement;
   onAgain: () => void;
   onLeave?: () => void;
   readyCount: number;
+  alreadyReady?: boolean;
 }) {
   const bao = settlement.baoZhuang
     ? BAO_LABEL[settlement.baoZhuang.reason]
@@ -118,8 +121,8 @@ export function SettlementModal({
           </ul>
         ) : null}
         <div className="split slim">
-          <button type="button" className="btn-action primary" onClick={onAgain}>
-            再来一局
+          <button type="button" className="btn-action primary" disabled={alreadyReady} onClick={onAgain}>
+            {alreadyReady ? '已准备，等朋友' : '再来一局'}
           </button>
           {onLeave ? (
             <button type="button" className="btn-action ghost" onClick={onLeave}>
@@ -127,6 +130,7 @@ export function SettlementModal({
             </button>
           ) : null}
         </div>
+        <p className="hint settlement-ready">已准备 {readyCount}/4{alreadyReady ? ' · 你已准备' : ''}</p>
       </div>
     </div>
   );

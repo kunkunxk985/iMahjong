@@ -9,6 +9,7 @@ interface ActionBarProps {
 
 const LABELS: Record<string, string> = {
   hu: '胡',
+  kan: '坎上',
   'ming-gang': '杠',
   'an-gang': '暗杠',
   'bu-gang': '补杠',
@@ -24,7 +25,7 @@ function actionLabel(action: AvailableAction): string {
   if (action.kind === 'chi' && action.tiles?.length) {
     return `吃 ${action.tiles.map((tile) => tileLabel(tile)).join('')}`;
   }
-  if ((action.kind === 'an-gang' || action.kind === 'bu-gang') && action.key) {
+  if ((action.kind === 'kan' || action.kind === 'an-gang' || action.kind === 'bu-gang') && action.key) {
     return `${LABELS[action.kind]} ${tileLabel(action.key)}`;
   }
   return LABELS[action.kind] ?? action.kind;
