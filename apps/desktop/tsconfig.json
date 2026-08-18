@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@pizhou/shared": ["../../packages/shared/src/index.ts"],
+      "@pizhou/rules": ["../../packages/rules/src/index.ts"]
+    }
+  },
+  "include": ["src", "electron"]
+}

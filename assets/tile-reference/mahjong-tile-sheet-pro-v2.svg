@@ -1,0 +1,755 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3030" height="1510" viewBox="0 0 3030 1510">
+<defs>
+ <linearGradient id="background" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#113d35"/><stop offset="1" stop-color="#061b18"/></linearGradient>
+ <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff9e7"/><stop offset=".42" stop-color="#dccda8"/><stop offset="1" stop-color="#ab9670"/></linearGradient>
+ <linearGradient id="face" x1=".2" y1="0" x2=".8" y2="1"><stop offset="0" stop-color="#fffef8"/><stop offset=".55" stop-color="#fbf6e6"/><stop offset="1" stop-color="#ece2c6"/></linearGradient>
+ <linearGradient id="bamboo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#155a3e"/><stop offset=".45" stop-color="#3fa26a"/><stop offset=".72" stop-color="#82b83f"/><stop offset="1" stop-color="#1b6849"/></linearGradient>
+ <filter id="shadow" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="11" stdDeviation="9" flood-color="#000000" flood-opacity=".45"/></filter>
+ <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".55" numOctaves="2" seed="13"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 .035"/></feComponentTransfer></filter>
+ <style>
+ .title{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif;font-size:34px;font-weight:800;fill:#f2e4b7;letter-spacing:1.5px}
+ .sub{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif;font-size:17px;fill:#b9d5c4}
+ .caption{font-family:"Consolas","Microsoft YaHei",sans-serif;font-size:17px;font-weight:700;fill:#e7d7a7;letter-spacing:.6px}
+ .wanNum{font-family:"STKaiti","FangSong","Microsoft YaHei",serif;font-size:164px;font-weight:700;fill:#bd302c}
+ .wanSuit{font-family:"STKaiti","FangSong","Microsoft YaHei",serif;font-size:77px;font-weight:700;fill:#bd302c}
+ .zhong{font-family:"STKaiti","FangSong","Microsoft YaHei",serif;font-size:214px;font-weight:800;fill:#bd292b}
+ .fa{font-family:"STKaiti","FangSong","Microsoft YaHei",serif;font-size:202px;font-weight:800;fill:#17834d}
+ </style>
+</defs>
+<rect width="3030" height="1510" fill="url(#background)"/>
+<text x="30" y="43" class="title">邳州麻将 · 成品牌面素材 V2</text>
+<text x="3000" y="43" text-anchor="end" class="sub">30种唯一牌面 · 每种复制4张 · 共120张 · 万、条、筒、中、发、白</text><g transform="translate(30,90)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <text x="135" y="190" text-anchor="middle" class="wanNum">一</text>
+ <text x="135" y="278" text-anchor="middle" class="wanSuit">萬</text>
+ </g>
+ <text x="165" y="517" text-anchor="middle" class="caption">WAN_1</text><g transform="translate(330,90)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <text x="135" y="190" text-anchor="middle" class="wanNum">二</text>
+ <text x="135" y="278" text-anchor="middle" class="wanSuit">萬</text>
+ </g>
+ <text x="465" y="517" text-anchor="middle" class="caption">WAN_2</text><g transform="translate(630,90)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <text x="135" y="190" text-anchor="middle" class="wanNum">三</text>
+ <text x="135" y="278" text-anchor="middle" class="wanSuit">萬</text>
+ </g>
+ <text x="765" y="517" text-anchor="middle" class="caption">WAN_3</text><g transform="translate(930,90)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <text x="135" y="190" text-anchor="middle" class="wanNum">四</text>
+ <text x="135" y="278" text-anchor="middle" class="wanSuit">萬</text>
+ </g>
+ <text x="1065" y="517" text-anchor="middle" class="caption">WAN_4</text><g transform="translate(1230,90)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <text x="135" y="190" text-anchor="middle" class="wanNum">五</text>
+ <text x="135" y="278" text-anchor="middle" class="wanSuit">萬</text>
+ </g>
+ <text x="1365" y="517" text-anchor="middle" class="caption">WAN_5</text><g transform="translate(1530,90)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <text x="135" y="190" text-anchor="middle" class="wanNum">六</text>
+ <text x="135" y="278" text-anchor="middle" class="wanSuit">萬</text>
+ </g>
+ <text x="1665" y="517" text-anchor="middle" class="caption">WAN_6</text><g transform="translate(1830,90)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <text x="135" y="190" text-anchor="middle" class="wanNum">七</text>
+ <text x="135" y="278" text-anchor="middle" class="wanSuit">萬</text>
+ </g>
+ <text x="1965" y="517" text-anchor="middle" class="caption">WAN_7</text><g transform="translate(2130,90)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <text x="135" y="190" text-anchor="middle" class="wanNum">八</text>
+ <text x="135" y="278" text-anchor="middle" class="wanSuit">萬</text>
+ </g>
+ <text x="2265" y="517" text-anchor="middle" class="caption">WAN_8</text><g transform="translate(2430,90)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <text x="135" y="190" text-anchor="middle" class="wanNum">九</text>
+ <text x="135" y="278" text-anchor="middle" class="wanSuit">萬</text>
+ </g>
+ <text x="2565" y="517" text-anchor="middle" class="caption">WAN_9</text><g transform="translate(2730,90)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <text x="135" y="240" text-anchor="middle" class="zhong">中</text>
+ </g>
+ <text x="2865" y="517" text-anchor="middle" class="caption">DRAGON_ZHONG</text><g transform="translate(30,550)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(135,195)">
+  <path d="M-76 58 C-48 17 -31-45 5-55 C47-67 76-31 68 15 C62 49 28 66-5 62 C-35 60-60 81-88 100" fill="#2f865a" stroke="#14583e" stroke-width="5"/>
+  <path d="M-42 13 C-2-7 36 4 56 28 C25 47-4 45-42 13Z" fill="#d2443c" stroke="#9f2d31" stroke-width="4"/>
+  <path d="M-20-38 C-5-74 39-84 60-52 C40-29 18-26-20-38Z" fill="#3d9b6a" stroke="#14583e" stroke-width="4"/>
+  <circle cx="32" cy="-47" r="7" fill="#fff6d9"/><circle cx="33" cy="-47" r="3" fill="#1a332b"/>
+  <path d="M58-45l29 11-27 12Z" fill="#cf3b37"/>
+  <path d="M-63 46 C-93 58-107 83-112 112 C-79 99-54 85-36 58" fill="#166e88" stroke="#14546d" stroke-width="4"/>
+  <path d="M-5 65l-15 57M17 61l5 59" stroke="#c99f4e" stroke-width="6" stroke-linecap="round"/>
+ </g>
+ </g>
+ <text x="165" y="977" text-anchor="middle" class="caption">TIAO_1</text><g transform="translate(330,550)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(88,122) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(182,260) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g>
+ </g>
+ <text x="465" y="977" text-anchor="middle" class="caption">TIAO_2</text><g transform="translate(630,550)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(84,105) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(135,195) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(186,285) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g>
+ </g>
+ <text x="765" y="977" text-anchor="middle" class="caption">TIAO_3</text><g transform="translate(930,550)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(84,118) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(186,118) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(84,272) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(186,272) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g>
+ </g>
+ <text x="1065" y="977" text-anchor="middle" class="caption">TIAO_4</text><g transform="translate(1230,550)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(84,110) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(186,110) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(135,195) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(84,280) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(186,280) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g>
+ </g>
+ <text x="1365" y="977" text-anchor="middle" class="caption">TIAO_5</text><g transform="translate(1530,550)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(78,100) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(135,100) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(192,100) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(78,290) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(135,290) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(192,290) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g>
+ </g>
+ <text x="1665" y="977" text-anchor="middle" class="caption">TIAO_6</text><g transform="translate(1830,550)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(78,92) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(135,92) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(192,92) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(135,195) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(78,298) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(135,298) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(192,298) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g>
+ </g>
+ <text x="1965" y="977" text-anchor="middle" class="caption">TIAO_7</text><g transform="translate(2130,550)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(78,92) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(135,92) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(192,92) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(78,298) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(135,298) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(192,298) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(78,195) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(192,195) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g>
+ </g>
+ <text x="2265" y="977" text-anchor="middle" class="caption">TIAO_8</text><g transform="translate(2430,550)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(78,92) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(135,92) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(192,92) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(78,195) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(135,195) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(192,195) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(78,298) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(135,298) rotate(7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g><g transform="translate(192,298) rotate(-7)">
+  <path d="M-15-42 C-27-22-27 16-15 42 C-5 55 5 55 15 42 C27 16 27-22 15-42 C5-55-5-55-15-42Z" fill="url(#bamboo)" stroke="#155d42" stroke-width="3"/>
+  <path d="M-20-20H20M-23 0H23M-20 20H20" stroke="#e2cb6b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-7-38v73" stroke="#c5e793" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+ </g>
+ </g>
+ <text x="2565" y="977" text-anchor="middle" class="caption">TIAO_9</text><g transform="translate(2730,550)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <text x="135" y="240" text-anchor="middle" class="fa">發</text>
+ </g>
+ <text x="2865" y="977" text-anchor="middle" class="caption">DRAGON_FA</text><g transform="translate(30,1010)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(135,195)">
+  <circle r="77" fill="#1f6c82" stroke="#174657" stroke-width="7"/>
+  <circle r="63" fill="#e9d88d" stroke="#fbf3d4" stroke-width="5"/>
+  <circle r="48" fill="#c8453e" stroke="#9f302e" stroke-width="5"/>
+  <circle r="29" fill="#f2d36b" stroke="#cf9a3a" stroke-width="5"/>
+  <circle r="12" fill="#2b7c68"/>
+  <circle cx="0" cy="-93" r="10" fill="#bd3d37"/><circle cx="87" cy="-30" r="10" fill="#2d7b69"/><circle cx="54" cy="75" r="10" fill="#315f9c"/><circle cx="-54" cy="75" r="10" fill="#bd3d37"/><circle cx="-87" cy="-30" r="10" fill="#2d7b69"/>
+ </g>
+ </g>
+ <text x="165" y="1437" text-anchor="middle" class="caption">TONG_1</text><g transform="translate(330,1010)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(88,122)">
+  <circle r="32" fill="#116f81" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#2f9c8b" stroke="#116f81" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(182,260)">
+  <circle r="32" fill="#b83c39" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#e4764a" stroke="#b83c39" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g>
+ </g>
+ <text x="465" y="1437" text-anchor="middle" class="caption">TONG_2</text><g transform="translate(630,1010)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(84,105)">
+  <circle r="32" fill="#116f81" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#2f9c8b" stroke="#116f81" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(135,195)">
+  <circle r="32" fill="#b83c39" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#e4764a" stroke="#b83c39" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(186,285)">
+  <circle r="32" fill="#295b9a" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#487fc2" stroke="#295b9a" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g>
+ </g>
+ <text x="765" y="1437" text-anchor="middle" class="caption">TONG_3</text><g transform="translate(930,1010)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(84,118)">
+  <circle r="32" fill="#116f81" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#2f9c8b" stroke="#116f81" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(186,118)">
+  <circle r="32" fill="#b83c39" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#e4764a" stroke="#b83c39" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(84,272)">
+  <circle r="32" fill="#295b9a" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#487fc2" stroke="#295b9a" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(186,272)">
+  <circle r="32" fill="#27754d" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#58a662" stroke="#27754d" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g>
+ </g>
+ <text x="1065" y="1437" text-anchor="middle" class="caption">TONG_4</text><g transform="translate(1230,1010)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(84,110)">
+  <circle r="32" fill="#116f81" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#2f9c8b" stroke="#116f81" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(186,110)">
+  <circle r="32" fill="#b83c39" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#e4764a" stroke="#b83c39" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(135,195)">
+  <circle r="32" fill="#295b9a" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#487fc2" stroke="#295b9a" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(84,280)">
+  <circle r="32" fill="#27754d" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#58a662" stroke="#27754d" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(186,280)">
+  <circle r="32" fill="#116f81" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#2f9c8b" stroke="#116f81" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g>
+ </g>
+ <text x="1365" y="1437" text-anchor="middle" class="caption">TONG_5</text><g transform="translate(1530,1010)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(78,100)">
+  <circle r="32" fill="#116f81" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#2f9c8b" stroke="#116f81" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(135,100)">
+  <circle r="32" fill="#b83c39" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#e4764a" stroke="#b83c39" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(192,100)">
+  <circle r="32" fill="#295b9a" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#487fc2" stroke="#295b9a" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(78,290)">
+  <circle r="32" fill="#27754d" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#58a662" stroke="#27754d" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(135,290)">
+  <circle r="32" fill="#116f81" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#2f9c8b" stroke="#116f81" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(192,290)">
+  <circle r="32" fill="#b83c39" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#e4764a" stroke="#b83c39" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g>
+ </g>
+ <text x="1665" y="1437" text-anchor="middle" class="caption">TONG_6</text><g transform="translate(1830,1010)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(78,92)">
+  <circle r="32" fill="#116f81" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#2f9c8b" stroke="#116f81" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(135,92)">
+  <circle r="32" fill="#b83c39" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#e4764a" stroke="#b83c39" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(192,92)">
+  <circle r="32" fill="#295b9a" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#487fc2" stroke="#295b9a" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(135,195)">
+  <circle r="32" fill="#27754d" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#58a662" stroke="#27754d" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(78,298)">
+  <circle r="32" fill="#116f81" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#2f9c8b" stroke="#116f81" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(135,298)">
+  <circle r="32" fill="#b83c39" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#e4764a" stroke="#b83c39" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(192,298)">
+  <circle r="32" fill="#295b9a" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#487fc2" stroke="#295b9a" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g>
+ </g>
+ <text x="1965" y="1437" text-anchor="middle" class="caption">TONG_7</text><g transform="translate(2130,1010)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(78,92)">
+  <circle r="32" fill="#116f81" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#2f9c8b" stroke="#116f81" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(135,92)">
+  <circle r="32" fill="#b83c39" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#e4764a" stroke="#b83c39" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(192,92)">
+  <circle r="32" fill="#295b9a" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#487fc2" stroke="#295b9a" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(78,298)">
+  <circle r="32" fill="#27754d" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#58a662" stroke="#27754d" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(135,298)">
+  <circle r="32" fill="#116f81" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#2f9c8b" stroke="#116f81" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(192,298)">
+  <circle r="32" fill="#b83c39" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#e4764a" stroke="#b83c39" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(78,195)">
+  <circle r="32" fill="#295b9a" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#487fc2" stroke="#295b9a" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(192,195)">
+  <circle r="32" fill="#27754d" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#58a662" stroke="#27754d" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g>
+ </g>
+ <text x="2265" y="1437" text-anchor="middle" class="caption">TONG_8</text><g transform="translate(2430,1010)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <g transform="translate(78,92)">
+  <circle r="32" fill="#116f81" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#2f9c8b" stroke="#116f81" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(135,92)">
+  <circle r="32" fill="#b83c39" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#e4764a" stroke="#b83c39" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(192,92)">
+  <circle r="32" fill="#295b9a" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#487fc2" stroke="#295b9a" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(78,195)">
+  <circle r="32" fill="#27754d" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#58a662" stroke="#27754d" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(135,195)">
+  <circle r="32" fill="#116f81" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#2f9c8b" stroke="#116f81" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(192,195)">
+  <circle r="32" fill="#b83c39" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#e4764a" stroke="#b83c39" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(78,298)">
+  <circle r="32" fill="#295b9a" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#487fc2" stroke="#295b9a" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(135,298)">
+  <circle r="32" fill="#27754d" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#58a662" stroke="#27754d" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g><g transform="translate(192,298)">
+  <circle r="32" fill="#116f81" stroke="#174c58" stroke-width="3"/>
+  <circle r="24" fill="#f6efd1"/>
+  <circle r="19" fill="#2f9c8b" stroke="#116f81" stroke-width="2"/>
+  <circle r="7" fill="#f4d76e"/>
+  <circle cx="-6" cy="-7" r="3.5" fill="#fff8d7" opacity=".85"/>
+ </g>
+ </g>
+ <text x="2565" y="1437" text-anchor="middle" class="caption">TONG_9</text><g transform="translate(2730,1010)">
+  <rect x="0" y="0" width="270" height="390" rx="28" fill="#1b2925" opacity=".7" filter="url(#shadow)"/>
+  <rect x="5" y="4" width="260" height="380" rx="25" fill="url(#edge)" stroke="#bdaf8c" stroke-width="3"/>
+  <rect x="17" y="17" width="236" height="356" rx="17" fill="url(#face)" stroke="#e4d9bc" stroke-width="2"/>
+  <rect x="25" y="25" width="220" height="340" rx="13" fill="none" stroke="#efe6cb" stroke-width="2"/>
+  <path d="M40 57c10-17 26-22 43-13M40 57c5 17 18 27 36 28M230 57c-10-17-26-22-43-13M230 57c-5 17-18 27-36 28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 333c10 17 26 22 43 13M40 333c5-17 18-27 36-28M230 333c-10 17-26 22-43 13M230 333c-5-17-18-27-36-28" fill="none" stroke="#d7c496" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+  <rect x="76" y="90" width="118" height="212" rx="9" fill="#fffef5" stroke="#2c766f" stroke-width="7"/><rect x="88" y="102" width="94" height="188" rx="5" fill="none" stroke="#b6cec4" stroke-width="3"/><path d="M99 117h72M99 275h72" stroke="#5e9c91" stroke-width="3" opacity=".7"/>
+ </g>
+ <text x="2865" y="1437" text-anchor="middle" class="caption">DRAGON_BAI</text></svg>

@@ -1,0 +1,210 @@
+import { useEffect, useMemo, useState } from 'react';
+import {
+  isPrivatePlayerView,
+  SEAT_NAMES,
+  type AvailableAction,
+  type ClientView,
+  type GameAction,
+  type PublicPlayerView,
+} from '@pizhou/shared';
+import { ActionBar } from '../components/ActionBar';
+import { Melds } from '../components/Melds';
+import { TileView } from '../components/TileView';
+
+interface TableProps {
+  view: ClientView;
+  onAction: (action: GameAction) => void;
+  onRules?: () => void;
+  onSettings?: () => void;
+}
+
+function relative(seat: number, me: number): number {
+  return (seat - me + 4) % 4;
+}
+
+function useCountdown(deadline: number | null): number {
+  const [left, setLeft] = useState(0);
+  useEffect(() => {
+    if (!deadline) {
+      setLeft(0);
+      return;
+    }
+    const tick = () => setLeft(Math.max(0, Math.ceil((deadline - Date.now()) / 1000)));
+    tick();
+    const id = setInterval(tick, 200);
+    return () => clearInterval(id);
+  }, [deadline]);
+  return left;
+}
+
+function Plaque({
+  player,
+  you,
+  current,
+}: {
+  player: PublicPlayerView;
+  you?: boolean;
+  current: boolean;
+}) {
+  return (
+    <div className={`plaque-card ${current ? 'current' : ''} ${player.online ? '' : 'offline'}`}>
+      <i className="wind">{SEAT_NAMES[player.seat]}</i>
+      <div className="meta">
+        <strong>
+          {player.nickname}
+          {you ? ' · 你' : ''}
+          {player.isBot ? ' · 陪练' : ''}
+        </strong>
+        <span>
+          {player.isDealer ? <b className="dealer">庄</b> : null}
+          {player.isHost && !player.isBot ? ' 房主' : ''}
+          {player.online ? '' : ' 离线'}
+        </span>
+      </div>
+      <em>{player.score}</em>
+    </div>
+  );
+}
+
+function SeatRack({
+  player,
+  area,
+  current,
+}: {
+  player: PublicPlayerView;
+  area: 'top' | 'left' | 'right';
+  current: boolean;
+}) {
+  const backs = Array.from({ length: player.handCount });
+  return (
+    <div className={`seat-area ${area} ${player.online ? '' : 'offline'} ${current ? 'current' : ''}`}>
+      <Plaque player={player} current={current} />
+      <div className="hidden-hand">
+        {backs.map((_, index) => (
+          <TileView key={`${player.seat}-${index}`} back small />
+        ))}
+      </div>
+      <Melds melds={player.melds} vertical={area !== 'top'} />
+      <div className="discards">
+        {player.discards.map((tile) => (
+          <TileView key={tile.id} tile={tile} small />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function Table({ view, onAction, onRules, onSettings }: TableProps) {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const left = useCountdown(view.turnDeadline);
+  const me = view.players.find((player) => player.seat === view.mySeat);
+  const myHand = me && isPrivatePlayerView(me) ? me.hand : [];
+  const lastDrawnId = me && isPrivatePlayerView(me) ? me.lastDrawnId : undefined;
+  const canDiscard = view.availableActions.some((action) => action.kind === 'discard');
+  const byRel = useMemo(() => {
+    const map: Record<number, (typeof view.players)[number] | undefined> = {};
+    for (const player of view.players) {
+      map[relative(player.seat, view.mySeat)] = player;
+    }
+    return map;
+  }, [view]);
+
+  const discard = () => {
+    if (!selectedId || !canDiscard) return;
+    onAction({ kind: 'discard', tileId: selectedId });
+    setSelectedId(null);
+  };
+
+  const handleAction = (action: AvailableAction | GameAction) => {
+    if (action.kind === 'discard') {
+      discard();
+      return;
+    }
+    onAction({
+      kind: action.kind,
+      tileId: action.tileId,
+      tileIds: action.tileIds,
+      key: action.key,
+    });
+  };
+
+  const ring = Math.max(0, Math.min(100, (left / 30) * 100));
+
+  return (
+    <div className="table-shell">
+      <div className="table-felt">
+        <header className="table-hud">
+          <div className="plaque">房间 {view.roomCode}</div>
+          <div className="hud-chip">第 {view.round || 1} 局</div>
+          <div className="hud-chip">余牌 {view.wallCount}</div>
+          <div className={`timer ${left <= 5 ? 'urgent' : ''}`} style={{ background: `conic-gradient(#e0c36a ${ring}%, rgba(0,0,0,.28) 0)` }}>
+            <span>{left > 0 ? left : '--'}</span>
+          </div>
+          {onRules ? (
+            <button type="button" className="btn-action ghost hud-btn" onClick={onRules}>
+              规则
+            </button>
+          ) : null}
+          {onSettings ? (
+            <button type="button" className="btn-action ghost hud-btn" onClick={onSettings}>
+              设置
+            </button>
+          ) : null}
+        </header>
+
+        {byRel[2] ? <SeatRack player={byRel[2]} area="top" current={view.currentSeat === byRel[2].seat} /> : null}
+        {byRel[3] ? <SeatRack player={byRel[3]} area="left" current={view.currentSeat === byRel[3].seat} /> : null}
+        {byRel[1] ? <SeatRack player={byRel[1]} area="right" current={view.currentSeat === byRel[1].seat} /> : null}
+
+        <div className="center-well">
+          <div className="compass">
+            <span>对</span>
+            <b>{view.gamePhase === 'qidong' ? '起手杠' : view.gamePhase === 'claim-window' ? '等人应牌' : '出牌中'}</b>
+          </div>
+          {view.lastDiscard ? (
+            <div className="last-discard pop">
+              <span>打出</span>
+              <TileView tile={view.lastDiscard.tile} />
+            </div>
+          ) : (
+            <div className="last-discard empty">等待出牌</div>
+          )}
+        </div>
+
+        {me ? (
+          <div className="self-area">
+            <Plaque player={me} you current={view.currentSeat === me.seat} />
+            <Melds melds={me.melds} />
+            <div className="discards self-discards">
+              {me.discards.map((tile) => (
+                <TileView key={tile.id} tile={tile} small />
+              ))}
+            </div>
+            <div className="own-hand">
+              {myHand.map((tile) => (
+                <TileView
+                  key={tile.id}
+                  tile={tile}
+                  selected={selectedId === tile.id}
+                  drawn={lastDrawnId === tile.id}
+                  onClick={() => setSelectedId(tile.id === selectedId ? null : tile.id)}
+                  onDoubleClick={() => {
+                    if (!canDiscard) return;
+                    onAction({ kind: 'discard', tileId: tile.id });
+                    setSelectedId(null);
+                  }}
+                />
+              ))}
+            </div>
+            <ActionBar
+              actions={view.availableActions}
+              onAction={handleAction}
+              onDiscard={discard}
+              canDiscard={canDiscard && Boolean(selectedId)}
+            />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}

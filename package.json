@@ -1,0 +1,22 @@
+{
+  "name": "pizhou-mahjong-demo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "邳州麻将四人联机桌面 Demo",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev -w @pizhou/server",
+    "dev:desktop": "npm run dev -w @pizhou/desktop",
+    "build": "npm run build -w @pizhou/desktop",
+    "package:win": "npm run package:win -w @pizhou/desktop",
+    "package:mac": "npm run package:mac -w @pizhou/desktop",
+    "test": "npm run test -w @pizhou/rules",
+    "dev": "npx --yes concurrently -n server,desktop -c blue,green \"npm run dev:server\" \"npm run dev:desktop\""
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
