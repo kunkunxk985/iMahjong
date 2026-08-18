@@ -637,10 +637,11 @@ export class PizhouGame {
     return firsts.every(Boolean) && new Set(firsts).size === 1;
   }
 
-  private seatPayload(winnerSeat: number | null, winnerHand?: Tile[]): SeatScoreInput[] {
+  private seatPayload(winnerSeat: number | null, winnerHand?: Tile[], winningDiscardId?: string): SeatScoreInput[] {
     return this.seats.map((seat, index) => ({
       hand: index === winnerSeat && winnerHand ? winnerHand : seat.hand,
       exposed: seat.melds,
+      winningDiscardId: index === winnerSeat ? winningDiscardId : undefined,
       changed: seat.changed,
       closedTwoPair: seat.closedTwoPair,
       discardedBeforeClose: seat.discardedBeforeClose.slice(),
@@ -649,7 +650,7 @@ export class PizhouGame {
 
   private finishWin(seat: number, concealed: Tile[], winType: WinType, selfDraw: boolean): ApplyResult {
     const result = settleChaHu({
-      seats: this.seatPayload(seat, concealed),
+      seats: this.seatPayload(seat, concealed, selfDraw ? undefined : this.lastDiscard?.tile.id),
       winnerSeat: seat,
       dealer: this.dealer,
       ron: !selfDraw,

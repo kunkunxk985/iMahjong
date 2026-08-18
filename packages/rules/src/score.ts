@@ -29,8 +29,10 @@ export interface ScoreResult {
 }
 
 export interface SeatScoreInput {
-  hand: Array<{ key: string }>;
+  hand: Array<{ key: string; id?: string }>;
   exposed: Meld[];
+  /** 点炮胡进来的牌只用于组成胡牌，不得把手里的对子升级为坎。 */
+  winningDiscardId?: string;
   changed?: boolean;
   closedTwoPair?: boolean;
   discardedBeforeClose?: string[];
@@ -130,9 +132,10 @@ function countKeys(hand: Array<{ key: string }>): Record<string, number> {
 }
 
 export function extractUnits(
-  hand: Array<{ key: string }>,
+  hand: Array<{ key: string; id?: string }>,
   exposed: Meld[],
   isWinner = false,
+  winningDiscardId?: string,
 ): Array<{ key: string; kind: UnitKind }> {
   const units: Array<{ key: string; kind: UnitKind }> = [];
   for (const meld of exposed) {
@@ -141,15 +144,24 @@ export function extractUnits(
     if (kind && key) units.push({ key, kind });
   }
 
-  const counts = countKeys(hand);
+  const scoringHand = winningDiscardId
+    ? hand.filter((tile) => tile.id !== winningDiscardId)
+    : hand;
+  const counts = countKeys(scoringHand);
   if (isWinner) {
     const needMelds = 4 - exposed.length;
     const decomps = findWinDecompositions(hand).filter((item) => item.melds.length === needMelds);
     if (decomps.length > 0) {
-      const decomp = pickBestDecomp(decomps);
-      units.push({ key: decomp.pairKey, kind: 'pair' });
-      for (const meld of decomp.melds) {
-        if (meld.type === 'pung') units.push({ key: meld.key, kind: 'pung' });
+      const decomp = decomps[0]!;
+      const pairKeys = new Set<string>([decomp.pairKey]);
+      if (winningDiscardId) {
+        const winningKey = hand.find((tile) => tile.id === winningDiscardId)?.key;
+        if (winningKey && (counts[winningKey] ?? 0) === 2) pairKeys.add(winningKey);
+      }
+      for (const key of pairKeys) units.push({ key, kind: 'pair' });
+      for (const [key, count] of Object.entries(counts)) {
+        if ((count ?? 0) >= 4) units.push({ key, kind: 'zi_kong' });
+        else if (count === 3) units.push({ key, kind: 'pung' });
       }
       return units;
     }
@@ -166,22 +178,6 @@ export function extractUnits(
     else if (count === 3) units.push({ key, kind: 'pung' });
   }
   return units;
-}
-
-function pickBestDecomp(decomps: WinDecomp[]): WinDecomp {
-  return decomps.reduce((best, item) => {
-    const score = (isYaoJiu(item.pairKey) ? 2 : 1)
-      + item.melds.reduce((sum, meld) => {
-        if (meld.type !== 'pung') return sum;
-        return sum + (isYaoJiu(meld.key) ? 4 : 2);
-      }, 0);
-    const bestScore = (isYaoJiu(best.pairKey) ? 2 : 1)
-      + best.melds.reduce((sum, meld) => {
-        if (meld.type !== 'pung') return sum;
-        return sum + (isYaoJiu(meld.key) ? 4 : 2);
-      }, 0);
-    return score > bestScore ? item : best;
-  });
 }
 
 export function countPk(hand: Array<{ key: string }>, exposed: Meld[]): {
@@ -255,14 +251,15 @@ function describeUnit(key: string, kind: UnitKind): ScoreBreakdownItem {
 
 export function scoreSeat(input: {
   seat: number;
-  hand: Array<{ key: string }>;
+  hand: Array<{ key: string; id?: string }>;
   exposed: Meld[];
+  winningDiscardId?: string;
   isWinner: boolean;
   isDealer: boolean;
   forcePiaoHun?: boolean;
   winType?: WinType;
 }): SeatScore {
-  const units = extractUnits(input.hand, input.exposed, input.isWinner);
+  const units = extractUnits(input.hand, input.exposed, input.isWinner, input.winningDiscardId);
   const breakdown: ScoreBreakdownItem[] = [];
   let hu = 0;
   let yao = 0;
@@ -368,6 +365,7 @@ export function settleChaHu(input: {
     seat: index,
     hand: seat.hand,
     exposed: seat.exposed,
+    winningDiscardId: seat.winningDiscardId,
     isWinner: index === input.winnerSeat,
     isDealer: index === input.dealer,
     forcePiaoHun: forcePiao && index === input.winnerSeat,
