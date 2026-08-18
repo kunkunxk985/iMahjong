@@ -7,9 +7,11 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "clean": "node scripts/clean.mjs",
     "build": "node scripts/build.mjs",
     "package:win": "npm run build && electron-builder --win --x64 --dir",
-    "package:mac": "npm run build && electron-builder --mac dmg --universal"
+    "package:mac": "npm run build && electron-builder --mac --arm64",
+    "package:mac:desktop": "npm run package:mac && node scripts/copy-to-desktop.mjs"
   },
   "dependencies": {
     "@pizhou/rules": "*",
@@ -66,11 +68,18 @@
       ]
     },
     "mac": {
+      "icon": "build/icon.icns",
       "target": [
         {
           "target": "dmg",
           "arch": [
-            "universal"
+            "arm64"
+          ]
+        },
+        {
+          "target": "dir",
+          "arch": [
+            "arm64"
           ]
         }
       ],

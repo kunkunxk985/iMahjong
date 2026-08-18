@@ -3,7 +3,13 @@ import { probeMahjongServer, startMahjongServer } from '../../server/src/createS
 
 const PORTS = [SERVER_PORT, 8788, 8789, 8790];
 
-export async function ensureLocalServer(): Promise<{ url: string; owned: boolean; close: () => Promise<void> }> {
+export interface LocalServer {
+  url: string;
+  owned: boolean;
+  close: () => Promise<void>;
+}
+
+export async function ensureLocalServer(): Promise<LocalServer> {
   for (const port of PORTS) {
     if (await probeMahjongServer(port)) {
       return {
