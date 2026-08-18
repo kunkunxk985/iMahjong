@@ -16,6 +16,7 @@ export async function bundleElectron() {
     alias: {
       '@pizhou/shared': path.join(repo, 'packages/shared/src/index.ts'),
       '@pizhou/rules': path.join(repo, 'packages/rules/src/index.ts'),
+      '@pizhou/server-core': path.join(repo, 'packages/server-core/src/index.ts'),
     },
   };
   await esbuild.build({

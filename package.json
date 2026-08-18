@@ -10,13 +10,20 @@
   "scripts": {
     "dev:server": "npm run dev -w @pizhou/server",
     "dev:desktop": "npm run dev -w @pizhou/desktop",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "smoke": "tsx apps/server/scripts/smoke.mts",
+    "verify": "npm run typecheck && npm test && npm run smoke && npm run build",
     "clean": "npm run clean -w @pizhou/desktop",
     "build": "npm run build -w @pizhou/desktop",
     "package": "npm run package:mac -w @pizhou/desktop",
     "package:win": "npm run package:win -w @pizhou/desktop",
     "package:mac": "npm run package:mac -w @pizhou/desktop",
     "test": "npm run test -w @pizhou/rules",
-    "dev": "npx --yes concurrently -n server,desktop -c blue,green \"npm run dev:server\" \"npm run dev:desktop\""
+    "dev": "concurrently -n server,desktop -c blue,green \"npm run dev:server\" \"npm run dev:desktop\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "tsx": "^4.19.3"
   },
   "engines": {
     "node": ">=20"

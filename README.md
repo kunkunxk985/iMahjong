@@ -2,7 +2,7 @@
 
 正统邳州麻将（查胡麻将）桌面端应用，支持 **四人联机对局**（通过 6 位房间号加入）与 **单机陪练模式**（与 3 位智能陪练练习打牌）。
 
-项目结构和当前运行链见 [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md)。当前正式牌桌是俯视 2D 绿绒布布局，旧版 3D 实验代码已移到 `apps/desktop/src/legacy/scene-3d/` 留档。
+项目结构和当前运行链见 [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md)。当前正式牌桌是俯视 2D 绿绒布布局，旧版 3D 实验代码已移到 `archive/legacy-3d/` 留档，不参与构建和打包。
 
 ## 规则特性
 - **牌库 120 张**：一至九万、一至九筒、一至九条、中发白（无风牌、无花牌）。
@@ -19,8 +19,8 @@ npm install
 # 运行规则单元测试
 npm test
 
-# 启动联机全流程测试
-npx tsx apps/server/scripts/smoke.mts
+# 完整验证：类型检查、规则测试、联机流程和桌面构建
+npm run verify
 
 # 启动桌面端开发客户端
 npm run dev:desktop

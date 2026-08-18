@@ -1,5 +1,5 @@
 import { SERVER_PORT } from '@pizhou/shared';
-import { probeMahjongServer, startMahjongServer } from '../../server/src/createServer.ts';
+import { probeMahjongServer, startMahjongServer } from '@pizhou/server-core';
 
 const PORTS = [SERVER_PORT, 8788, 8789, 8790];
 

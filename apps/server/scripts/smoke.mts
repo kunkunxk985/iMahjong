@@ -1,6 +1,6 @@
 import WebSocket from 'ws';
 import type { C2SMessage, ClientView, S2CMessage } from '@pizhou/shared';
-import { startMahjongServer } from '../src/createServer.ts';
+import { startMahjongServer } from '@pizhou/server-core';
 
 const server = await startMahjongServer({ port: 8799, host: '127.0.0.1', log: false });
 
@@ -150,7 +150,17 @@ for (const bot of bots) {
 await Promise.all(bots.map((bot) => bot.waitView((view) => view.round === 2 && view.phase === 'playing')));
 console.log('✔ 顺利开启第2局，庄家座位:', bots[0]!.view?.dealer);
 
+console.log('--- 测试单机统一服务流程 ---');
+const solo = new Bot('单机玩家');
+await solo.waitOpen();
+solo.send({ type: 'room:create', nickname: solo.name, solo: true });
+const soloView = await solo.waitView(
+  (view) => view.phase === 'playing' && view.players.length === 4 && view.players.filter((player) => player.isBot).length === 3,
+);
+console.log('✔ 单机通过同一服务核心启动，陪练数:', soloView.players.filter((player) => player.isBot).length);
+
 for (const bot of bots) bot.ws.close();
+solo.ws.close();
 await server.close();
 console.log('✔ 全部全流程测试通过！');
 process.exit(0);

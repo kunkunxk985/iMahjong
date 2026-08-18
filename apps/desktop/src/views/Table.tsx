@@ -25,6 +25,7 @@ interface TableProps {
   onRules?: () => void;
   onLeave?: () => void;
   networkStatus?: 'connecting' | 'open' | 'closed';
+  practice?: boolean;
 }
 
 function relative(seat: number, me: number): number {
@@ -108,35 +109,6 @@ function ConcealedHand({ player, position }: { player: ViewPlayer; position: Boa
       {Array.from({ length: count }, (_, index) => (
         <TileView key={`${player.seat}-hand-${index}`} back small className="board-concealed-tile" />
       ))}
-    </div>
-  );
-}
-
-function Plaque({
-  player,
-  you,
-  current,
-}: {
-  player: PublicPlayerView;
-  you?: boolean;
-  current: boolean;
-}) {
-  return (
-    <div className={`plaque-card ${current ? 'current' : ''} ${player.online ? '' : 'offline'}`}>
-      <i className="wind">{SEAT_NAMES[player.seat]}</i>
-      <div className="meta">
-        <strong>
-          {player.nickname}
-          {you ? ' · 你' : ''}
-          {player.isBot ? ' · 陪练' : ''}
-        </strong>
-        <span>
-          {player.isDealer ? <b className="dealer">庄</b> : null}
-          {player.isHost && !player.isBot ? ' 房主' : ''}
-          {player.online ? '' : ' 离线'}
-        </span>
-      </div>
-      <em>{player.score}</em>
     </div>
   );
 }
@@ -225,7 +197,7 @@ function TenpaiBar({
 
 /* ─── Main Table Component ─────────────────────────────────── */
 
-export function Table({ view, onAction, onRules, onLeave, networkStatus }: TableProps) {
+export function Table({ view, onAction, onRules, onLeave, networkStatus, practice = false }: TableProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [enteringId, setEnteringId] = useState<string | undefined>(undefined);
   const [muted, setMuted] = useState(isMuted());
@@ -305,7 +277,7 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus }: Table
     });
   };
 
-  const timeoutSeconds = view.roomCode === '单机' ? 18 : ACTION_TIMEOUT_MS / 1000;
+  const timeoutSeconds = practice ? 18 : ACTION_TIMEOUT_MS / 1000;
   const ring = Math.max(0, Math.min(100, (left / timeoutSeconds) * 100));
   const clock = useClock();
   const phaseText =
@@ -329,7 +301,7 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus }: Table
             </button>
           ) : null}
           <span>房间号</span>
-          <strong>{view.roomCode === '单机' ? '单机练习' : view.roomCode}</strong>
+          <strong>{practice ? '单机练习' : view.roomCode}</strong>
         </div>
         <div className="board-title">邳州麻将</div>
         <div className="board-top-tools">
