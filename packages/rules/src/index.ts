@@ -23,3 +23,4 @@ export {
   isBetterAction,
 } from './actions.ts';
 export { chooseCompanionAction, pickDiscard, discardScore } from './companion.ts';
+export { getTenpaiWaits, getDiscardTenpaiOptions, ALL_TILE_KEYS, type DiscardTenpaiOption } from './tenpai.ts';

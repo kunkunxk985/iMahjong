@@ -1,5 +1,5 @@
 import { SERVER_PORT } from '@pizhou/shared';
-import { startMahjongServer } from './createServer.ts';
+import { startMahjongServer } from '@pizhou/server-core';
 
 const port = Number(process.env.PORT ?? SERVER_PORT);
 const started = await startMahjongServer({ port, host: '0.0.0.0', log: true });

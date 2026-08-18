@@ -8,8 +8,10 @@ const WINDOW_MIN_WIDTH = 1024;
 const WINDOW_MIN_HEIGHT = 700;
 
 function iconPath(): string | undefined {
+  const icns = path.join(__dirname, '../build/icon.icns');
   const ico = path.join(__dirname, '../build/icon.ico');
   const png = path.join(__dirname, '../build/icon.png');
+  if (process.platform === 'darwin' && fs.existsSync(icns)) return icns;
   if (fs.existsSync(ico)) return ico;
   if (fs.existsSync(png)) return png;
   return undefined;

@@ -83,7 +83,7 @@ test('基础平胡：10胡 + 普通对子1胡', () => {
   assert.equal(result.hu, 11);
 });
 
-test('幺九对子2胡，普通坎2胡，幺九坎4胡1幺', () => {
+test('未主动坎上的三张相同牌不计坎胡', () => {
   const concealed = tiles(
     ['wan', 1, 0], ['wan', 1, 1], ['wan', 1, 2],
     ['tong', 2, 0], ['tong', 2, 1], ['tong', 2, 2],
@@ -93,8 +93,8 @@ test('幺九对子2胡，普通坎2胡，幺九坎4胡1幺', () => {
   );
   const result = scoreWin({ concealed, exposed: [], isDealer: false, winType: 'ping-hu' });
   assert.ok(result);
-  assert.equal(result.huBeforeDealer, 18);
-  assert.equal(result.yao, 1);
+  assert.equal(result.huBeforeDealer, 12);
+  assert.equal(result.yao, 0);
 });
 
 test('庄家胡牌只翻胡数，不翻幺数', () => {
@@ -107,10 +107,48 @@ test('庄家胡牌只翻胡数，不翻幺数', () => {
   );
   const result = scoreWin({ concealed, exposed: [], isDealer: true, winType: 'ping-hu' });
   assert.ok(result);
-  assert.equal(result.huBeforeDealer, 16);
-  assert.equal(result.yao, 1);
+  assert.equal(result.huBeforeDealer, 12);
+  assert.equal(result.yao, 0);
   assert.equal(result.dealerMultiplier, 2);
-  assert.equal(result.hu, 32);
+  assert.equal(result.hu, 24);
+});
+
+test('点炮胡进来的第三张不能把手中对子升级成坎', () => {
+  const concealed = tiles(
+    ['wan', 1, 0], ['wan', 2, 0], ['wan', 3, 0],
+    ['wan', 4, 0], ['wan', 5, 0], ['wan', 6, 0],
+    ['wan', 7, 0], ['wan', 8, 0], ['wan', 9, 0],
+    ['tong', 5, 0], ['tong', 5, 1],
+    ['tiao', 1, 0], ['tiao', 1, 1], ['tiao', 1, 2],
+  );
+  const winningDiscard = concealed.at(-1)!;
+  const result = settleChaHu({
+    seats: [
+      { hand: concealed, exposed: [], winningDiscardId: winningDiscard.id },
+      emptySeat(),
+      emptySeat(),
+      emptySeat(),
+    ],
+    winnerSeat: 0,
+    dealer: 1,
+    ron: true,
+    discardKey: winningDiscard.key,
+    discarderSeat: 1,
+  });
+  const winner = result.seats[0]!;
+  assert.equal(winner.units.some((unit) => unit.key === 'tiao-1' && unit.kind === 'pung'), false);
+  assert.equal(winner.units.some((unit) => unit.key === 'tiao-1' && unit.kind === 'pair'), true);
+  assert.equal(winner.huBeforeDealer, 13);
+  assert.equal(winner.yao, 0);
+});
+
+test('主动坎上的锁定牌组才计分：普通坎2胡，幺头坎4胡1幺', () => {
+  const ordinaryTiles = tiles(['tong', 5, 0], ['tong', 5, 1], ['tong', 5, 2]);
+  const yaoTiles = tiles(['tiao', 1, 0], ['tiao', 1, 1], ['tiao', 1, 2]);
+  const ordinary = extractUnits([], [{ type: 'kan', tiles: ordinaryTiles }], false);
+  const yao = extractUnits([], [{ type: 'kan', tiles: yaoTiles }], false);
+  assert.deepEqual(unitValue(ordinary[0]!.key, ordinary[0]!.kind), { hu: 2, yao: 0 });
+  assert.deepEqual(unitValue(yao[0]!.key, yao[0]!.kind), { hu: 4, yao: 1 });
 });
 
 test('落地碰算坎，吃牌不计胡数', () => {

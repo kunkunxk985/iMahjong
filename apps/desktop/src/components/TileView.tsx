@@ -8,15 +8,18 @@ interface TileViewProps {
   drawn?: boolean;
   dim?: boolean;
   last?: boolean;
+  tenpaiHint?: boolean;
+  entering?: boolean;
+  className?: string;
   onClick?: () => void;
   onDoubleClick?: () => void;
 }
 
 function faceSrc(tile: Tile): string {
-  return `/assets/tiles/${tile.suit}-${tile.rank}.png`;
+  return `./assets/tiles/${tile.suit}-${tile.rank}.png`;
 }
 
-export function TileView({ tile, back, small, selected, drawn, dim, last, onClick, onDoubleClick }: TileViewProps) {
+export function TileView({ tile, back, small, selected, drawn, dim, last, tenpaiHint, entering, className: extraClassName, onClick, onDoubleClick }: TileViewProps) {
   const className = [
     'tile',
     small ? 'small' : '',
@@ -25,17 +28,23 @@ export function TileView({ tile, back, small, selected, drawn, dim, last, onClic
     dim ? 'dim' : '',
     last ? 'last-out' : '',
     back || !tile ? 'is-back' : '',
+    tenpaiHint ? 'tenpai-hint' : '',
+    entering ? 'entering' : '',
+    extraClassName ?? '',
   ]
     .filter(Boolean)
     .join(' ');
 
   const body = (
-    <img
-      className="tile-skin"
-      src={back || !tile ? '/assets/tile-back.png' : faceSrc(tile)}
-      alt=""
-      draggable={false}
-    />
+    <>
+      <img
+        className="tile-skin"
+        src={back || !tile ? './assets/tile-back.png' : faceSrc(tile)}
+        alt=""
+        draggable={false}
+      />
+      {tenpaiHint ? <span className="tenpai-badge">听</span> : null}
+    </>
   );
 
   if (!onClick) {
