@@ -104,6 +104,40 @@ test('庄家起手平胡', () => {
   assert.ok((game.settlement?.hu ?? 0) > 0);
 });
 
+test('三张相同牌提示坎上，确认后锁定且不能拆开出牌', () => {
+  const game = new PizhouGame({ dealer: 0 });
+  const runtime = game.seats[0]!;
+  const locked = [makeTile('tong', 5, 0), makeTile('tong', 5, 1), makeTile('tong', 5, 2)];
+  runtime.hand = [...locked, ...runtime.hand.filter((tile) => tile.key !== 'tong-5').slice(0, 11)];
+  game.phase = 'self-turn';
+  game.currentSeat = 0;
+
+  const action = game.availableFor(0).find((item) => item.kind === 'kan' && item.key === 'tong-5');
+  assert.ok(action, '应提示坎上五筒');
+  const result = game.apply(0, { kind: 'kan', key: 'tong-5', tileIds: action!.tileIds }, 'kan-1', game.sequence);
+  assert.equal(result.ok, true, result.error);
+  assert.equal(runtime.melds.some((meld) => meld.type === 'kan' && meld.tiles[0]?.key === 'tong-5'), true);
+  assert.equal(runtime.hand.some((tile) => locked.some((item) => item.id === tile.id)), false);
+
+  const discardLocked = game.apply(0, { kind: 'discard', tileId: locked[0]!.id }, 'kan-locked', game.sequence);
+  assert.equal(discardLocked.ok, false);
+});
+
+test('锁定坎可升级：别人打第四张为送杠，自己摸第四张可自杠', () => {
+  const game = new PizhouGame({ dealer: 0 });
+  const kanTiles = [makeTile('tiao', 1, 0), makeTile('tiao', 1, 1), makeTile('tiao', 1, 2)];
+  game.seats[1]!.melds = [{ type: 'kan', tiles: kanTiles }];
+  game.seats[1]!.hand = [makeTile('tiao', 1, 3)];
+
+  const claim = game['buildClaimCandidates'](makeTile('tiao', 1, 3), 0, 'discard')
+    .find((candidate) => candidate.seat === 1)?.actions;
+  assert.equal(claim?.some((item) => item.kind === 'ming-gang' && item.key === 'tiao-1'), true);
+
+  game.phase = 'self-turn';
+  game.currentSeat = 1;
+  assert.equal(game.availableFor(1).some((item) => item.kind === 'bu-gang' && item.key === 'tiao-1'), true);
+});
+
 test('过期 sequence 和重复 actionId 会被拒绝', () => {
   const game = new PizhouGame({ dealer: 0, wall: placeWinningDealerWall() });
   const first = game.apply(0, { kind: 'hu' }, 'same', 1);

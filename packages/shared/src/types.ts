@@ -6,12 +6,13 @@ export type RoomPhase = 'lobby' | 'playing' | 'settlement';
 
 export type GamePhase = 'qidong' | 'self-turn' | 'claim-window' | 'settlement';
 
-export type MeldType = 'chi' | 'peng' | 'ming-gang' | 'an-gang' | 'bu-gang';
+export type MeldType = 'chi' | 'peng' | 'kan' | 'ming-gang' | 'an-gang' | 'bu-gang';
 
 export type ActionKind =
   | 'discard'
   | 'chi'
   | 'peng'
+  | 'kan'
   | 'ming-gang'
   | 'an-gang'
   | 'bu-gang'

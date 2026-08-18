@@ -34,6 +34,9 @@ function chooseBotAction(room: Room, seat: number): GameAction | null {
   }
   if (hu) return { kind: 'hu' };
 
+  const kan = actions.find((item) => item.kind === 'kan');
+  if (kan) return { kind: 'kan', key: kan.key, tileIds: kan.tileIds };
+
   if (actions.some((item) => item.kind === 'discard')) {
     const runtime = game.seats[seat]!;
     const tile =

@@ -119,7 +119,7 @@ export function hasOpeningKong(hand: Array<{ key: string }>): string | null {
 
 function meldKind(meld: Meld): UnitKind | null {
   if (meld.type === 'chi') return null;
-  if (meld.type === 'peng') return 'pung';
+  if (meld.type === 'peng' || meld.type === 'kan') return 'pung';
   if (meld.type === 'ming-gang') return 'song_kong';
   if (meld.type === 'an-gang' || meld.type === 'bu-gang') return 'zi_kong';
   return null;
@@ -159,10 +159,6 @@ export function extractUnits(
         if (winningKey && (counts[winningKey] ?? 0) === 2) pairKeys.add(winningKey);
       }
       for (const key of pairKeys) units.push({ key, kind: 'pair' });
-      for (const [key, count] of Object.entries(counts)) {
-        if ((count ?? 0) >= 4) units.push({ key, kind: 'zi_kong' });
-        else if (count === 3) units.push({ key, kind: 'pung' });
-      }
       return units;
     }
     for (const [key, count] of Object.entries(counts)) {
@@ -173,10 +169,6 @@ export function extractUnits(
     return units;
   }
 
-  for (const [key, count] of Object.entries(counts)) {
-    if ((count ?? 0) >= 4) units.push({ key, kind: 'zi_kong' });
-    else if (count === 3) units.push({ key, kind: 'pung' });
-  }
   return units;
 }
 
@@ -191,7 +183,7 @@ export function countPk(hand: Array<{ key: string }>, exposed: Meld[]): {
     if (meld.type === 'chi') chow += 1;
     else if (meldKind(meld)) pk += 1;
   }
-  const concealedPung = Object.values(countKeys(hand)).filter((n) => n >= 3).length;
+  const concealedPung = 0;
   return { pk, chow, concealedPung };
 }
 
