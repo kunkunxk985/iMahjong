@@ -18,6 +18,8 @@ export interface ClientHandlers {
   onLeft?: () => void;
 }
 
+export type ConnectionStatus = 'connecting' | 'open' | 'closed';
+
 export class GameClient {
   url = DEFAULT_WS_URL;
   private ws: WebSocket | null = null;
@@ -37,7 +39,14 @@ export class GameClient {
     this.disconnect(false);
     this.url = url;
     this.handlers.onStatus('connecting');
-    const ws = new WebSocket(url);
+    let ws: WebSocket;
+    try {
+      ws = new WebSocket(url);
+    } catch {
+      this.handlers.onStatus('closed');
+      this.handlers.onError('服务器地址格式不正确');
+      return;
+    }
     this.ws = ws;
     ws.onopen = () => {
       this.retries = 0;
@@ -50,6 +59,7 @@ export class GameClient {
     };
     ws.onclose = () => {
       this.clearHeartbeat();
+      this.retry = null;
       this.handlers.onStatus('closed');
       if (!this.closedByUser) this.scheduleReconnect();
     };
@@ -57,7 +67,13 @@ export class GameClient {
       this.handlers.onError('无法连接服务器');
     };
     ws.onmessage = (event) => {
-      const message = JSON.parse(String(event.data)) as S2CMessage;
+      let message: S2CMessage;
+      try {
+        message = JSON.parse(String(event.data)) as S2CMessage;
+      } catch {
+        this.handlers.onError('服务器返回了无法识别的消息');
+        return;
+      }
       if (isViewMessage(message)) {
         if (message.type === 'game:settlement') {
           this.handlers.onSettlement(message.settlement, message.view);
