@@ -9,6 +9,7 @@ import {
   type BaoZhuang,
   type BaoZhuangReason,
   type Meld,
+  type PairwiseTransaction,
   type ScoreBreakdownItem,
   type Settlement,
   type SettlementScore,
@@ -16,7 +17,7 @@ import {
 } from '@pizhou/shared';
 import { findWinDecompositions, type WinDecomp } from './win.ts';
 
-export type UnitKind = 'pair' | 'pung' | 'song_kong' | 'zi_kong';
+export type UnitKind = 'pair' | 'peng' | 'pung' | 'song_kong' | 'zi_kong';
 
 export interface ScoreResult {
   hu: number;
@@ -56,6 +57,9 @@ export interface SeatScore {
 export interface ChaHuResult {
   seats: SeatScore[];
   deltas: number[];
+  transactions: PairwiseTransaction[];
+  receivables: number[];
+  payables: number[];
   baoZhuang: BaoZhuang | null;
   hunDi: boolean;
   openingGang: boolean;
@@ -64,6 +68,7 @@ export interface ChaHuResult {
 
 const KIND_CN: Record<UnitKind, string> = {
   pair: '对',
+  peng: '碰',
   pung: '坎',
   song_kong: '送杠',
   zi_kong: '自杠',
@@ -88,12 +93,14 @@ export function unitValue(key: string, kind: UnitKind): { hu: number; yao: numbe
   const yaoTou = isYaoJiu(key);
   const table: Record<`${UnitKind}:${'yao' | 'plain'}`, { hu: number; yao: number }> = {
     'pair:yao': { hu: 2, yao: 0 },
-    'pung:yao': { hu: 4, yao: 1 },
-    'song_kong:yao': { hu: 8, yao: 2 },
-    'zi_kong:yao': { hu: 12, yao: 3 },
     'pair:plain': { hu: 1, yao: 0 },
+    'peng:yao': { hu: 2, yao: 0 },
+    'peng:plain': { hu: 1, yao: 0 },
+    'pung:yao': { hu: 4, yao: 1 },
     'pung:plain': { hu: 2, yao: 0 },
+    'song_kong:yao': { hu: 8, yao: 2 },
     'song_kong:plain': { hu: 4, yao: 0 },
+    'zi_kong:yao': { hu: 12, yao: 3 },
     'zi_kong:plain': { hu: 6, yao: 0 },
   };
   return table[`${kind}:${yaoTou ? 'yao' : 'plain'}`];
@@ -119,7 +126,8 @@ export function hasOpeningKong(hand: Array<{ key: string }>): string | null {
 
 function meldKind(meld: Meld): UnitKind | null {
   if (meld.type === 'chi') return null;
-  if (meld.type === 'peng' || meld.type === 'kan') return 'pung';
+  if (meld.type === 'peng') return 'peng';
+  if (meld.type === 'kan') return 'pung';
   if (meld.type === 'ming-gang') return 'song_kong';
   if (meld.type === 'an-gang' || meld.type === 'bu-gang') return 'zi_kong';
   return null;
@@ -131,44 +139,107 @@ function countKeys(hand: Array<{ key: string }>): Record<string, number> {
   return counts;
 }
 
-export function extractUnits(
-  hand: Array<{ key: string; id?: string }>,
-  exposed: Meld[],
-  isWinner = false,
-  winningDiscardId?: string,
-): Array<{ key: string; kind: UnitKind }> {
+function exposedUnits(exposed: Meld[]): Array<{ key: string; kind: UnitKind }> {
   const units: Array<{ key: string; kind: UnitKind }> = [];
   for (const meld of exposed) {
     const kind = meldKind(meld);
     const key = meld.tiles[0]?.key;
     if (kind && key) units.push({ key, kind });
   }
+  return units;
+}
 
-  const scoringHand = winningDiscardId
-    ? hand.filter((tile) => tile.id !== winningDiscardId)
-    : hand;
-  const counts = countKeys(scoringHand);
-  if (isWinner) {
-    const needMelds = 4 - exposed.length;
-    const decomps = findWinDecompositions(hand).filter((item) => item.melds.length === needMelds);
-    if (decomps.length > 0) {
-      const decomp = decomps[0]!;
-      const pairKeys = new Set<string>([decomp.pairKey]);
-      if (winningDiscardId) {
-        const winningKey = hand.find((tile) => tile.id === winningDiscardId)?.key;
-        if (winningKey && (counts[winningKey] ?? 0) === 2) pairKeys.add(winningKey);
-      }
-      for (const key of pairKeys) units.push({ key, kind: 'pair' });
-      return units;
+/** 按张数拆：4=自杠，3=坎，2=对。顺子和单张不计。 */
+function countBasedUnits(
+  hand: Array<{ key: string }>,
+  options: { pairs: boolean; pungs: boolean },
+): Array<{ key: string; kind: UnitKind }> {
+  const units: Array<{ key: string; kind: UnitKind }> = [];
+  for (const [key, raw] of Object.entries(countKeys(hand))) {
+    let n = raw ?? 0;
+    if (n >= 4) {
+      units.push({ key, kind: 'zi_kong' });
+      n -= 4;
     }
-    for (const [key, count] of Object.entries(counts)) {
-      if ((count ?? 0) >= 4) units.push({ key, kind: 'zi_kong' });
-      else if (count === 3) units.push({ key, kind: 'pung' });
-      else if (count === 2) units.push({ key, kind: 'pair' });
+    if (n >= 3 && options.pungs) {
+      units.push({ key, kind: 'pung' });
+      n -= 3;
     }
+    if (n >= 2 && options.pairs) {
+      units.push({ key, kind: 'pair' });
+    }
+  }
+  return units;
+}
+
+function pickWinDecomp(decomps: WinDecomp[]): WinDecomp {
+  return decomps.reduce((best, item) => {
+    const pungs = item.melds.filter((meld) => meld.type === 'pung').length;
+    const bestPungs = best.melds.filter((meld) => meld.type === 'pung').length;
+    return pungs > bestPungs ? item : best;
+  });
+}
+
+/**
+ * 正统查胡拆牌：
+ * - 吃/顺子不计胡
+ * - 手上的对子（含将牌）0胡
+ * - 别人打出来碰的（明碰）普通1胡，幺牌2胡
+ * - 自己主动砍上的（坎）普通2胡，幺牌4胡1幺
+ * - 送杠（明杠）普通4胡，幺牌8胡2幺
+ * - 自杠（暗杠）普通6胡，幺牌12胡3幺
+ * - 没胡的人只计亮出来/主动坎上的（碰/坎/杠），手牌未锁定的散牌不计胡
+ * - 胡的人计胡牌10胡底分 + 碰/坎/杠
+ * - 点炮进来的第三张不成坎
+ */
+export function extractUnits(
+  hand: Array<{ key: string; id?: string }>,
+  exposed: Meld[],
+  isWinner = false,
+  winningDiscardId?: string,
+  winType?: WinType,
+): Array<{ key: string; kind: UnitKind }> {
+  const units = exposedUnits(exposed);
+
+  if (!isWinner) {
+    // 没胡的人：只算亮出来的/主动砍上的（碰、坎、杠），未锁定的手牌散牌不算
     return units;
   }
 
+  if (winType === 'qidong-gang-hu') {
+    units.push(...countBasedUnits(hand, { pairs: true, pungs: true }));
+    return units;
+  }
+
+  const needMelds = 4 - exposed.length;
+  let decomps = findWinDecompositions(hand).filter((item) => item.melds.length === needMelds);
+  if (decomps.length === 0) {
+    decomps = findWinDecompositions(hand);
+  }
+  if (decomps.length === 0) {
+    units.push(...countBasedUnits(hand, { pairs: true, pungs: true }));
+    return units;
+  }
+
+  const decomp = pickWinDecomp(decomps);
+  const winningKey = winningDiscardId
+    ? hand.find((tile) => tile.id === winningDiscardId)?.key
+    : undefined;
+  const beforeWin = winningDiscardId
+    ? hand.filter((tile) => tile.id !== winningDiscardId)
+    : hand;
+  const countsBefore = countKeys(beforeWin);
+
+  units.push({ key: decomp.pairKey, kind: 'pair' });
+  for (const meld of decomp.melds) {
+    if (meld.type !== 'pung') continue;
+    const ronIncomplete = Boolean(
+      winningKey
+      && meld.key === winningKey
+      && (countsBefore[winningKey] ?? 0) < 3,
+    );
+    units.push({ key: meld.key, kind: ronIncomplete ? 'pair' : 'pung' });
+  }
   return units;
 }
 
@@ -183,7 +254,10 @@ export function countPk(hand: Array<{ key: string }>, exposed: Meld[]): {
     if (meld.type === 'chi') chow += 1;
     else if (meldKind(meld)) pk += 1;
   }
-  const concealedPung = 0;
+  let concealedPung = 0;
+  for (const n of Object.values(countKeys(hand))) {
+    if ((n ?? 0) >= 3) concealedPung += 1;
+  }
   return { pk, chow, concealedPung };
 }
 
@@ -251,7 +325,13 @@ export function scoreSeat(input: {
   forcePiaoHun?: boolean;
   winType?: WinType;
 }): SeatScore {
-  const units = extractUnits(input.hand, input.exposed, input.isWinner, input.winningDiscardId);
+  const units = extractUnits(
+    input.hand,
+    input.exposed,
+    input.isWinner,
+    input.winningDiscardId,
+    input.winType,
+  );
   const breakdown: ScoreBreakdownItem[] = [];
   let hu = 0;
   let yao = 0;
@@ -259,7 +339,9 @@ export function scoreSeat(input: {
     const value = unitValue(unit.key, unit.kind);
     hu += value.hu;
     yao += value.yao;
-    breakdown.push(describeUnit(unit.key, unit.kind));
+    if (value.hu > 0 || value.yao > 0) {
+      breakdown.push(describeUnit(unit.key, unit.kind));
+    }
   }
 
   const notes = breakdown.map((item) => `${item.label}+${item.hu}胡${item.yao ? `+${item.yao}幺` : ''}`);
@@ -273,14 +355,16 @@ export function scoreSeat(input: {
       hu *= 2;
       notes.push('飘荤×2');
     }
-    if (input.isDealer) notes.push('庄×2');
-  } else if (input.isDealer && hu > 0) {
-    notes.push('庄×2');
+  }
+  if (input.isDealer) {
+    notes.push('庄家(差胡×2)');
+  }
+
+  if (notes.length === 0) {
+    notes.push('0胡0幺');
   }
 
   const huBeforeDealer = hu;
-  const dealerMultiplier = input.isDealer ? 2 : 1;
-  if (input.isDealer) hu *= 2;
 
   const decomp = input.isWinner
     ? (findWinDecompositions(input.hand)[0] ?? { pairKey: units.find((u) => u.kind === 'pair')?.key ?? 'wan-5', melds: [] })
@@ -330,6 +414,9 @@ export function settleChaHu(input: {
         decomp: { pairKey: 'wan-5', melds: [] },
       })),
       deltas: [0, 0, 0, 0],
+      transactions: [],
+      receivables: [0, 0, 0, 0],
+      payables: [0, 0, 0, 0],
       baoZhuang: null,
       hunDi: false,
       openingGang: false,
@@ -365,11 +452,41 @@ export function settleChaHu(input: {
   }));
 
   const deltas = [0, 0, 0, 0];
+  const receivables = [0, 0, 0, 0];
+  const payables = [0, 0, 0, 0];
+  const transactions: PairwiseTransaction[] = [];
+
   for (let i = 0; i < 4; i += 1) {
     for (let j = i + 1; j < 4; j += 1) {
-      const diff = seats[i]!.fen - seats[j]!.fen;
-      deltas[i] += diff;
-      deltas[j] -= diff;
+      const isDealerPair = i === input.dealer || j === input.dealer;
+      const huMultiplier = isDealerPair ? 2 : 1;
+      const diffHu = (seats[i]!.hu - seats[j]!.hu) * huMultiplier;
+      const diffYao = seats[i]!.yao - seats[j]!.yao;
+      const pairPoints = diffHu * HU_RATE + diffYao * YAO_RATE;
+
+      deltas[i] += pairPoints;
+      deltas[j] -= pairPoints;
+
+      if (pairPoints > 0) {
+        receivables[i] += pairPoints;
+        payables[j] += pairPoints;
+      } else if (pairPoints < 0) {
+        payables[i] += Math.abs(pairPoints);
+        receivables[j] += Math.abs(pairPoints);
+      }
+
+      transactions.push({
+        seatA: i,
+        seatB: j,
+        huA: seats[i]!.hu,
+        huB: seats[j]!.hu,
+        yaoA: seats[i]!.yao,
+        yaoB: seats[j]!.yao,
+        isDealerPair,
+        deltaHu: diffHu,
+        deltaYao: diffYao,
+        points: pairPoints,
+      });
     }
   }
 
@@ -385,25 +502,35 @@ export function settleChaHu(input: {
         if (seat === input.winnerSeat) continue;
         deltas[input.winnerSeat] += HUN_DI;
         deltas[baoZhuang.payerSeat] -= HUN_DI;
+        receivables[input.winnerSeat] += HUN_DI;
+        payables[baoZhuang.payerSeat] += HUN_DI;
       }
     } else {
       for (let seat = 0; seat < 4; seat += 1) {
         if (seat === input.winnerSeat) continue;
         deltas[input.winnerSeat] += HUN_DI;
         deltas[seat] -= HUN_DI;
+        receivables[input.winnerSeat] += HUN_DI;
+        payables[seat] += HUN_DI;
       }
     }
   }
 
   if (baoZhuang && input.winnerSeat !== null) {
-    const winnerFen = seats[input.winnerSeat]!.fen;
+    const winnerSeat = input.winnerSeat;
     const pack = baoZhuang.payerSeat;
     for (let seat = 0; seat < 4; seat += 1) {
-      if (seat === input.winnerSeat || seat === pack) continue;
-      const owe = winnerFen - seats[seat]!.fen;
+      if (seat === winnerSeat || seat === pack) continue;
+      const isDealerPair = seat === input.dealer || winnerSeat === input.dealer;
+      const huMultiplier = isDealerPair ? 2 : 1;
+      const diffHu = (seats[winnerSeat]!.hu - seats[seat]!.hu) * huMultiplier;
+      const diffYao = seats[winnerSeat]!.yao - seats[seat]!.yao;
+      const owe = diffHu * HU_RATE + diffYao * YAO_RATE;
       if (owe > 0) {
         deltas[seat] += owe;
         deltas[pack] -= owe;
+        payables[seat] -= owe;
+        payables[pack] += owe;
       }
     }
   }
@@ -411,6 +538,9 @@ export function settleChaHu(input: {
   return {
     seats,
     deltas,
+    transactions,
+    receivables,
+    payables,
     baoZhuang,
     hunDi,
     openingGang: Boolean(input.openingGang),
@@ -439,6 +569,8 @@ export function toSettlement(
     isWinner: seat.isWinner,
     isDealer: seat.isDealer,
     notes: seat.notes,
+    receivable: result.receivables[seat.seat] ?? 0,
+    payable: result.payables[seat.seat] ?? 0,
   }));
   return {
     liuju: extra.winType === 'liuju',
@@ -452,6 +584,7 @@ export function toSettlement(
     selfDraw: extra.selfDraw,
     breakdown: winner?.breakdown ?? [],
     scores,
+    transactions: result.transactions,
     hunDi: result.hunDi,
     baoZhuang: result.baoZhuang,
     drawReason: result.drawReason,

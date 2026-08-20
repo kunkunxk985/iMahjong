@@ -10,16 +10,39 @@ interface TileViewProps {
   last?: boolean;
   tenpaiHint?: boolean;
   entering?: boolean;
+  highlightSame?: boolean;
   className?: string;
   onClick?: () => void;
   onDoubleClick?: () => void;
+  onHover?: (hovered: boolean) => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 function faceSrc(tile: Tile): string {
+  if (tile.key === 'back' || !tile.suit || !tile.rank) return './assets/tile-back.png';
   return `./assets/tiles/${tile.suit}-${tile.rank}.png`;
 }
 
-export function TileView({ tile, back, small, selected, drawn, dim, last, tenpaiHint, entering, className: extraClassName, onClick, onDoubleClick }: TileViewProps) {
+export function TileView({
+  tile,
+  back,
+  small,
+  selected,
+  drawn,
+  dim,
+  last,
+  tenpaiHint,
+  entering,
+  highlightSame,
+  className: extraClassName,
+  onClick,
+  onDoubleClick,
+  onHover,
+  onMouseEnter,
+  onMouseLeave,
+}: TileViewProps) {
+  const isBack = Boolean(back || !tile || tile.key === 'back');
   const className = [
     'tile',
     small ? 'small' : '',
@@ -27,7 +50,8 @@ export function TileView({ tile, back, small, selected, drawn, dim, last, tenpai
     drawn ? 'drawn' : '',
     dim ? 'dim' : '',
     last ? 'last-out' : '',
-    back || !tile ? 'is-back' : '',
+    highlightSame && !isBack ? 'highlight-same' : '',
+    isBack ? 'is-back' : '',
     tenpaiHint ? 'tenpai-hint' : '',
     entering ? 'entering' : '',
     extraClassName ?? '',
@@ -35,20 +59,42 @@ export function TileView({ tile, back, small, selected, drawn, dim, last, tenpai
     .filter(Boolean)
     .join(' ');
 
+  const handleMouseEnter = () => {
+    onHover?.(true);
+    onMouseEnter?.();
+  };
+
+  const handleMouseLeave = () => {
+    onHover?.(false);
+    onMouseLeave?.();
+  };
+
   const body = (
     <>
-      <img
-        className="tile-skin"
-        src={back || !tile ? './assets/tile-back.png' : faceSrc(tile)}
-        alt=""
-        draggable={false}
-      />
+      <span className="tile-depth" aria-hidden="true" />
+      <span className="tile-cap">
+        <img
+          className="tile-skin"
+          src={isBack ? './assets/tile-back.png' : faceSrc(tile!)}
+          alt=""
+          draggable={false}
+        />
+        <span className="tile-sheen" aria-hidden="true" />
+      </span>
       {tenpaiHint ? <span className="tenpai-badge">听</span> : null}
     </>
   );
 
   if (!onClick) {
-    return <div className={className}>{body}</div>;
+    return (
+      <div
+        className={className}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {body}
+      </div>
+    );
   }
 
   return (
@@ -57,6 +103,8 @@ export function TileView({ tile, back, small, selected, drawn, dim, last, tenpai
       className={className}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {body}
     </button>

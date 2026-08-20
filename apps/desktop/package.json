@@ -11,6 +11,7 @@
     "clean": "node scripts/clean.mjs",
     "build": "node scripts/build.mjs",
     "package:win": "npm run build && electron-builder --win --x64 --dir",
+    "package:win:portable": "npm run build && electron-builder --win portable --x64",
     "package:mac": "npm run build && electron-builder --mac --arm64",
     "package:mac:desktop": "npm run package:mac && node scripts/copy-to-desktop.mjs"
   },

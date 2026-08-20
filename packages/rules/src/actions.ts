@@ -75,7 +75,7 @@ export function concealedAnGangActions(hand: Tile[]): AvailableAction[] {
   return actions;
 }
 
-/** 三张相同牌只有玩家主动“坎上”后才成为锁定坎。 */
+/** 三张相同即可坎上锁定，便于送杠/自杠；暗刻即使不锁，结算也按坎计胡。 */
 export function concealedKanActions(hand: Tile[]): AvailableAction[] {
   const groups = new Map<string, Tile[]>();
   for (const tile of hand) {

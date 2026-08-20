@@ -47,6 +47,21 @@ export interface SettlementScore {
   isWinner?: boolean;
   isDealer?: boolean;
   notes?: string[];
+  receivable?: number;
+  payable?: number;
+}
+
+export interface PairwiseTransaction {
+  seatA: number;
+  seatB: number;
+  huA: number;
+  huB: number;
+  yaoA: number;
+  yaoB: number;
+  isDealerPair: boolean;
+  deltaHu: number;
+  deltaYao: number;
+  points: number;
 }
 
 export type BaoZhuangReason = 'four_wait_seq' | 'chow_wait_seq' | 'xiang';
@@ -69,6 +84,7 @@ export interface Settlement {
   selfDraw: boolean;
   breakdown: ScoreBreakdownItem[];
   scores: SettlementScore[];
+  transactions?: PairwiseTransaction[];
   hunDi: boolean;
   baoZhuang: BaoZhuang | null;
   drawReason: string | null;
