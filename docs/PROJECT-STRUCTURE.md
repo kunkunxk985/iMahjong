@@ -62,7 +62,8 @@ apps/desktop/release/
 
 ```bash
 npm install
-npm run dev                 # 服务端 + Electron 开发客户端
+npm run dev                 # 只起 Electron；本机牌局服务由桌面端探测或自启
+npm run dev:server          # 仅当局域网主机、不要窗口时使用
 npm run verify              # 类型检查、规则测试、联机全流程和桌面构建
 npm run build               # 构建桌面端，不打包安装文件
 npm run package:mac         # 生成 macOS DMG、release/mac-arm64/，并覆盖桌面唯一最新版 App

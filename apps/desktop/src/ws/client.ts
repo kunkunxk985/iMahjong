@@ -49,6 +49,7 @@ export class GameClient {
     }
     this.ws = ws;
     ws.onopen = () => {
+      if (this.ws !== ws) return;
       this.retries = 0;
       this.handlers.onStatus('open');
       this.heartbeat = setInterval(() => this.send({ type: 'player:heartbeat' }), HEARTBEAT_INTERVAL_MS);
@@ -58,15 +59,19 @@ export class GameClient {
       }
     };
     ws.onclose = () => {
+      if (this.ws !== ws) return;
+      this.ws = null;
       this.clearHeartbeat();
       this.retry = null;
       this.handlers.onStatus('closed');
       if (!this.closedByUser) this.scheduleReconnect();
     };
     ws.onerror = () => {
+      if (this.ws !== ws) return;
       this.handlers.onError('无法连接服务器');
     };
     ws.onmessage = (event) => {
+      if (this.ws !== ws) return;
       let message: S2CMessage;
       try {
         message = JSON.parse(String(event.data)) as S2CMessage;
@@ -103,9 +108,17 @@ export class GameClient {
       this.retry = null;
     }
     if (this.ws) {
-      this.ws.onclose = null;
-      this.ws.close();
+      const socket = this.ws;
       this.ws = null;
+      socket.onopen = null;
+      socket.onclose = null;
+      socket.onerror = null;
+      socket.onmessage = null;
+      try {
+        socket.close();
+      } catch {
+        // Ignore sockets that are already closing.
+      }
     }
   }
 
@@ -165,4 +178,8 @@ export class GameClient {
       this.heartbeat = null;
     }
   }
+}
+
+export function isLoopbackWs(url: string): boolean {
+  return /^wss?:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/i.test(url.trim());
 }

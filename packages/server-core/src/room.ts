@@ -148,7 +148,7 @@ export class Room {
   nextRoundDealer(): number {
     const settlement = this.game?.settlement;
     if (!settlement) return this.dealer;
-    return nextDealer(this.dealer, settlement.winnerSeat, settlement.liuju);
+    return nextDealer(this.dealer, settlement.winnerSeat, settlement.liuju, settlement.drawReason);
   }
 
   applySettlementTotals(): void {
@@ -238,6 +238,7 @@ export class Room {
         online: metas[seat]!.online,
         isHost: metas[seat]!.isHost,
         isDealer: seat === this.dealer,
+        closed: false,
         isBot: metas[seat]!.isBot,
         score: metas[seat]!.score,
         handCount: 0,

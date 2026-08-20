@@ -19,7 +19,7 @@
     "package:win": "npm run package:win -w @pizhou/desktop",
     "package:mac": "npm run package:mac -w @pizhou/desktop",
     "test": "npm run test -w @pizhou/rules",
-    "dev": "concurrently -n server,desktop -c blue,green \"npm run dev:server\" \"npm run dev:desktop\""
+    "dev": "npm run dev:desktop"
   },
   "devDependencies": {
     "@react-three/postprocessing": "^3.0.5",
