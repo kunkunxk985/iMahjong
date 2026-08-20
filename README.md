@@ -2,7 +2,7 @@
 
 正统邳州麻将（查胡麻将）桌面端应用，支持 **四人联机对局**（通过 6 位房间号加入）与 **单机陪练模式**（与 3 位智能陪练练习打牌）。
 
-项目结构和当前运行链见 [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md)。当前正式牌桌是俯视 2D 绿绒布布局，旧版 3D 实验代码已移到 `archive/legacy-3d/` 留档，不参与构建和打包。
+项目结构和当前运行链见 [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md)。当前正式牌桌使用 3D 牌桌场景，运行时素材统一从 `apps/desktop/public/assets/` 加载。
 
 ## 规则特性
 - **牌库 120 张**：一至九万、一至九筒、一至九条、中发白（无风牌、无花牌）。
@@ -35,7 +35,7 @@ npm run dev:desktop
 ## 打包构建
 
 ```bash
-# macOS 打包
+# macOS 打包并更新桌面上的唯一最新版 App
 npm run package:mac
 
 # Windows 打包
@@ -45,8 +45,4 @@ npm run package:win
 npm run clean
 ```
 
-打包文件只会放在 `apps/desktop/release/`，不会默认复制到桌面，避免同时出现多个同名应用。需要桌面副本时再运行：
-
-```bash
-npm run package:mac:desktop
-```
+macOS 打包会把最新版覆盖复制到桌面的 `邳州麻将.app`，不会再生成“新版2/新版3”这类重复副本。

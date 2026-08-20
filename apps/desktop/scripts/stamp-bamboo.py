@@ -7,9 +7,11 @@ from PIL import Image
 SRC = Path(
     r"C:\Users\14416\.grok\sessions\C%3A%5CUsers%5C14416%5CDesktop%5Cpizhou-mahjong-demo\01a0137d-5c0d-7032-9d1d-0b2fec57c7a2\images"
 )
-ASSETS = Path(__file__).resolve().parents[1] / "public" / "assets"
+PROJECT = Path(__file__).resolve().parents[2]
+ASSETS = PROJECT / "apps" / "desktop" / "public" / "assets"
+SOURCE = PROJECT / "assets" / "source"
 OUT = ASSETS / "tiles"
-BLANK = Image.open(ASSETS / "tile-front.png").convert("RGBA")
+BLANK = Image.open(SOURCE / "tile-front.png").convert("RGBA")
 W, H = BLANK.size
 
 

@@ -10,20 +10,34 @@ if (process.platform === 'win32') {
 app.commandLine.appendSwitch('high-dpi-support', '1');
 
 let localServer: LocalServer | null = null;
+let localServerPromise: Promise<LocalServer | null> | null = null;
 
-app.whenReady().then(async () => {
-  try {
-    localServer = await ensureLocalServer();
-  } catch (error) {
-    // The renderer can still connect to a manually configured remote server.
-    console.error('本机牌局服务启动失败，仍可使用远程服务器：', error);
-  }
+function startLocalServer(): Promise<LocalServer | null> {
+  if (localServerPromise) return localServerPromise;
 
-  ipcMain.handle('local-server:url', () => localServer?.url ?? null);
+  localServerPromise = ensureLocalServer()
+    .then((server) => {
+      localServer = server;
+      return server;
+    })
+    .catch((error) => {
+      // The renderer can still connect to a manually configured remote server.
+      console.error('本机牌局服务启动失败，仍可使用远程服务器：', error);
+      return null;
+    });
+
+  return localServerPromise;
+}
+
+app.whenReady().then(() => {
+  // Register IPC and show the window before the optional local server is ready.
+  // A slow/blocked port must not make the whole desktop app look frozen.
+  ipcMain.handle('local-server:url', async () => (await startLocalServer())?.url ?? null);
   ipcMain.handle('window:new', () => {
     createWindow();
   });
   createWindow();
+  void startLocalServer();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
