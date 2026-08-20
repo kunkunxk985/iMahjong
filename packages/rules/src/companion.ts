@@ -50,6 +50,17 @@ function keepPairForChi(hand: Tile[], used: Tile[]): boolean {
   return used.some((tile) => (counts.get(tile.key) ?? 0) >= 1);
 }
 
+/** Milliseconds a companion should wait before acting. */
+export function companionThinkMs(
+  phase: string,
+  humanBusy: boolean,
+  rng: () => number = Math.random,
+): number {
+  if (phase === 'self-turn') return 1500 + Math.floor(rng() * 1000);
+  if (humanBusy) return 2200 + Math.floor(rng() * 900);
+  return 800 + Math.floor(rng() * 700);
+}
+
 export function chooseCompanionAction(
   actions: AvailableAction[],
   seat: SeatRuntime,
@@ -91,12 +102,16 @@ export function chooseCompanionAction(
     return { kind: 'chi', tileIds: chi.tileIds };
   }
 
+  const closeGate = actions.find((item) => item.kind === 'close-gate');
+  if (closeGate && rng() < 0.8) {
+    return { kind: 'close-gate', tileId: closeGate.tileIds?.[0] };
+  }
+
   if (actions.some((item) => item.kind === 'discard')) {
     const tile = pickDiscard(seat.hand, seat.lastDrawnId);
     if (tile) return { kind: 'discard', tileId: tile.id };
   }
 
   if (actions.some((item) => item.kind === 'pass')) return { kind: 'pass' };
-  if (actions.some((item) => item.kind === 'close-gate') && rng() < 0.4) return { kind: 'close-gate' };
   return null;
 }

@@ -239,7 +239,6 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
   useEffect(() => {
     if (lastDrawnId && lastDrawnId !== prevDrawnRef.current) {
       setEnteringId(lastDrawnId);
-      // Clear entering state after animation completes
       const timer = setTimeout(() => setEnteringId(undefined), 350);
       prevDrawnRef.current = lastDrawnId;
       return () => clearTimeout(timer);
@@ -505,7 +504,7 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
       {byRel[3] ? <ConcealedHand player={byRel[3]} position="left" /> : null}
       {byRel[1] ? <ConcealedHand player={byRel[1]} position="right" /> : null}
 
-      {/* Opponents' melds (open melds visible, kan melds concealed with tile backs) */}
+      {/* Opponents' melds */}
       {byRel[2]?.melds && byRel[2].melds.length > 0 ? (
         <div className="board-opponent-melds board-melds-top">
           <Melds melds={byRel[2].melds} isOpponent highlightKey={focusKey} onTileHover={setHoveredTileKey} />

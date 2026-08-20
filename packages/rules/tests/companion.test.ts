@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { makeTile, type AvailableAction } from '@pizhou/shared';
-import { chooseCompanionAction, pickDiscard } from '../src/companion.ts';
+import { chooseCompanionAction, companionThinkMs, pickDiscard } from '../src/companion.ts';
 import type { SeatRuntime } from '../src/types.ts';
 
 function seat(hand = [makeTile('wan', 1, 0)]): SeatRuntime {
@@ -12,6 +12,7 @@ function seat(hand = [makeTile('wan', 1, 0)]): SeatRuntime {
     changed: false,
     closed: false,
     closedTwoPair: false,
+    closedTwoPairKeys: [],
     discardedBeforeClose: [],
   };
 }
@@ -35,6 +36,13 @@ test('起手杠多数时候选择继续打', () => {
   const actions: AvailableAction[] = [{ kind: 'hu', key: 'qidong-gang-hu' }, { kind: 'pass' }];
   const action = chooseCompanionAction(actions, seat(), () => 0.1);
   assert.deepEqual(action, { kind: 'pass' });
+});
+
+test('出牌思考 1.5–2.5 秒，人在考虑时更慢', () => {
+  assert.equal(companionThinkMs('self-turn', false, () => 0), 1500);
+  assert.equal(companionThinkMs('self-turn', false, () => 0.999), 2499);
+  assert.equal(companionThinkMs('claim-window', true, () => 0), 2200);
+  assert.equal(companionThinkMs('claim-window', false, () => 0), 800);
 });
 
 test('有碰时会碰', () => {

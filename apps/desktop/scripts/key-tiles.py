@@ -3,11 +3,14 @@ from pathlib import Path
 
 from PIL import Image
 
+PROJECT = Path(__file__).resolve().parents[2]
 SRC = Path(
     r"C:\Users\14416\.grok\sessions\C%3A%5CUsers%5C14416%5CDesktop%5Cpizhou-mahjong-demo\01a0137d-5c0d-7032-9d1d-0b2fec57c7a2\images"
 )
-OUT = Path(__file__).resolve().parents[1] / "public" / "assets"
+OUT = PROJECT / "apps" / "desktop" / "public" / "assets"
+SOURCE = PROJECT / "assets" / "source"
 OUT.mkdir(parents=True, exist_ok=True)
+SOURCE.mkdir(parents=True, exist_ok=True)
 
 
 def is_green(r: int, g: int, b: int) -> bool:
@@ -56,6 +59,6 @@ def key_and_crop(src: Path, dest: Path) -> None:
     print(dest.name, cropped.size)
 
 
-key_and_crop(SRC / "7.jpg", OUT / "tile-front.png")
+key_and_crop(SRC / "7.jpg", SOURCE / "tile-front.png")
 key_and_crop(SRC / "8.jpg", OUT / "tile-back.png")
 print("done")

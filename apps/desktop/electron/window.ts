@@ -28,7 +28,9 @@ export function createWindow(): BrowserWindow {
     icon: iconPath(),
     autoHideMenuBar: true,
     useContentSize: true,
-    show: false,
+    // Show immediately so a slow local server or renderer readiness event
+    // cannot leave the user staring at an apparently hung launch.
+    show: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

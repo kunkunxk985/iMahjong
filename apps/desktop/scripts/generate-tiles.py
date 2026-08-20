@@ -11,7 +11,7 @@ ASSETS = ROOT / "public" / "assets"
 OUT = ASSETS / "tiles"
 OUT.mkdir(parents=True, exist_ok=True)
 
-BLANK = Image.open(ASSETS / "tile-front.png").convert("RGBA")
+BLANK = Image.open(ROOT.parent.parent / "assets" / "source" / "tile-front.png").convert("RGBA")
 W, H = BLANK.size
 FONT = Path(r"C:\Windows\Fonts\simkai.ttf")
 
