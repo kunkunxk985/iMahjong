@@ -109,7 +109,8 @@
   }
 
   .board-action-area {
-    right: 0;
+    left: 50%;
+    transform: translateX(-50%);
     bottom: calc(100% + 4px);
   }
 }

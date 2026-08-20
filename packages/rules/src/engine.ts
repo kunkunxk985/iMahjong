@@ -229,10 +229,25 @@ export class PizhouGame {
         score: meta.score,
         handCount: runtime.hand.length,
         discards: runtime.discards.map((tile) => ({ ...tile })),
-        melds: runtime.melds.map((meld) => ({
-          ...meld,
-          tiles: meld.tiles.map((tile) => ({ ...tile })),
-        })),
+        melds: runtime.melds.map((meld) => {
+          const isSecret = meld.type === 'kan' || meld.type === 'an-gang';
+          if (isSecret && seat !== input.mySeat && !this.settlement) {
+            return {
+              ...meld,
+              tiles: meld.tiles.map((tile) => ({
+                id: tile.id,
+                suit: 'dragon' as const,
+                rank: 0,
+                copy: 0,
+                key: 'back',
+              })),
+            };
+          }
+          return {
+            ...meld,
+            tiles: meld.tiles.map((tile) => ({ ...tile })),
+          };
+        }),
       };
       if (seat === input.mySeat) {
         return {

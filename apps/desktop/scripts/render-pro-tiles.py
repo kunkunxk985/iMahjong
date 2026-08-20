@@ -31,10 +31,14 @@ CY = (IY0 + IY1) // 2
 # Font path
 FONT_KAI = str(ROOT / "build" / "MaShanZheng.ttf")
 
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 # Authentic Chinese Mahjong Palette
 RED = (204, 28, 28, 255)            # 朱砂红
 RED_DARK = (120, 14, 14, 255)
-BLUE = (22, 74, 154, 255)           # 景泰蓝 / 花青
+BLUE = (22, 74, 154, 255)           # 景泰蓝 / 花青 (宝蓝)
 BLUE_DARK = (10, 36, 82, 255)
 GREEN = (18, 126, 48, 255)          # 翡翠绿
 GREEN_DARK = (8, 66, 24, 255)
@@ -101,13 +105,13 @@ def render_wan(rank: int) -> Image.Image:
     num_font = get_font(int(IH * 0.44))
     wan_font = get_font(int(IH * 0.42))
 
-    # Top Chinese Numeral (Deep ink)
+    # Top Chinese Numeral in Blue (宝蓝)
     num_y = IY0 + int(IH * 0.28)
-    draw_bold_text(draw, NUMS[rank - 1], CX, num_y, num_font, INK, bold_offset=3)
+    draw_bold_text(draw, NUMS[rank - 1], CX, num_y, num_font, BLUE, bold_offset=3)
 
-    # Bottom 万 (Cinnabar Red)
+    # Bottom 萬 in Cinnabar Red (朱砂红)
     wan_y = IY0 + int(IH * 0.73)
-    draw_bold_text(draw, "万", CX, wan_y, wan_font, RED, bold_offset=3)
+    draw_bold_text(draw, "萬", CX, wan_y, wan_font, RED, bold_offset=3)
 
     engraved = apply_chisel_relief(layer, depth=3)
     tile.alpha_composite(engraved)
@@ -184,12 +188,12 @@ def draw_master_yi_tong(draw: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> 
 DOT_POS: dict[int, list[tuple[float, float, str]]] = {
     2: [(50, 28, "blue"), (50, 72, "green")],
     3: [(28, 25, "blue"), (50, 50, "red"), (72, 75, "green")],
-    4: [(32, 28, "blue"), (68, 28, "green"), (32, 72, "green"), (68, 72, "blue")],
-    5: [(30, 26, "blue"), (70, 26, "green"), (50, 50, "red"), (30, 74, "green"), (70, 74, "blue")],
+    4: [(32, 28, "green"), (68, 28, "blue"), (32, 72, "blue"), (68, 72, "green")],
+    5: [(30, 26, "green"), (70, 26, "blue"), (50, 50, "red"), (30, 74, "blue"), (70, 74, "green")],
     6: [(32, 24, "green"), (68, 24, "green"), (32, 50, "red"), (68, 50, "red"), (32, 76, "red"), (68, 76, "red")],
     7: [(28, 20, "green"), (50, 26, "green"), (72, 32, "green"), (32, 58, "red"), (68, 58, "red"), (32, 82, "red"), (68, 82, "red")],
     8: [(32, 16, "blue"), (68, 16, "blue"), (32, 38, "blue"), (68, 38, "blue"), (32, 62, "blue"), (68, 62, "blue"), (32, 84, "blue"), (68, 84, "blue")],
-    9: [(26, 20, "green"), (50, 20, "blue"), (74, 20, "red"), (26, 50, "green"), (50, 50, "blue"), (74, 50, "red"), (26, 80, "green"), (50, 80, "blue"), (74, 80, "red")],
+    9: [(26, 20, "blue"), (50, 20, "blue"), (74, 20, "blue"), (26, 50, "red"), (50, 50, "red"), (74, 50, "red"), (26, 80, "green"), (50, 80, "green"), (74, 80, "green")],
 }
 
 
@@ -261,10 +265,10 @@ BAMBOO_POS: dict[int, list[tuple[float, float, str]]] = {
 
 def render_tiao(rank: int) -> Image.Image:
     if rank == 1:
-        # Authentic Cloisonné Enamel Peacock / 幺鸡
-        src_path = Path("/tmp/orig_tiao_1.png")
-        if src_path.exists():
-            return Image.open(src_path).convert("RGBA")
+        # Check if existing high quality 幺鸡 exists
+        cur_path = OUT / "tiao-1.png"
+        if cur_path.exists():
+            return Image.open(cur_path).convert("RGBA")
 
     tile = BLANK.copy()
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -297,15 +301,15 @@ def render_dragon(rank: int) -> Image.Image:
     draw = ImageDraw.Draw(layer)
 
     if rank == 1:
-        # 红中 (Grand Calligraphic 中)
+        # 红中 (Grand Calligraphic 中 in Red)
         font = get_font(int(IH * 0.76))
         draw_bold_text(draw, "中", CX, CY, font, RED, bold_offset=4)
     elif rank == 2:
-        # 发财 (Grand Calligraphic 发 in Emerald Green)
+        # 发财 (Grand Calligraphic 繁体 發 in Emerald Green)
         font = get_font(int(IH * 0.74))
-        draw_bold_text(draw, "发", CX, CY, font, GREEN, bold_offset=3)
+        draw_bold_text(draw, "發", CX, CY, font, GREEN, bold_offset=3)
     else:
-        # 白板: Classical Double-Bordered Jade Frame
+        # 白板: Classical Double-Bordered Jade Frame in Blue
         bx0, by0 = IX0 + int(IW * 0.10), IY0 + int(IH * 0.08)
         bx1, by1 = IX1 - int(IW * 0.10), IY1 - int(IH * 0.08)
 
@@ -313,9 +317,9 @@ def render_dragon(rank: int) -> Image.Image:
         draw.rounded_rectangle((bx0, by0, bx1, by1), radius=32, outline=BLUE_DARK, width=24)
         draw.rounded_rectangle((bx0 + 3, by0 + 3, bx1 - 3, by1 - 3), radius=30, outline=BLUE, width=18)
 
-        # Inner fine gold wire
+        # Inner fine blue wire
         pad = 28
-        draw.rounded_rectangle((bx0 + pad, by0 + pad, bx1 - pad, by1 - pad), radius=18, outline=GOLD, width=5)
+        draw.rounded_rectangle((bx0 + pad, by0 + pad, bx1 - pad, by1 - pad), radius=18, outline=BLUE_DARK, width=4)
 
     engraved = apply_chisel_relief(layer, depth=3)
     tile.alpha_composite(engraved)
@@ -323,15 +327,16 @@ def render_dragon(rank: int) -> Image.Image:
 
 
 def main() -> None:
-    print("🎨 Rendering complete Chinese Mahjong art set with Ma Shan Zheng calligraphy...")
+    print("Rendering complete Chinese Mahjong art set with blue numerals, red Wan, and traditional Fa...")
     for r in range(1, 10):
         render_wan(r).save(OUT / f"wan-{r}.png")
         render_tong(r).save(OUT / f"tong-{r}.png")
-        render_tiao(r).save(OUT / f"tiao-{r}.png")
+        if r > 1 or not (OUT / "tiao-1.png").exists():
+            render_tiao(r).save(OUT / f"tiao-{r}.png")
     for r in range(1, 4):
         render_dragon(r).save(OUT / f"dragon-{r}.png")
 
-    print(f"✓ All 30 tiles successfully generated into {OUT}!")
+    print(f"All 30 tiles successfully generated into {OUT}!")
 
 
 if __name__ == "__main__":

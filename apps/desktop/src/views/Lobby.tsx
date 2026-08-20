@@ -46,7 +46,10 @@ export function Lobby({
 
   return (
     <div className="hall">
-      <div className="hall-vignette" />
+      <div className="hall-vignette" aria-hidden="true">
+        <span className="hall-corner bl" />
+        <span className="hall-corner br" />
+      </div>
       <div className="hall-card">
         <div className="gold-line" />
         <p className="eyebrow">查 胡 · 老 家 桌</p>

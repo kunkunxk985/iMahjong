@@ -1,4 +1,4 @@
-/* ─── Top-down reference table ─────────────────────────────── */
+/* ─── Top-down reference table (Celestial Star-Ocean Theme) ──── */
 
 .mahjong-board {
   position: relative;
@@ -7,29 +7,90 @@
   overflow: hidden;
   isolation: isolate;
   color: #f4edcf;
-  background:
-    radial-gradient(ellipse at 50% 46%, rgba(76, 160, 91, 0.38), transparent 58%),
-    linear-gradient(135deg, #1c6a3d, #0f4e30 52%, #0b3b28);
+  background: #081426;
 }
 
-.board-grain {
+.board-wood {
   position: absolute;
   inset: 0;
-  z-index: -1;
-  opacity: 0.28;
-  background: url('../../public/assets/felt.jpg') center / cover;
-  mix-blend-mode: soft-light;
+  z-index: 0;
+  background:
+    linear-gradient(180deg, rgba(8, 22, 46, 0.5), rgba(4, 12, 28, 0.75)),
+    radial-gradient(ellipse at 50% 50%, #173864 0%, #08162b 100%);
   pointer-events: none;
 }
 
-.board-grain::after {
+.board-felt {
+  position: absolute;
+  z-index: 1;
+  inset: 16px 20px 14px;
+  overflow: hidden;
+  border-radius: 26px;
+  background:
+    radial-gradient(ellipse at 50% 46%, #3a91ea 0%, #1f64bc 36%, #0f3d7a 72%, #081e3f 100%);
+  box-shadow:
+    inset 0 0 0 2px rgba(245, 218, 130, 0.8),
+    inset 0 0 0 7px rgba(8, 28, 62, 0.85),
+    inset 0 0 90px rgba(4, 15, 38, 0.8),
+    0 12px 36px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+/* Star Orbit Concentric Circles and Nebula Glow */
+.board-felt::before {
   content: "";
   position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at 50% 40%, transparent 28%, rgba(2, 32, 18, 0.24) 100%),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.16), transparent 18%, transparent 82%, rgba(0, 0, 0, 0.16));
+  top: 50%;
+  left: 50%;
+  width: clamp(460px, 46vw, 740px);
+  height: clamp(460px, 46vw, 740px);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1.5px dashed rgba(245, 220, 130, 0.45);
+  box-shadow:
+    0 0 0 28px rgba(245, 220, 130, 0.04),
+    inset 0 0 0 28px rgba(245, 220, 130, 0.04),
+    0 0 45px rgba(90, 180, 255, 0.32);
+  pointer-events: none;
 }
+
+.board-felt::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(320px, 32vw, 520px);
+  height: clamp(320px, 32vw, 520px);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(245, 220, 130, 0.55);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 240, 170, 0.3),
+    0 0 30px rgba(110, 195, 255, 0.35);
+  background: radial-gradient(circle at 50% 50%, rgba(70, 160, 255, 0.22) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.board-corners {
+  position: absolute;
+  inset: 10px 14px 8px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.board-corner {
+  position: absolute;
+  width: clamp(72px, 8vw, 118px);
+  height: clamp(72px, 8vw, 118px);
+  background: url('../../public/assets/corner.png') center / contain no-repeat;
+  opacity: 0.92;
+  filter: drop-shadow(0 3px 8px rgba(0, 10, 30, 0.6)) brightness(1.1);
+}
+
+.board-corner.tl { top: 0; left: 0; }
+.board-corner.tr { top: 0; right: 0; transform: scaleX(-1); }
+.board-corner.bl { bottom: 0; left: 0; transform: scaleY(-1); }
+.board-corner.br { bottom: 0; right: 0; transform: scale(-1); }
 
 .board-topbar {
   position: absolute;
@@ -48,25 +109,25 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  color: rgba(222, 243, 205, 0.72);
+  color: rgba(224, 242, 254, 0.85);
   font-size: clamp(13px, 1.25vw, 21px);
-  text-shadow: 0 2px 8px rgba(0, 32, 14, 0.5);
+  text-shadow: 0 2px 8px rgba(0, 15, 40, 0.7);
   pointer-events: auto;
 }
 
 .board-room-info strong {
-  color: #d9efb5;
-  font-weight: 500;
+  color: #fef08a;
+  font-weight: 600;
   letter-spacing: 0.04em;
 }
 
 .board-title {
-  color: rgba(209, 236, 172, 0.16);
+  color: rgba(224, 242, 254, 0.22);
   font-family: var(--serif);
   font-size: clamp(20px, 2.4vw, 42px);
   letter-spacing: 0.3em;
   text-indent: 0.3em;
-  text-shadow: 0 2px 16px rgba(3, 43, 21, 0.22);
+  text-shadow: 0 2px 16px rgba(10, 30, 70, 0.4);
 }
 
 .board-top-tools {
@@ -74,7 +135,7 @@
 }
 
 .board-clock {
-  color: rgba(225, 243, 201, 0.78);
+  color: rgba(224, 242, 254, 0.85);
   font-variant-numeric: tabular-nums;
 }
 
@@ -85,9 +146,9 @@
   place-items: center;
   border: 0;
   background: transparent;
-  color: rgba(232, 247, 215, 0.88);
+  color: rgba(240, 249, 255, 0.92);
   cursor: pointer;
-  text-shadow: 0 2px 7px rgba(0, 26, 12, 0.7);
+  text-shadow: 0 2px 7px rgba(0, 15, 40, 0.8);
   transition: transform 0.16s ease, color 0.16s ease;
   pointer-events: auto;
 }
@@ -131,11 +192,15 @@
 
 .board-wall {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   display: flex;
   gap: 2px;
   filter: drop-shadow(0 4px 5px rgba(0, 24, 9, 0.34));
   opacity: 0.94;
+  pointer-events: none !important;
+}
+.board-wall * {
+  pointer-events: none !important;
 }
 
 .board-wall-top {
@@ -145,13 +210,13 @@
 }
 
 .board-wall-left {
-  top: 22%;
+  top: 26%;
   left: 9.7%;
   flex-direction: column;
 }
 
 .board-wall-right {
-  top: 22%;
+  top: 26%;
   right: 9.7%;
   flex-direction: column;
 }
@@ -160,13 +225,12 @@
   width: clamp(22px, 2.2vw, 40px) !important;
   height: clamp(31px, 3.1vw, 56px) !important;
   border-radius: 3px;
+  pointer-events: none !important;
 }
 
-/* The reference uses a warm ochre wall. Keep the existing carved-back asset,
-   but push it toward the same amber/gold family without touching face-up tiles. */
-.board-wall-tile .tile-skin,
-.board-concealed-tile .tile-skin {
-  filter: sepia(1) saturate(4.6) hue-rotate(338deg) brightness(1.16) contrast(0.98);
+.board-wall-tile .tile-depth,
+.board-concealed-tile .tile-depth {
+  background: linear-gradient(180deg, #1e5a9c 0%, #123d72 60%, #092040 100%);
 }
 
 .board-player {
@@ -176,8 +240,8 @@
   align-items: center;
   gap: 9px;
   min-width: 138px;
-  color: rgba(241, 244, 214, 0.94);
-  text-shadow: 0 2px 8px rgba(0, 26, 10, 0.72);
+  color: #f0f9ff;
+  text-shadow: 0 2px 8px rgba(0, 15, 40, 0.8);
 }
 
 .board-player-top {
@@ -209,21 +273,21 @@
   display: grid;
   place-items: center;
   overflow: hidden;
-  border: 2px solid rgba(232, 218, 151, 0.72);
-  border-radius: 10px;
-  box-shadow: 0 5px 14px rgba(0, 30, 13, 0.38), inset 0 0 0 2px rgba(255, 255, 255, 0.13);
+  border: 2px solid rgba(245, 214, 120, 0.85);
+  border-radius: 50%;
+  box-shadow: 0 0 14px rgba(60, 160, 255, 0.45), inset 0 0 0 2px rgba(255, 255, 255, 0.2);
 }
 
 .board-avatar::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.32), transparent 42%, rgba(0, 0, 0, 0.28));
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.35), transparent 42%, rgba(0, 0, 0, 0.3));
 }
 
 .board-avatar span {
   position: relative;
-  color: rgba(255, 249, 210, 0.92);
+  color: #fffbeb;
   font-family: var(--serif);
   font-size: clamp(22px, 2.1vw, 38px);
   font-weight: 600;
@@ -231,22 +295,22 @@
 
 .board-avatar i {
   position: absolute;
-  right: 3px;
-  bottom: 2px;
-  color: rgba(255, 246, 190, 0.82);
+  right: 4px;
+  bottom: 3px;
+  color: #fef08a;
   font-family: var(--serif);
   font-size: 11px;
   font-style: normal;
 }
 
-.avatar-0 { background: linear-gradient(145deg, #b87951, #58352d 78%); }
-.avatar-1 { background: linear-gradient(145deg, #6f9d68, #204f39 78%); }
-.avatar-2 { background: linear-gradient(145deg, #728da7, #283e57 78%); }
-.avatar-3 { background: linear-gradient(145deg, #a77a9d, #54364f 78%); }
+.avatar-0 { background: linear-gradient(145deg, #1e4a7a, #0d2340 78%); }
+.avatar-1 { background: linear-gradient(145deg, #165b50, #082823 78%); }
+.avatar-2 { background: linear-gradient(145deg, #4f3b78, #22143b 78%); }
+.avatar-3 { background: linear-gradient(145deg, #8c4a6b, #3d1b2d 78%); }
 
 .board-player.is-current .board-avatar {
-  border-color: #ffe279;
-  box-shadow: 0 0 0 4px rgba(255, 217, 94, 0.18), 0 5px 18px rgba(0, 30, 13, 0.42);
+  border-color: #fef08a;
+  box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.3), 0 0 20px rgba(96, 165, 250, 0.6);
 }
 
 .board-player-copy {
@@ -260,23 +324,24 @@
   max-width: 145px;
   overflow: hidden;
   font-size: clamp(12px, 1.1vw, 18px);
-  font-weight: 500;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .board-player-copy span {
-  color: rgba(219, 238, 190, 0.68);
+  color: rgba(186, 230, 253, 0.78);
   font-size: 11px;
 }
 
 .board-player > em {
   align-self: flex-end;
   margin-left: 4px;
-  color: #ffe17c;
+  color: #fef08a;
   font-size: 13px;
   font-style: normal;
   font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
 }
 
 .board-dealer {
@@ -296,7 +361,11 @@
   z-index: 4;
   display: flex;
   gap: 2px;
-  filter: drop-shadow(0 4px 5px rgba(0, 23, 8, 0.4));
+  filter: drop-shadow(0 4px 5px rgba(0, 15, 35, 0.45));
+  pointer-events: none !important;
+}
+.board-concealed * {
+  pointer-events: none !important;
 }
 
 .board-concealed-top {
@@ -320,20 +389,21 @@
 .board-concealed-tile {
   width: clamp(18px, 1.65vw, 31px) !important;
   height: clamp(26px, 2.35vw, 43px) !important;
+  pointer-events: none !important;
 }
 
 .board-watermark {
   position: absolute;
   top: 30%;
   left: 50%;
-  z-index: 1;
+  z-index: 2;
   transform: translateX(-50%);
-  color: rgba(2, 42, 22, 0.24);
+  color: rgba(224, 242, 254, 0.1);
   font-family: var(--serif);
   font-size: clamp(35px, 4.5vw, 78px);
   letter-spacing: 0.22em;
   text-indent: 0.22em;
-  text-shadow: 0 1px 0 rgba(137, 210, 129, 0.08);
+  text-shadow: 0 0 25px rgba(96, 165, 250, 0.2);
   white-space: nowrap;
 }
 
@@ -401,7 +471,6 @@
 .board-discard-tile {
   width: clamp(26px, 2.2vw, 42px) !important;
   height: clamp(37px, 3.1vw, 60px) !important;
-  filter: drop-shadow(1px 3px 3px rgba(0, 25, 8, 0.42));
 }
 
 .board-discard .river-seat-mark {
@@ -418,7 +487,7 @@
 }
 
 .board-discard-tile.last-out {
-  filter: drop-shadow(0 0 7px rgba(255, 220, 100, 0.95)) drop-shadow(1px 3px 3px rgba(0, 25, 8, 0.42));
+  filter: drop-shadow(0 0 10px rgba(255, 220, 100, 0.95)) drop-shadow(1px 3px 4px rgba(0, 15, 40, 0.6));
 }
 
 .board-controller {
@@ -436,61 +505,70 @@
   display: flex;
   align-items: baseline;
   gap: 4px;
-  color: rgba(218, 249, 116, 0.88);
-  text-shadow: 0 2px 10px rgba(4, 45, 17, 0.55);
+  color: #fef08a;
+  text-shadow: 0 2px 10px rgba(0, 20, 50, 0.6);
 }
 
 .board-counter b {
   font-size: clamp(25px, 3vw, 50px);
-  font-weight: 400;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
 .board-counter span {
-  color: rgba(208, 237, 165, 0.52);
+  color: rgba(186, 230, 253, 0.65);
   font-size: clamp(13px, 1.2vw, 20px);
 }
 
 .board-dial {
-  width: clamp(100px, 8.6vw, 158px);
-  height: clamp(100px, 8.6vw, 158px);
+  width: clamp(96px, 8.2vw, 152px);
+  height: clamp(96px, 8.2vw, 152px);
   display: grid;
   padding: 5px;
-  border: 2px solid rgba(255, 226, 115, 0.74);
-  border-radius: 24%;
-  box-shadow: 0 0 0 4px rgba(255, 224, 105, 0.16), 0 12px 30px rgba(0, 25, 10, 0.34);
+  border: 2px solid rgba(245, 214, 120, 0.85);
+  border-radius: 20%;
+  background: linear-gradient(145deg, rgba(16, 42, 80, 0.9), rgba(6, 16, 36, 0.95));
+  box-shadow:
+    0 0 0 2px rgba(10, 28, 60, 0.8),
+    0 0 0 4px rgba(245, 214, 120, 0.3),
+    0 10px 24px rgba(0, 8, 22, 0.65),
+    0 0 24px rgba(80, 170, 255, 0.35);
 }
 
 .board-dial-inner {
   position: relative;
   display: grid;
   place-items: center;
-  border: 2px solid rgba(111, 174, 55, 0.86);
-  border-radius: 20%;
-  background: linear-gradient(145deg, #26713b, #0f472d 68%, #173f26);
-  box-shadow: inset 0 0 20px rgba(2, 32, 10, 0.5);
+  border: 1px solid rgba(245, 214, 120, 0.5);
+  border-radius: 16%;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(60, 140, 240, 0.35), transparent 60%),
+    linear-gradient(160deg, #163660, #0c203c 70%, #061224);
+  box-shadow: inset 0 1px 0 rgba(255, 240, 180, 0.25), inset 0 0 20px rgba(0, 10, 30, 0.65);
 }
 
 .board-dial-inner strong {
-  color: #e8f67c;
+  color: #fef08a;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: clamp(30px, 3.1vw, 58px);
-  font-weight: 400;
+  font-size: clamp(28px, 3vw, 54px);
+  font-weight: 600;
   line-height: 1;
+  text-shadow: 0 0 12px rgba(250, 204, 21, 0.7);
 }
 
 .board-dial-inner small {
   position: absolute;
-  bottom: 16%;
-  color: rgba(222, 245, 170, 0.78);
+  bottom: 14%;
+  color: rgba(210, 235, 255, 0.85);
   font-size: 11px;
 }
 
 .dial-arrow {
   position: absolute;
-  color: rgba(12, 54, 22, 0.72);
+  color: #ffe68a;
   font-size: 11px;
   font-style: normal;
+  text-shadow: 0 0 8px rgba(250, 204, 21, 0.8);
 }
 
 .dial-arrow-top { top: 9%; }
@@ -504,7 +582,7 @@
   left: 50%;
   min-width: 120px;
   transform: translateX(-50%);
-  color: rgba(227, 244, 189, 0.66);
+  color: rgba(224, 242, 254, 0.8);
   font-size: 12px;
   text-align: center;
   white-space: nowrap;
@@ -515,7 +593,7 @@
 }
 
 @keyframes board-dial-pulse {
-  50% { box-shadow: 0 0 0 7px rgba(255, 224, 105, 0.22), 0 12px 30px rgba(0, 25, 10, 0.38); }
+  50% { box-shadow: 0 0 0 6px rgba(250, 204, 21, 0.35), 0 0 28px rgba(96, 165, 250, 0.6); }
 }
 
 .board-hand-area {
@@ -543,18 +621,24 @@
   height: clamp(60px, 5.8vw, 116px);
 }
 
+.board-own-hand .tile.drawn {
+  margin-left: clamp(10px, 1.2vw, 22px);
+}
+
 .board-own-hand .tile.selected {
   transform: translateY(-18px);
 }
 
+.board-hand-area > .melds-container,
 .board-hand-area > .melds {
   position: absolute;
   right: 0;
   bottom: calc(100% + 8px);
   display: flex;
-  gap: 7px;
+  gap: 10px;
 }
 
+.board-hand-area > .melds-container .tile,
 .board-hand-area > .melds .tile {
   width: clamp(25px, 2.3vw, 42px);
   height: clamp(36px, 3.3vw, 60px);
@@ -562,27 +646,78 @@
 
 .board-hand-area .tenpai-bar {
   position: absolute;
-  bottom: calc(100% + 2px);
+  bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
+  z-index: 45;
+  transition: bottom 0.15s ease;
+}
+
+.board-hand-area .tenpai-bar.elevated {
+  bottom: calc(100% + 56px);
 }
 
 .board-action-area {
   position: absolute;
-  right: -2px;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60 !important;
+  display: flex;
+  justify-content: center;
+  pointer-events: auto !important;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.6));
 }
 
 .board-action-area .action-bar {
-  justify-content: flex-end;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+  pointer-events: auto !important;
 }
 
 .board-action-area .btn-action {
-  min-width: 64px;
-  height: 34px;
-  border-radius: 999px;
-  background: rgba(24, 63, 33, 0.74);
-  box-shadow: 0 3px 10px rgba(0, 24, 8, 0.3);
+  min-width: 80px;
+  height: 42px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 8px;
+  border: 1.5px solid rgba(245, 214, 120, 0.95);
+  background: linear-gradient(180deg, #1d64b4 0%, #0d366a 100%);
+  color: #fffbeb;
+  box-shadow: 0 3px 0 #061933, 0 8px 18px rgba(0, 0, 0, 0.5), 0 0 12px rgba(96, 165, 250, 0.35);
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  white-space: nowrap;
+  user-select: none;
+  transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
+}
+
+.board-action-area .btn-action:hover {
+  filter: brightness(1.25) drop-shadow(0 0 12px rgba(245, 214, 120, 0.8));
+  transform: translateY(-3px) scale(1.04);
+}
+
+.board-action-area .btn-action:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 #061933;
+}
+
+.board-action-area .btn-action.primary {
+  background: linear-gradient(180deg, #e11d48 0%, #9f1239 100%);
+  border-color: #fde047;
+  box-shadow: 0 3px 0 #4c0519, 0 8px 20px rgba(225, 29, 72, 0.45), 0 0 16px rgba(244, 63, 94, 0.5);
+  min-width: 96px;
+  font-size: 16px;
+}
+
+.board-action-area .btn-action.ghost {
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  border-color: rgba(203, 213, 225, 0.45);
+  box-shadow: 0 3px 0 #0f172a;
 }
 
 .board-bottom-rule {
@@ -594,3 +729,69 @@
   z-index: 5;
   background: linear-gradient(90deg, transparent, rgba(239, 217, 135, 0.42), transparent);
 }
+
+/* ─── Same-tile Highlighting ──────────────────────────────── */
+
+.tile.highlight-same {
+  z-index: 6 !important;
+  filter: drop-shadow(0 0 8px rgba(66, 211, 240, 0.95)) drop-shadow(0 0 2px rgba(255, 255, 255, 0.8)) !important;
+  transform: translateY(-4px) scale(1.05);
+}
+
+.tile.highlight-same .tile-cap {
+  box-shadow: 0 0 0 2px rgba(96, 230, 255, 0.9), inset 0 0 8px rgba(96, 230, 255, 0.35);
+}
+
+.board-own-hand .tile.highlight-same:not(.selected) {
+  transform: translateY(-8px) scale(1.03);
+}
+
+.board-own-hand .tile.highlight-same.selected {
+  transform: translateY(-22px) scale(1.03);
+}
+
+.board-discard-tile.highlight-same {
+  transform: scale(1.12);
+}
+
+/* ─── Opponents' Open Melds ───────────────────────────────── */
+
+.board-opponent-melds {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  gap: 5px;
+  pointer-events: auto;
+}
+
+.board-melds-top {
+  top: 188px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.board-melds-top .tile {
+  width: clamp(22px, 2.1vw, 36px);
+  height: clamp(31px, 3.0vw, 52px);
+}
+
+.board-melds-left {
+  top: 52%;
+  left: 10%;
+}
+
+.board-melds-left .tile {
+  width: clamp(22px, 2.1vw, 36px);
+  height: clamp(31px, 3.0vw, 52px);
+}
+
+.board-melds-right {
+  top: 52%;
+  right: 10%;
+}
+
+.board-melds-right .tile {
+  width: clamp(22px, 2.1vw, 36px);
+  height: clamp(31px, 3.0vw, 52px);
+}
+

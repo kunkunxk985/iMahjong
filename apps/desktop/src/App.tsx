@@ -76,6 +76,13 @@ export function App() {
       return;
     }
 
+    const envWsUrl = import.meta.env.VITE_WS_URL;
+    if (envWsUrl) {
+      setServerUrl(envWsUrl);
+      setServerUrlReady(true);
+      return;
+    }
+
     let active = true;
     const localUrl = window.pizhou?.getLocalServerUrl;
     if (localUrl) {
