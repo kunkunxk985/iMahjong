@@ -9,6 +9,7 @@ interface LobbyProps {
   error: string;
   networkStatus: NetworkStatus;
   serverUrl: string;
+  soloBusy?: boolean;
   onCreateRoom: () => void;
   onJoinRoom: (roomCode: string) => void;
   onStartLocal: () => void;
@@ -28,6 +29,7 @@ export function Lobby({
   error,
   networkStatus,
   serverUrl,
+  soloBusy = false,
   onCreateRoom,
   onJoinRoom,
   onStartLocal,
@@ -110,11 +112,16 @@ export function Lobby({
           </div>
         ) : (
           <div role="tabpanel">
-            <button type="button" className="btn-action hero" disabled={!onlineReady} onClick={onStartLocal}>
+            <button
+              type="button"
+              className="btn-action hero"
+              disabled={!nickname.trim() || soloBusy}
+              onClick={onStartLocal}
+            >
               开始单机对局
-              <small>{networkStatus === 'open' ? '和三位陪练熟悉手感' : '正在启动本机牌桌'}</small>
+              <small>{soloBusy ? '正在启动本机牌桌…' : '和三位陪练熟悉手感，不必先填服务器'}</small>
             </button>
-            <p className="hint">单机通过内置本机服务运行，与联机共用同一套规则和对局流程。</p>
+            <p className="hint">单机走本机内置服务。局域网联机才需要在设置里填朋友那台电脑的地址。</p>
           </div>
         )}
 

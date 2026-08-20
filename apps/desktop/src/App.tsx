@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { DEFAULT_WS_URL, type ClientView, type GameAction, type Settlement } from '@pizhou/shared';
 import { RulesModal } from './components/RulesModal';
 import { SettingsModal } from './components/SettingsModal';
-import { GameClient } from './ws/client';
+import { GameClient, isLoopbackWs } from './ws/client';
 import { Lobby, type NetworkStatus } from './views/Lobby';
 import { SettlementModal } from './views/Settlement';
 import { Table } from './views/Table';
@@ -20,7 +20,7 @@ function initialNickname(): string {
   return `玩家${String(Math.floor(Math.random() * 90) + 10)}`;
 }
 
-function savedServerUrl(): string {
+function savedOverrideUrl(): string {
   try {
     return localStorage.getItem('pizhou.serverUrl') || '';
   } catch {
@@ -30,8 +30,10 @@ function savedServerUrl(): string {
 
 export function App() {
   const [nickname, setNicknameState] = useState(initialNickname);
-  const [serverUrl, setServerUrl] = useState(savedServerUrl);
-  const [serverUrlReady, setServerUrlReady] = useState(() => Boolean(savedServerUrl()));
+  const [localUrl, setLocalUrl] = useState('');
+  const [localUrlReady, setLocalUrlReady] = useState(false);
+  const [overrideUrl, setOverrideUrl] = useState(savedOverrideUrl);
+  const [soloIntent, setSoloIntent] = useState(false);
   const [mode, setMode] = useState<Mode>('home');
   const [networkStatus, setNetworkStatus] = useState<NetworkStatus>('connecting');
   const [view, setView] = useState<ClientView | null>(null);
@@ -42,6 +44,7 @@ export function App() {
 
   const clientRef = useRef<GameClient | null>(null);
   const requestedModeRef = useRef<Mode>('home');
+  const pendingSoloRef = useRef(false);
 
   if (!clientRef.current) {
     clientRef.current = new GameClient({
@@ -60,7 +63,9 @@ export function App() {
       onError: (message) => setError(message),
       onStatus: (status) => setNetworkStatus(status),
       onLeft: () => {
+        pendingSoloRef.current = false;
         requestedModeRef.current = 'home';
+        setSoloIntent(false);
         setMode('home');
         setView(null);
         setSettlement(null);
@@ -69,45 +74,52 @@ export function App() {
   }
 
   useEffect(() => {
-    const saved = savedServerUrl();
-    if (saved) {
-      setServerUrl(saved);
-      setServerUrlReady(true);
-      return;
-    }
-
+    let active = true;
     const envWsUrl = import.meta.env.VITE_WS_URL;
     if (envWsUrl) {
-      setServerUrl(envWsUrl);
-      setServerUrlReady(true);
-      return;
+      setLocalUrl(envWsUrl);
+      setLocalUrlReady(true);
+      return undefined;
     }
 
-    let active = true;
-    const localUrl = window.pizhou?.getLocalServerUrl;
-    if (localUrl) {
-      void localUrl().then((url) => {
-        if (!active) return;
-        setServerUrl(url || DEFAULT_WS_URL);
-        setServerUrlReady(true);
-      });
-    } else {
-      setServerUrl(DEFAULT_WS_URL);
-      setServerUrlReady(true);
+    const localUrlApi = window.pizhou?.getLocalServerUrl;
+    if (!localUrlApi) {
+      setLocalUrl(DEFAULT_WS_URL);
+      setLocalUrlReady(true);
+      return undefined;
     }
+
+    void localUrlApi().then((url) => {
+      if (!active) return;
+      setLocalUrl(url || DEFAULT_WS_URL);
+      setLocalUrlReady(true);
+    });
 
     return () => {
       active = false;
     };
   }, []);
 
+  const targetUrl = soloIntent
+    ? (localUrl || DEFAULT_WS_URL)
+    : (overrideUrl.trim() || localUrl || DEFAULT_WS_URL);
+  const urlReady = soloIntent ? localUrlReady : Boolean(overrideUrl.trim()) || localUrlReady;
+
   useEffect(() => {
-    if (!serverUrlReady || !serverUrl) return undefined;
-    clientRef.current?.connect(serverUrl);
-    return () => clientRef.current?.disconnect();
-  }, [serverUrl, serverUrlReady]);
+    if (!urlReady || !targetUrl) return undefined;
+    clientRef.current?.connect(targetUrl);
+    return () => clientRef.current?.disconnect(false);
+  }, [targetUrl, urlReady]);
 
   useEffect(() => () => clientRef.current?.disconnect(), []);
+
+  useEffect(() => {
+    if (!pendingSoloRef.current) return;
+    if (networkStatus !== 'open') return;
+    if (!isLoopbackWs(clientRef.current?.url ?? '')) return;
+    pendingSoloRef.current = false;
+    clientRef.current?.createRoom(nickname.trim() || '玩家', true);
+  }, [networkStatus, nickname]);
 
   const setNickname = (value: string) => {
     setNicknameState(value);
@@ -144,10 +156,19 @@ export function App() {
   };
 
   const startLocal = () => {
-    if (!requireOnline()) return;
+    if (soloIntent || pendingSoloRef.current) return;
+    if (!nickname.trim()) {
+      setError('请先输入昵称');
+      return;
+    }
     setError('');
     requestedModeRef.current = 'local';
-    clientRef.current?.createRoom(nickname.trim(), true);
+    pendingSoloRef.current = true;
+    setSoloIntent(true);
+    if (networkStatus === 'open' && isLoopbackWs(clientRef.current?.url ?? '')) {
+      pendingSoloRef.current = false;
+      clientRef.current?.createRoom(nickname.trim(), true);
+    }
   };
 
   const sendAction = (action: GameAction) => {
@@ -156,6 +177,8 @@ export function App() {
   };
 
   const leave = () => {
+    pendingSoloRef.current = false;
+    setSoloIntent(false);
     clientRef.current?.leave();
     requestedModeRef.current = 'home';
     setMode('home');
@@ -167,8 +190,8 @@ export function App() {
   const again = () => clientRef.current?.again();
 
   const saveServerUrl = (value: string) => {
-    const next = value.trim() || DEFAULT_WS_URL;
-    setServerUrl(next);
+    const next = value.trim();
+    setOverrideUrl(next);
     try {
       localStorage.setItem('pizhou.serverUrl', next);
     } catch {
@@ -180,6 +203,8 @@ export function App() {
 
   const inGame = Boolean(view && (view.phase === 'playing' || view.phase === 'settlement'));
   const inWaitingRoom = Boolean(mode === 'online' && view?.phase === 'lobby');
+  const displayUrl = clientRef.current?.url || targetUrl;
+  const soloBusy = soloIntent && networkStatus !== 'open';
 
   return (
     <div className="viewport">
@@ -207,7 +232,8 @@ export function App() {
             setNickname={setNickname}
             error={error}
             networkStatus={networkStatus}
-            serverUrl={serverUrl}
+            serverUrl={displayUrl}
+            soloBusy={soloBusy}
             onCreateRoom={createRoom}
             onJoinRoom={joinRoom}
             onStartLocal={startLocal}
@@ -227,7 +253,7 @@ export function App() {
         ) : null}
         {rulesOpen ? <RulesModal onClose={() => setRulesOpen(false)} /> : null}
         {settingsOpen ? (
-          <SettingsModal serverUrl={serverUrl} onSave={saveServerUrl} onClose={() => setSettingsOpen(false)} />
+          <SettingsModal serverUrl={overrideUrl} onSave={saveServerUrl} onClose={() => setSettingsOpen(false)} />
         ) : null}
         {error && inGame ? <div className="toast">{error}</div> : null}
       </div>
