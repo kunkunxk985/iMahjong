@@ -60,11 +60,13 @@
   }
 
   .board-concealed-left {
-    left: 58px;
+    top: 19%;
+    left: 42px;
   }
 
   .board-concealed-right {
-    right: 58px;
+    top: 19%;
+    right: 42px;
   }
 
   .board-wall-left { left: 2%; }
@@ -77,7 +79,23 @@
 
   .board-discard-left,
   .board-discard-right {
-    display: none;
+    display: flex;
+    top: 31%;
+    width: 74px;
+    padding: 17px 3px 5px;
+  }
+
+  .board-discard-left {
+    left: 10px;
+  }
+
+  .board-discard-right {
+    right: 10px;
+  }
+
+  .board-discard-left .board-discard-grid,
+  .board-discard-right .board-discard-grid {
+    grid-template-columns: repeat(2, max-content);
   }
 
   .board-melds-top {
@@ -87,13 +105,13 @@
 
   .board-melds-left,
   .board-melds-right {
-    top: 58%;
-    width: 128px;
+    top: 61%;
+    width: 118px;
     padding: 3px;
   }
 
-  .board-melds-left { left: 56px; }
-  .board-melds-right { right: 56px; }
+  .board-melds-left { left: 6px; }
+  .board-melds-right { right: 6px; }
 
   .board-melds-left .melds-container.vertical,
   .board-melds-right .melds-container.vertical {
@@ -123,6 +141,12 @@
     right: 3%;
     bottom: 8px;
     left: 10%;
+  }
+
+  .board-own-melds {
+    right: 0;
+    max-width: 58%;
+    padding: 16px 4px 4px;
   }
 
   .board-own-hand {

@@ -487,17 +487,17 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
 
       {/* Opponents' melds */}
       {byRel[2]?.melds && byRel[2].melds.length > 0 ? (
-        <div className="board-opponent-melds board-melds-top">
+        <div className="board-opponent-melds board-melds-top" aria-label="对家副露区">
           <Melds melds={byRel[2].melds} isOpponent highlightKey={focusKey} onTileHover={setHoveredTileKey} />
         </div>
       ) : null}
       {byRel[3]?.melds && byRel[3].melds.length > 0 ? (
-        <div className="board-opponent-melds board-melds-left">
+        <div className="board-opponent-melds board-melds-left" aria-label="左家副露区">
           <Melds melds={byRel[3].melds} vertical isOpponent highlightKey={focusKey} onTileHover={setHoveredTileKey} />
         </div>
       ) : null}
       {byRel[1]?.melds && byRel[1].melds.length > 0 ? (
-        <div className="board-opponent-melds board-melds-right">
+        <div className="board-opponent-melds board-melds-right" aria-label="右家副露区">
           <Melds melds={byRel[1].melds} vertical isOpponent highlightKey={focusKey} onTileHover={setHoveredTileKey} />
         </div>
       ) : null}
@@ -552,7 +552,11 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
 
       {me ? (
         <div className="board-hand-area">
-          <Melds melds={me.melds} highlightKey={focusKey} onTileHover={setHoveredTileKey} />
+          {me.melds.length > 0 ? (
+            <div className="board-own-melds" aria-label="我的副露区">
+              <Melds melds={me.melds} highlightKey={focusKey} onTileHover={setHoveredTileKey} />
+            </div>
+          ) : null}
           <div className="board-own-hand">
             {myHand.map((tile) => (
               <TileView
