@@ -10,7 +10,7 @@ import {
   parseClientMessage,
   send,
 } from './room.ts';
-import { scheduleBots } from './bots.ts';
+import { cancelAllBots, cancelBots, scheduleBots } from './bots.ts';
 
 export interface StartedServer {
   port: number;
@@ -62,7 +62,7 @@ export async function startMahjongServer(options: {
 
   const tick = setInterval(() => {
     const now = Date.now();
-    manager.sweep(now);
+    for (const roomCode of manager.sweep(now)) cancelBots(roomCode);
     for (const room of manager.all()) {
       if (room.game && room.phase === 'playing') {
         const result = room.game.tick(now);
@@ -96,6 +96,7 @@ export async function startMahjongServer(options: {
     close: () =>
       new Promise((resolve) => {
         clearInterval(tick);
+        cancelAllBots();
         wss.close();
         httpServer.close(() => resolve());
       }),
@@ -215,6 +216,7 @@ function handleMessage(
     if (!left) return;
     send(ws, { type: 'error', message: '已离开房间', code: 'left' });
     if (manager.get(left.room.code)) broadcastState(left.room);
+    else cancelBots(left.room.code);
     return;
   }
 

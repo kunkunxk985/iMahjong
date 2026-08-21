@@ -41,7 +41,7 @@ export function Lobby({
   const onlineReady = networkStatus === 'open' && nickname.trim().length > 0;
 
   const join = () => {
-    const normalized = roomCode.trim().toUpperCase();
+    const normalized = roomCode.trim();
     if (normalized.length !== 6) return;
     onJoinRoom(normalized);
   };
@@ -91,7 +91,7 @@ export function Lobby({
             <div className="join-row">
               <input
                 value={roomCode}
-                onChange={(event) => setRoomCode(event.target.value.replace(/[^a-z0-9]/gi, '').slice(0, 6).toUpperCase())}
+                onChange={(event) => setRoomCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' && onlineReady) join();
                 }}

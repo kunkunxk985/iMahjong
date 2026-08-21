@@ -123,6 +123,137 @@ test('三张相同牌提示坎上，确认后锁定且不能拆开出牌', () =>
   assert.equal(discardLocked.ok, false);
 });
 
+test('三组碰坎杠后可选择出牌并关门，臭牌记录采用全桌牌河', () => {
+  const game = new PizhouGame({ dealer: 0 });
+  const runtime = game.seats[0]!;
+  const gateDiscard = makeTile('wan', 9, 0);
+  runtime.hand = [
+    makeTile('tong', 1, 0), makeTile('tong', 1, 1),
+    makeTile('tong', 2, 0), makeTile('tong', 2, 1),
+    gateDiscard,
+  ];
+  runtime.melds = [
+    { type: 'peng', tiles: [makeTile('tiao', 2, 0), makeTile('tiao', 2, 1), makeTile('tiao', 2, 2)] },
+    { type: 'kan', tiles: [makeTile('tiao', 3, 0), makeTile('tiao', 3, 1), makeTile('tiao', 3, 2)] },
+    { type: 'an-gang', tiles: [makeTile('tiao', 4, 0), makeTile('tiao', 4, 1), makeTile('tiao', 4, 2), makeTile('tiao', 4, 3)] },
+  ];
+  runtime.discards = [makeTile('wan', 8, 0)];
+  game.seats[1]!.discards = [makeTile('dragon', 1, 0)];
+  game.phase = 'self-turn';
+  game.currentSeat = 0;
+
+  const action = game.availableFor(0).find((item) => item.kind === 'close-gate');
+  assert.deepEqual(action?.tileIds, [gateDiscard.id]);
+
+  const missingTile = game.apply(0, { kind: 'close-gate' }, 'gate-missing', game.sequence);
+  assert.equal(missingTile.ok, false);
+
+  const result = game.apply(0, { kind: 'close-gate', tileId: gateDiscard.id }, 'gate-1', game.sequence);
+  assert.equal(result.ok, true, result.error);
+  assert.equal(runtime.closedTwoPair, true);
+  assert.equal(runtime.closed, true);
+  assert.deepEqual(runtime.closedTwoPairKeys, ['tong-1', 'tong-2']);
+  assert.deepEqual(runtime.hand.map((tile) => tile.key).sort(), ['tong-1', 'tong-1', 'tong-2', 'tong-2']);
+  assert.deepEqual(runtime.discardedBeforeClose.sort(), ['dragon-1', 'wan-8', 'wan-9']);
+  assert.equal(runtime.discards.some((tile) => tile.id === gateDiscard.id), true);
+});
+
+test('有吃牌或不足三组时不能两对关门', () => {
+  const game = new PizhouGame({ dealer: 0 });
+  const runtime = game.seats[0]!;
+  runtime.hand = [
+    makeTile('tong', 1, 0), makeTile('tong', 1, 1),
+    makeTile('tong', 2, 0), makeTile('tong', 2, 1),
+    makeTile('wan', 9, 0),
+  ];
+  runtime.melds = [
+    { type: 'peng', tiles: [makeTile('tiao', 2, 0), makeTile('tiao', 2, 1), makeTile('tiao', 2, 2)] },
+    { type: 'kan', tiles: [makeTile('tiao', 3, 0), makeTile('tiao', 3, 1), makeTile('tiao', 3, 2)] },
+    { type: 'chi', tiles: [makeTile('wan', 3, 0), makeTile('wan', 4, 0), makeTile('wan', 5, 0)] },
+  ];
+  game.phase = 'self-turn';
+  game.currentSeat = 0;
+  assert.equal(game.availableFor(0).some((item) => item.kind === 'close-gate'), false);
+
+  runtime.melds = runtime.melds.slice(0, 2);
+  assert.equal(game.availableFor(0).some((item) => item.kind === 'close-gate'), false);
+});
+
+test('四组完成后只剩一张单钓对子，自动算关门', () => {
+  const game = new PizhouGame({ dealer: 0 });
+  const runtime = game.seats[0]!;
+  const waitTile = makeTile('tong', 5, 0);
+  const discard = makeTile('wan', 8, 0);
+  runtime.hand = [waitTile, discard];
+  runtime.melds = [
+    { type: 'peng', tiles: [makeTile('tiao', 2, 0), makeTile('tiao', 2, 1), makeTile('tiao', 2, 2)] },
+    { type: 'kan', tiles: [makeTile('tiao', 3, 0), makeTile('tiao', 3, 1), makeTile('tiao', 3, 2)] },
+    { type: 'peng', tiles: [makeTile('tiao', 4, 0), makeTile('tiao', 4, 1), makeTile('tiao', 4, 2)] },
+    { type: 'an-gang', tiles: [makeTile('tiao', 5, 0), makeTile('tiao', 5, 1), makeTile('tiao', 5, 2), makeTile('tiao', 5, 3)] },
+  ];
+  game.phase = 'self-turn';
+  game.currentSeat = 0;
+
+  const result = game.apply(0, { kind: 'discard', tileId: discard.id }, 'single-wait-close', game.sequence);
+  assert.equal(result.ok, true, result.error);
+  assert.equal(runtime.hand.length, 1);
+  assert.equal(runtime.hand[0]?.id, waitTile.id);
+  assert.equal(runtime.closed, true);
+  assert.equal(runtime.closedTwoPair, false);
+  assert.equal(runtime.waitKey, waitTile.key);
+});
+
+test('单钓关门允许换听口，并继续保留关门状态', () => {
+  const game = new PizhouGame({ dealer: 0 });
+  const runtime = game.seats[0]!;
+  const oldWait = makeTile('tong', 5, 0);
+  const newWait = makeTile('wan', 8, 0);
+  runtime.hand = [oldWait, newWait];
+  runtime.melds = [
+    { type: 'peng', tiles: [makeTile('tiao', 2, 0), makeTile('tiao', 2, 1), makeTile('tiao', 2, 2)] },
+    { type: 'kan', tiles: [makeTile('tiao', 3, 0), makeTile('tiao', 3, 1), makeTile('tiao', 3, 2)] },
+    { type: 'peng', tiles: [makeTile('tiao', 4, 0), makeTile('tiao', 4, 1), makeTile('tiao', 4, 2)] },
+    { type: 'an-gang', tiles: [makeTile('tiao', 5, 0), makeTile('tiao', 5, 1), makeTile('tiao', 5, 2), makeTile('tiao', 5, 3)] },
+  ];
+  runtime.closed = true;
+  runtime.waitKey = oldWait.key;
+  game.phase = 'self-turn';
+  game.currentSeat = 0;
+
+  const result = game.apply(0, { kind: 'discard', tileId: oldWait.id }, 'single-wait-change', game.sequence);
+  assert.equal(result.ok, true, result.error);
+  assert.equal(runtime.closed, true);
+  assert.equal(runtime.closedTwoPair, false);
+  assert.equal(runtime.waitKey, newWait.key);
+});
+
+test('两对关门后拆对子换听口，关门立即失效', () => {
+  const game = new PizhouGame({ dealer: 0 });
+  const runtime = game.seats[0]!;
+  const splitPair = makeTile('tong', 1, 0);
+  runtime.hand = [
+    splitPair, makeTile('tong', 1, 1),
+    makeTile('tong', 2, 0), makeTile('tong', 2, 1),
+    makeTile('wan', 8, 0),
+  ];
+  runtime.melds = [
+    { type: 'peng', tiles: [makeTile('tiao', 2, 0), makeTile('tiao', 2, 1), makeTile('tiao', 2, 2)] },
+    { type: 'kan', tiles: [makeTile('tiao', 3, 0), makeTile('tiao', 3, 1), makeTile('tiao', 3, 2)] },
+    { type: 'peng', tiles: [makeTile('tiao', 4, 0), makeTile('tiao', 4, 1), makeTile('tiao', 4, 2)] },
+  ];
+  runtime.closed = true;
+  runtime.closedTwoPair = true;
+  runtime.closedTwoPairKeys = ['tong-1', 'tong-2'];
+  game.phase = 'self-turn';
+  game.currentSeat = 0;
+
+  const result = game.apply(0, { kind: 'discard', tileId: splitPair.id }, 'two-pair-change', game.sequence);
+  assert.equal(result.ok, true, result.error);
+  assert.equal(runtime.closed, false);
+  assert.equal(runtime.closedTwoPair, false);
+  assert.deepEqual(runtime.closedTwoPairKeys, []);
+});
+
 test('锁定坎可升级：别人打第四张为送杠，自己摸第四张可自杠', () => {
   const game = new PizhouGame({ dealer: 0 });
   const kanTiles = [makeTile('tiao', 1, 0), makeTile('tiao', 1, 1), makeTile('tiao', 1, 2)];
@@ -136,6 +267,22 @@ test('锁定坎可升级：别人打第四张为送杠，自己摸第四张可�
   game.phase = 'self-turn';
   game.currentSeat = 1;
   assert.equal(game.availableFor(1).some((item) => item.kind === 'bu-gang' && item.key === 'tiao-1'), true);
+});
+
+test('允许抢补杠胡，补杠玩家视为点炮方', () => {
+  const game = new PizhouGame({ dealer: 0 });
+  game.seats[1]!.hand = [
+    makeTile('wan', 1, 0), makeTile('wan', 2, 0), makeTile('wan', 3, 0),
+    makeTile('wan', 4, 0), makeTile('wan', 5, 0), makeTile('wan', 6, 0),
+    makeTile('wan', 7, 0), makeTile('wan', 8, 0), makeTile('wan', 9, 0),
+    makeTile('tiao', 1, 0), makeTile('tiao', 2, 0), makeTile('tiao', 3, 0),
+    makeTile('tong', 5, 0),
+  ];
+  const robbedTile = makeTile('tong', 5, 1);
+  const actions = game['buildClaimCandidates'](robbedTile, 0, 'bu-gang')
+    .find((candidate) => candidate.seat === 1)?.actions;
+  assert.equal(actions?.some((action) => action.kind === 'hu'), true);
+  assert.equal(actions?.some((action) => action.kind === 'peng' || action.kind === 'ming-gang'), false);
 });
 
 test('过期 sequence 和重复 actionId 会被拒绝', () => {

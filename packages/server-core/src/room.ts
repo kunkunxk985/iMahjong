@@ -1,11 +1,14 @@
-import { randomInt, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import type { WebSocket } from 'ws';
 import {
   EMPTY_ROOM_TTL_MS,
   HEARTBEAT_TIMEOUT_MS,
-  NICKNAME_MAX,
   PLAYER_COUNT,
   RECONNECT_WINDOW_MS,
+  generateRoomCode,
+  isValidRoomCode,
+  normalizeRoomCode,
+  sanitizeNickname,
   type C2SMessage,
   type ClientView,
   type GameAction,
@@ -53,7 +56,7 @@ export class Room {
   addPlayer(nickname: string, ws: WebSocket): RoomPlayer | string {
     const seat = this.players.findIndex((player) => player === null);
     if (seat < 0) return '房间已满';
-    const name = sanitizeNickname(nickname, seat);
+    const name = sanitizeNickname(nickname, `玩家${seat + 1}`);
     if (this.occupied.some((player) => player.nickname === name)) return '昵称已被使用';
     const player: RoomPlayer = {
       seat,
@@ -258,7 +261,7 @@ export class RoomManager {
   private readonly rooms = new Map<string, Room>();
 
   create(nickname: string, ws: WebSocket, solo = false): { room: Room; player: RoomPlayer } {
-    const room = new Room(this.uniqueCode());
+    const room = new Room(generateRoomCode((code) => this.rooms.has(code)));
     const player = room.addPlayer(nickname, ws);
     if (typeof player === 'string') throw new Error(player);
     if (solo) {
@@ -271,7 +274,9 @@ export class RoomManager {
   }
 
   join(roomCode: string, nickname: string, ws: WebSocket): { room: Room; player: RoomPlayer } | string {
-    const room = this.rooms.get(roomCode.trim().toUpperCase());
+    const code = normalizeRoomCode(roomCode);
+    if (!isValidRoomCode(code)) return '房间号应为6位数字';
+    const room = this.rooms.get(code);
     if (!room) return '房间不存在';
     if (room.phase === 'playing') return '对局已开始，请使用重连';
     if (room.occupied.length >= PLAYER_COUNT) return '房间已满';
@@ -296,7 +301,9 @@ export class RoomManager {
   }
 
   reconnect(roomCode: string, token: string, ws: WebSocket): { room: Room; player: RoomPlayer } | string {
-    const room = this.rooms.get(roomCode);
+    const code = normalizeRoomCode(roomCode);
+    if (!isValidRoomCode(code)) return '房间号应为6位数字';
+    const room = this.rooms.get(code);
     if (!room) return '房间不存在';
     const player = room.findByToken(token);
     if (!player) return '找不到原来的座位';
@@ -321,32 +328,25 @@ export class RoomManager {
   }
 
   get(code: string): Room | undefined {
-    return this.rooms.get(code);
+    return this.rooms.get(normalizeRoomCode(code));
   }
 
   all(): Room[] {
     return [...this.rooms.values()];
   }
 
-  sweep(now = Date.now()): void {
+  sweep(now = Date.now()): string[] {
+    const removed: string[] = [];
     for (const [code, room] of this.rooms) {
       const { expired } = room.sweep(now);
-      if (expired) this.rooms.delete(code);
+      if (expired) {
+        this.rooms.delete(code);
+        removed.push(code);
+      }
     }
+    return removed;
   }
 
-  private uniqueCode(): string {
-    for (let i = 0; i < 50; i += 1) {
-      const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
-      if (!this.rooms.has(code)) return code;
-    }
-    throw new Error('无法分配房间号');
-  }
-}
-
-export function sanitizeNickname(raw: string, seat: number): string {
-  const trimmed = raw.replace(/\s+/g, ' ').trim().slice(0, NICKNAME_MAX);
-  return trimmed || `玩家${seat + 1}`;
 }
 
 export function send(ws: WebSocket | null, message: S2CMessage): void {

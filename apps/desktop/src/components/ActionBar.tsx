@@ -5,6 +5,7 @@ interface ActionBarProps {
   onAction: (action: GameAction) => void;
   onDiscard: () => void;
   canDiscard: boolean;
+  selectedTileId?: string | null;
 }
 
 const LABELS: Record<string, string> = {
@@ -31,21 +32,27 @@ function actionLabel(action: AvailableAction): string {
   return LABELS[action.kind] ?? action.kind;
 }
 
-export function ActionBar({ actions, onAction, onDiscard, canDiscard }: ActionBarProps) {
+export function ActionBar({ actions, onAction, onDiscard, canDiscard, selectedTileId }: ActionBarProps) {
   const buttons = actions.filter((action) => action.kind !== 'discard');
   if (buttons.length === 0 && !canDiscard) return null;
   return (
     <div className="action-bar">
-      {buttons.map((action, index) => (
-        <button
-          key={`${action.kind}-${action.key ?? ''}-${action.tileIds?.join('-') ?? index}`}
-          type="button"
-          className={`btn-action ${action.kind === 'hu' ? 'primary' : ''} ${action.kind === 'pass' ? 'ghost' : ''}`}
-          onClick={() => onAction(action)}
-        >
-          {actionLabel(action)}
-        </button>
-      ))}
+      {buttons.map((action, index) => {
+        const needsGateDiscard = action.kind === 'close-gate' && Boolean(action.tileIds?.length);
+        const gateTileValid = !needsGateDiscard || Boolean(selectedTileId && action.tileIds?.includes(selectedTileId));
+        return (
+          <button
+            key={`${action.kind}-${action.key ?? ''}-${action.tileIds?.join('-') ?? index}`}
+            type="button"
+            className={`btn-action ${action.kind === 'hu' ? 'primary' : ''} ${action.kind === 'pass' ? 'ghost' : ''}`}
+            disabled={!gateTileValid}
+            title={needsGateDiscard && !gateTileValid ? '先选择一张牌；打出后留下两对才能关门' : undefined}
+            onClick={() => onAction({ ...action, tileId: needsGateDiscard ? selectedTileId ?? undefined : action.tileId })}
+          >
+            {actionLabel(action)}
+          </button>
+        );
+      })}
       {canDiscard ? (
         <button type="button" className="btn-action" onClick={onDiscard}>
           出牌

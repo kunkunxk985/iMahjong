@@ -6,6 +6,7 @@ const timers = new Map<string, ReturnType<typeof setTimeout>>();
 export function scheduleBots(room: Room): void {
   const prev = timers.get(room.code);
   if (prev) clearTimeout(prev);
+  timers.delete(room.code);
   if (!room.solo) return;
   if (room.phase === 'settlement') {
     for (const player of room.occupied) {
@@ -17,9 +18,26 @@ export function scheduleBots(room: Room): void {
   timers.set(
     room.code,
     setTimeout(() => {
+      timers.delete(room.code);
       stepBots(room);
     }, botDelayMs(room)),
   );
+}
+
+export function cancelBots(roomCode: string): void {
+  const timer = timers.get(roomCode);
+  if (timer) clearTimeout(timer);
+  timers.delete(roomCode);
+}
+
+export function cancelAllBots(): void {
+  for (const timer of timers.values()) clearTimeout(timer);
+  timers.clear();
+}
+
+/** 仅供生命周期测试和诊断使用。 */
+export function hasScheduledBots(roomCode: string): boolean {
+  return timers.has(roomCode);
 }
 
 function botDelayMs(room: Room): number {

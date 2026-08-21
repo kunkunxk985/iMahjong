@@ -227,6 +227,7 @@ export class PizhouGame {
         isDealer: seat === this.dealer,
         isBot: meta.isBot,
         score: meta.score,
+        closed: runtime.closed,
         handCount: runtime.hand.length,
         discards: runtime.discards.map((tile) => ({ ...tile })),
         melds: runtime.melds.map((meld) => {
@@ -303,7 +304,7 @@ export class PizhouGame {
       return this.declareHu(seat, runtime.hand, true);
     }
     if (action.kind === 'close-gate') {
-      return this.closeGate(seat);
+      return this.closeGate(seat, action.tileId);
     }
     if (action.kind === 'kan') {
       return this.declareKan(seat, action.key);
@@ -339,9 +340,13 @@ export class PizhouGame {
     runtime.lastDrawnId = undefined;
     runtime.hand = sortTiles(runtime.hand);
     if (!runtime.firstDiscardKey) runtime.firstDiscardKey = tile.key;
-    if (!runtime.closed && !runtime.discardedBeforeClose.includes(tile.key)) {
-      runtime.discardedBeforeClose.push(tile.key);
+    // 臭牌按全桌历史判断；尚未关门的玩家持续记录每一家打出的牌。
+    for (const target of this.seats) {
+      if (!target.closed && !target.discardedBeforeClose.includes(tile.key)) {
+        target.discardedBeforeClose.push(tile.key);
+      }
     }
+    this.refreshTwoPairClose(runtime);
     this.refreshWaitFlags(runtime);
     this.lastDiscard = { tile, fromSeat: seat };
     this.firstDiscardDone = true;
@@ -538,7 +543,7 @@ export class PizhouGame {
     }
     if (best.action.kind === 'hu') {
       const winner = this.seats[best.seat]!;
-      this.declareHu(best.seat, [...winner.hand, pending.tile], false);
+      this.declareHu(best.seat, [...winner.hand, pending.tile], false, pending.tile);
       return;
     }
     if (pending.reason === 'bu-gang') {
@@ -623,36 +628,85 @@ export class PizhouGame {
     return this.finishWin(seat, this.seats[seat]!.hand, 'qidong-gang-hu', true);
   }
 
-  private declareHu(seat: number, concealed: Tile[], selfDraw: boolean): ApplyResult {
+  private declareHu(seat: number, concealed: Tile[], selfDraw: boolean, claimedTile?: Tile): ApplyResult {
     if (!canHuTiles(concealed, this.seats[seat]!.melds.length)) {
       return { ok: false, error: '还不能胡牌', changed: false };
     }
     const winType: WinType = !this.firstDiscardDone && this.hadOpeningKong ? 'qidong-gang-hu' : 'ping-hu';
 
-    if (!selfDraw) {
-      const winTile = concealed.find((tile) => !this.seats[seat]!.hand.some((own) => own.id === tile.id));
-      if (winTile && this.lastDiscard && this.lastDiscard.tile.id === winTile.id) {
-        const from = this.seats[this.lastDiscard.fromSeat]!;
+    if (!selfDraw && claimedTile) {
+      const fromSeat = this.lastDiscard?.fromSeat ?? this.pending?.fromSeat;
+      if (fromSeat !== undefined) {
+        const from = this.seats[fromSeat]!;
         const last = from.discards[from.discards.length - 1];
-        if (last && last.id === winTile.id) from.discards.pop();
+        if (last && last.id === claimedTile.id) from.discards.pop();
       }
     }
 
-    return this.finishWin(seat, concealed, winType, selfDraw);
+    return this.finishWin(seat, concealed, winType, selfDraw, claimedTile);
   }
 
-  private closeGate(seat: number): ApplyResult {
+  private closeGate(seat: number, discardTileId?: string): ApplyResult {
     const runtime = this.seats[seat]!;
+    if (runtime.closedTwoPair) {
+      return { ok: false, error: '本局已经关门', changed: false };
+    }
+    if (runtime.melds.length !== 3 || runtime.melds.some((meld) => meld.type === 'chi')) {
+      return { ok: false, error: '需要先有三组碰、坎或杠才能关门', changed: false };
+    }
     const counts: Record<string, number> = {};
     for (const tile of runtime.hand) counts[tile.key] = (counts[tile.key] ?? 0) + 1;
-    if (runtime.hand.length !== 4 || Object.values(counts).filter((n) => n === 2).length !== 2) {
-      return { ok: false, error: '手里不是两对，不能关门', changed: false };
+    const alreadyTwoPairs = runtime.hand.length === 4 && Object.values(counts).filter((n) => n === 2).length === 2;
+
+    if (!alreadyTwoPairs) {
+      if (!discardTileId) return { ok: false, error: '请先选择关门时要出的牌', changed: false };
+      const remaining = runtime.hand.filter((tile) => tile.id !== discardTileId);
+      const remainingCounts: Record<string, number> = {};
+      for (const tile of remaining) remainingCounts[tile.key] = (remainingCounts[tile.key] ?? 0) + 1;
+      const leavesTwoPairs = remaining.length === 4 && Object.values(remainingCounts).filter((n) => n === 2).length === 2;
+      if (!leavesTwoPairs) return { ok: false, error: '打出这张后不是两对，不能关门', changed: false };
+
+      const discarded = this.discard(seat, discardTileId);
+      if (!discarded.ok) return discarded;
+      runtime.discardedBeforeClose = this.allDiscardedKeys();
+      runtime.closed = true;
+      runtime.closedTwoPair = true;
+      runtime.closedTwoPairKeys = this.twoPairKeys(runtime.hand);
+      return discarded;
     }
+
     runtime.closed = true;
     runtime.closedTwoPair = true;
-    runtime.discardedBeforeClose = this.seats.flatMap((item) => item.discards.map((tile) => tile.key));
+    runtime.closedTwoPairKeys = this.twoPairKeys(runtime.hand);
+    runtime.discardedBeforeClose = this.allDiscardedKeys();
     this.bump();
     return { ok: true, changed: true };
+  }
+
+  private twoPairKeys(hand: Tile[]): string[] {
+    const counts: Record<string, number> = {};
+    for (const tile of hand) counts[tile.key] = (counts[tile.key] ?? 0) + 1;
+    return Object.entries(counts)
+      .filter(([, count]) => count === 2)
+      .map(([key]) => key)
+      .sort();
+  }
+
+  private allDiscardedKeys(): string[] {
+    return [...new Set(this.seats.flatMap((seat) => seat.discards.map((tile) => tile.key)))];
+  }
+
+  private refreshTwoPairClose(seat: SeatRuntime): void {
+    if (!seat.closedTwoPair) return;
+    const currentKeys = this.twoPairKeys(seat.hand);
+    const unchanged = currentKeys.length === 2
+      && currentKeys.every((key, index) => key === seat.closedTwoPairKeys[index]);
+    if (unchanged) return;
+    seat.closed = false;
+    seat.closedTwoPair = false;
+    seat.closedTwoPairKeys = [];
+    // 关门失效后，之前漏记的全桌牌河也全部纳入臭牌历史。
+    seat.discardedBeforeClose = this.allDiscardedKeys();
   }
 
   private refreshWaitFlags(seat: SeatRuntime): void {
@@ -662,7 +716,8 @@ export class PizhouGame {
         seat.waitKey = key;
         seat.closed = true;
       } else if (seat.waitKey !== key) {
-        seat.changed = true;
+        // 单钓允许换听口，关门和包庄资格继续保留。
+        seat.waitKey = key;
       }
       return;
     }
@@ -677,25 +732,36 @@ export class PizhouGame {
     return firsts.every(Boolean) && new Set(firsts).size === 1;
   }
 
-  private seatPayload(winnerSeat: number | null, winnerHand?: Tile[], winningDiscardId?: string): SeatScoreInput[] {
+  private seatPayload(
+    winnerSeat: number | null,
+    winnerHand?: Tile[],
+    winningDiscardId?: string,
+    winningTileId?: string,
+  ): SeatScoreInput[] {
     return this.seats.map((seat, index) => ({
       hand: index === winnerSeat && winnerHand ? winnerHand : seat.hand,
       exposed: seat.melds,
       winningDiscardId: index === winnerSeat ? winningDiscardId : undefined,
+      winningTileId: index === winnerSeat ? winningTileId : undefined,
       changed: seat.changed,
       closedTwoPair: seat.closedTwoPair,
       discardedBeforeClose: seat.discardedBeforeClose.slice(),
     }));
   }
 
-  private finishWin(seat: number, concealed: Tile[], winType: WinType, selfDraw: boolean): ApplyResult {
+  private finishWin(seat: number, concealed: Tile[], winType: WinType, selfDraw: boolean, claimedTile?: Tile): ApplyResult {
+    const winningDiscardId = selfDraw ? undefined : (claimedTile?.id ?? this.lastDiscard?.tile.id);
+    const winningTileId = selfDraw ? this.seats[seat]!.lastDrawnId : undefined;
+    const discardKey = selfDraw ? null : (claimedTile?.key ?? this.lastDiscard?.tile.key ?? concealed[concealed.length - 1]?.key);
+    const discarderSeat = selfDraw ? null : (this.lastDiscard?.fromSeat ?? this.pending?.fromSeat ?? null);
+
     const result = settleChaHu({
-      seats: this.seatPayload(seat, concealed, selfDraw ? undefined : this.lastDiscard?.tile.id),
+      seats: this.seatPayload(seat, concealed, winningDiscardId, winningTileId),
       winnerSeat: seat,
       dealer: this.dealer,
       ron: !selfDraw,
-      discardKey: selfDraw ? null : this.lastDiscard?.tile.key ?? concealed[concealed.length - 1]?.key,
-      discarderSeat: selfDraw ? null : this.lastDiscard?.fromSeat ?? null,
+      discardKey,
+      discarderSeat,
       openingGang: winType === 'qidong-gang-hu',
       winType,
     });
@@ -739,6 +805,7 @@ function emptySeat(): SeatRuntime {
     changed: false,
     closed: false,
     closedTwoPair: false,
+    closedTwoPairKeys: [],
     discardedBeforeClose: [],
   };
 }

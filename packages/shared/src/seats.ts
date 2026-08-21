@@ -20,8 +20,8 @@ export function clockwiseDistance(from: number, to: number): number {
   return (to - from + PLAYER_COUNT) % PLAYER_COUNT;
 }
 
-export function sanitizeNickname(raw: string): string {
-  return raw.replace(/\s+/g, ' ').trim().slice(0, NICKNAME_MAX);
+export function sanitizeNickname(raw: string, fallback = '玩家'): string {
+  return raw.replace(/\s+/g, ' ').trim().slice(0, NICKNAME_MAX) || fallback;
 }
 
 export function normalizeRoomCode(raw: string): string {

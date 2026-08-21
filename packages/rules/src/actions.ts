@@ -75,7 +75,7 @@ export function concealedAnGangActions(hand: Tile[]): AvailableAction[] {
   return actions;
 }
 
-/** 三张相同即可坎上锁定，便于送杠/自杠；暗刻即使不锁，结算也按坎计胡。 */
+/** 三张相同可主动坎上并锁定；未坎上的三张不能按坎计胡。 */
 export function concealedKanActions(hand: Tile[]): AvailableAction[] {
   const groups = new Map<string, Tile[]>();
   for (const tile of hand) {
@@ -115,12 +115,27 @@ export function buGangActions(seat: SeatRuntime): AvailableAction[] {
   return actions;
 }
 
+function isTwoPairHand(hand: Tile[]): boolean {
+  if (hand.length !== 4) return false;
+  const counts: Record<string, number> = {};
+  for (const tile of hand) counts[tile.key] = (counts[tile.key] ?? 0) + 1;
+  return Object.values(counts).filter((n) => n === 2).length === 2;
+}
+
+/** 正常摸牌回合手里有 5 张，tileIds 表示打出后恰好留下两对的候选牌。 */
+export function closeGateDiscardIds(seat: SeatRuntime): string[] {
+  if (seat.closedTwoPair) return [];
+  if (seat.melds.length !== 3 || seat.melds.some((meld) => meld.type === 'chi')) return [];
+  if (seat.hand.length !== 5) return [];
+  return seat.hand
+    .filter((tile) => isTwoPairHand(seat.hand.filter((item) => item.id !== tile.id)))
+    .map((tile) => tile.id);
+}
+
 export function canCloseGate(seat: SeatRuntime): boolean {
   if (seat.closedTwoPair) return false;
-  if (seat.hand.length !== 4) return false;
-  const counts: Record<string, number> = {};
-  for (const tile of seat.hand) counts[tile.key] = (counts[tile.key] ?? 0) + 1;
-  return Object.values(counts).filter((n) => n === 2).length === 2;
+  if (seat.melds.length !== 3 || seat.melds.some((meld) => meld.type === 'chi')) return false;
+  return isTwoPairHand(seat.hand) || closeGateDiscardIds(seat).length > 0;
 }
 
 export function selfTurnActions(seat: SeatRuntime): AvailableAction[] {
@@ -129,7 +144,8 @@ export function selfTurnActions(seat: SeatRuntime): AvailableAction[] {
     actions.push({ kind: 'hu' });
   }
   if (canCloseGate(seat)) {
-    actions.push({ kind: 'close-gate' });
+    const tileIds = closeGateDiscardIds(seat);
+    actions.push({ kind: 'close-gate', tileIds: tileIds.length > 0 ? tileIds : undefined });
   }
   actions.push(...concealedAnGangActions(seat.hand));
   actions.push(...concealedKanActions(seat.hand));
@@ -229,6 +245,12 @@ export function actionMatchesAvailable(action: GameAction, available: AvailableA
     const want = (action.tileIds ?? []).slice().sort().join(',');
     return available.some((item) => item.kind === 'chi' && (item.tileIds ?? []).slice().sort().join(',') === want);
   }
-  if (action.kind === 'close-gate') return available.some((item) => item.kind === 'close-gate');
+  if (action.kind === 'close-gate') {
+    return available.some((item) => {
+      if (item.kind !== 'close-gate') return false;
+      if (!item.tileIds?.length) return !action.tileId;
+      return Boolean(action.tileId && item.tileIds.includes(action.tileId));
+    });
+  }
   return false;
 }
