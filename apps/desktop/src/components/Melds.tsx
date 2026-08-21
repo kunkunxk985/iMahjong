@@ -29,6 +29,10 @@ export function Melds({
 
   const kanMelds = melds.filter((m) => m.type === 'kan' || m.type === 'an-gang');
   const openMelds = melds.filter((m) => m.type !== 'kan' && m.type !== 'an-gang');
+  const orderedMelds = [
+    ...kanMelds.map((meld) => ({ meld, isKan: true })),
+    ...openMelds.map((meld) => ({ meld, isKan: false })),
+  ];
 
   const renderMeld = (meld: Meld, index: number, isKan: boolean) => {
     const isSecret = isKan && isOpponent;
@@ -51,6 +55,7 @@ export function Melds({
               tile={tile}
               back={isSecret || tile.key === 'back'}
               small
+              pose={isSecret ? 'rack' : 'lie'}
               highlightSame={Boolean(highlightKey && !isSecret && tile.key !== 'back' && tile.key === highlightKey)}
               onHover={(hovered) => {
                 if (!isSecret && tile.key !== 'back') {
@@ -65,17 +70,11 @@ export function Melds({
   };
 
   return (
-    <div className={`melds-container ${vertical ? 'vertical' : ''}`}>
-      {kanMelds.length > 0 ? (
-        <div className="meld-section kan-section">
-          {kanMelds.map((meld, i) => renderMeld(meld, i, true))}
-        </div>
-      ) : null}
-      {openMelds.length > 0 ? (
-        <div className="meld-section open-section">
-          {openMelds.map((meld, i) => renderMeld(meld, i, false))}
-        </div>
-      ) : null}
+    <div
+      className={`melds-container ${vertical ? 'vertical' : ''} ${melds.length >= 3 ? 'has-many' : ''}`}
+      data-meld-count={melds.length}
+    >
+      {orderedMelds.map(({ meld, isKan }, index) => renderMeld(meld, index, isKan))}
     </div>
   );
 }

@@ -12,6 +12,7 @@ interface TileViewProps {
   entering?: boolean;
   highlightSame?: boolean;
   className?: string;
+  pose?: 'hand' | 'lie' | 'rack';
   onClick?: () => void;
   onDoubleClick?: () => void;
   onHover?: (hovered: boolean) => void;
@@ -36,6 +37,7 @@ export function TileView({
   entering,
   highlightSame,
   className: extraClassName,
+  pose = 'hand',
   onClick,
   onDoubleClick,
   onHover,
@@ -55,6 +57,7 @@ export function TileView({
     tenpaiHint ? 'tenpai-hint' : '',
     entering ? 'entering' : '',
     extraClassName ?? '',
+    `pose-${pose}`,
   ]
     .filter(Boolean)
     .join(' ');
@@ -71,15 +74,17 @@ export function TileView({
 
   const body = (
     <>
-      <span className="tile-depth" aria-hidden="true" />
-      <span className="tile-cap">
-        <img
-          className="tile-skin"
-          src={isBack ? './assets/tile-back.png' : faceSrc(tile!)}
-          alt=""
-          draggable={false}
-        />
-        <span className="tile-sheen" aria-hidden="true" />
+      <span className="tile-3d">
+        <span className="tile-face">
+          <img
+            className="tile-skin"
+            src={isBack ? './assets/tile-back.png' : faceSrc(tile!)}
+            alt=""
+            draggable={false}
+          />
+        </span>
+        <span className="tile-edge-x" aria-hidden="true" />
+        <span className="tile-edge-y" aria-hidden="true" />
       </span>
       {tenpaiHint ? <span className="tenpai-badge">听</span> : null}
     </>

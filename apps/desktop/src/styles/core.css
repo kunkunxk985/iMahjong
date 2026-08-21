@@ -358,26 +358,17 @@ button, input { font: inherit; }
 .melds-container {
   display: flex;
   align-items: flex-end;
+  justify-content: center;
+  flex-wrap: nowrap;
   gap: 10px;
 }
 
 .melds-container.vertical {
-  max-height: 280px;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.meld-section {
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-}
-
-.melds-container.vertical .meld-section {
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  align-items: end;
+  justify-content: center;
+  gap: 8px 10px;
 }
 
 .meld {
@@ -433,11 +424,13 @@ button, input { font: inherit; }
 .tile-showcase {
   display: flex;
   justify-content: center;
-  gap: 6px;
+  gap: 10px;
   margin: 4px 0 14px;
+  perspective: 520px;
 }
 
 .tile {
+  --tile-thick: 8px;
   position: relative;
   width: 56px;
   height: 80px;
@@ -446,112 +439,119 @@ button, input { font: inherit; }
   overflow: visible;
   background: transparent;
   color: var(--ink);
-  filter: drop-shadow(1px 4px 3px rgba(0, 16, 6, 0.4));
   cursor: default;
-  transform: translateZ(0);
-  transition: transform 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.2), filter 0.16s ease;
+  transform-style: preserve-3d;
+  transition: transform 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
 button.tile { cursor: pointer; }
 .tile.small {
+  --tile-thick: 6px;
   width: 30px;
   height: 43px;
-  filter: drop-shadow(1px 2px 2px rgba(0, 16, 6, 0.35));
 }
 
-/* Subtle Natural Tile Depth */
-.tile-depth {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 2px;
-  bottom: -4px;
-  z-index: 0;
-  border-radius: 8% / 6%;
-  background:
-    linear-gradient(180deg, #d8cbaf 0%, #b8a684 60%, #7d6b49 100%);
-  box-shadow: 0 3px 6px rgba(0, 12, 5, 0.45);
-}
-
-/* Clean Porcelain Ivory Cap with Soft Bevel */
-.tile-cap {
+.tile-3d {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  transform-style: preserve-3d;
+}
+
+.tile-face {
+  position: absolute;
+  inset: 0;
   overflow: hidden;
-  border-radius: 7% / 5%;
-  background:
-    linear-gradient(160deg, #fbf8f0 0%, #f5efe2 50%, #ede4d2 100%);
+  border-radius: 5px;
+  background: #f4ead8;
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.8),
-    0 1px 2px rgba(0, 20, 8, 0.2);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.35),
+    0 2px 0 rgba(0, 0, 0, 0.18);
+  transform: translateZ(0.4px);
+  backface-visibility: hidden;
 }
 
 .tile-skin {
   position: absolute;
   inset: 0;
-  z-index: 1;
   width: 100%;
   height: 100%;
-  max-width: none;
   display: block;
-  object-fit: fill;
+  object-fit: cover;
   pointer-events: none;
   user-select: none;
 }
 
-/* Full Celestial Sapphire Tile Back */
-.tile.is-back .tile-depth {
-  background:
-    linear-gradient(180deg, #1e5a9c 0%, #123d72 60%, #092040 100%);
-}
-.tile.is-back .tile-cap {
-  background:
-    radial-gradient(ellipse at 40% 30%, #5d9ee8 0%, #2f79d0 50%, #154c94 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(180, 220, 255, 0.65),
-    inset 0 2px 4px rgba(255, 255, 255, 0.4);
-}
-
-/* Glassy Ceramic Sheen Reflection */
-.tile-sheen {
+.tile-edge-x,
+.tile-edge-y {
   position: absolute;
-  inset: 0;
-  z-index: 2;
   pointer-events: none;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.08) 22%, transparent 45%);
-  box-shadow:
-    inset 1px 1px 0.5px rgba(255, 255, 255, 0.7),
-    inset -1px -1px 0.5px rgba(60, 42, 14, 0.15);
-}
-.tile.is-back .tile-sheen {
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.15) 28%, transparent 55%),
-    linear-gradient(180deg, transparent 65%, rgba(10, 35, 75, 0.35) 100%);
-  box-shadow:
-    inset 1px 1px 1px rgba(200, 235, 255, 0.8),
-    inset -1px -2px 1px rgba(5, 20, 48, 0.45);
+  background: linear-gradient(180deg, #efe4cc 0%, #c4b089 55%, #8d7a52 100%);
 }
 
-/* Interactive 3D Lift & Shadow Stretch */
-button.tile:hover {
-  transform: translateY(-8px);
-  filter: drop-shadow(2px 8px 6px rgba(0, 16, 6, 0.45));
+.tile-edge-x {
+  top: 0;
+  right: 0;
+  width: var(--tile-thick);
+  height: 100%;
+  transform-origin: left center;
+  transform: translateX(100%) rotateY(88deg);
+  border-radius: 0 3px 3px 0;
 }
-.tile.selected {
+
+.tile-edge-y {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: var(--tile-thick);
+  transform-origin: top center;
+  transform: translateY(100%) rotateX(-88deg);
+  background: linear-gradient(180deg, #cbb892 0%, #8a7348 100%);
+  border-radius: 0 0 3px 3px;
+}
+
+.tile.is-back .tile-face {
+  background: #157a3a;
+  box-shadow: inset 0 0 0 1px rgba(180, 255, 210, 0.25);
+}
+.tile.is-back .tile-edge-x,
+.tile.is-back .tile-edge-y {
+  background: linear-gradient(180deg, #1a8a44 0%, #0b4a24 100%);
+}
+
+.tile.pose-lie {
+  transform: rotateX(54deg);
+  transform-origin: 50% 100%;
+}
+.tile.pose-rack {
+  transform: rotateX(-18deg) translateZ(4px);
+  transform-origin: 50% 100%;
+}
+
+button.tile.pose-hand:hover {
+  transform: translateY(-8px) rotateX(-6deg);
+}
+.tile.pose-hand.selected {
   z-index: 10;
-  transform: translateY(-18px);
-  filter: drop-shadow(3px 14px 10px rgba(0, 16, 6, 0.5));
+  transform: translateY(-18px) rotateX(-8deg);
 }
-.tile.drawn .tile-sheen {
+.tile.drawn .tile-face {
   box-shadow:
     inset 0 0 0 2px rgba(245, 206, 92, 0.95),
-    inset 1px 1px 1px rgba(255, 255, 255, 0.6);
+    0 2px 0 rgba(0, 0, 0, 0.18);
 }
 .tile.dim { opacity: 0.55; }
 .tile.last-out {
-  z-index: 3;
-  filter: drop-shadow(0 0 8px rgba(255, 226, 122, 0.95)) drop-shadow(2px 5px 4px rgba(0, 16, 6, 0.45));
+  z-index: 4;
+  outline: 2px solid rgba(255, 226, 122, 0.95);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile.pose-lie,
+  .tile.pose-rack,
+  button.tile.pose-hand:hover,
+  .tile.pose-hand.selected {
+    transform: none;
+  }
 }
 
 .glyph {
