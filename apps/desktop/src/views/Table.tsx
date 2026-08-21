@@ -81,23 +81,11 @@ function BoardPlayer({
         <strong>{player.nickname}{you ? ' · 你' : ''}</strong>
         <span>
           {player.isDealer ? <b className="board-dealer">庄</b> : null}
+          {player.closed ? <b className="board-closed">关</b> : null}
           {player.isBot ? '陪练' : player.isHost ? '房主' : player.online ? '在线' : '离线'}
         </span>
       </div>
       <em>{player.score}</em>
-    </div>
-  );
-}
-
-function WallRail({ position, wallCount }: { position: BoardPosition; wallCount: number }) {
-  const maxCount = position === 'top' ? 14 : 7;
-  const count = Math.min(maxCount, Math.max(0, Math.ceil(wallCount / 6)));
-  if (count === 0) return null;
-  return (
-    <div className={`board-wall board-wall-${position}`} aria-hidden="true">
-      {Array.from({ length: count }, (_, index) => (
-        <TileView key={`${position}-wall-${index}`} back small className="board-wall-tile" />
-      ))}
     </div>
   );
 }
@@ -108,7 +96,7 @@ function ConcealedHand({ player, position }: { player: ViewPlayer; position: Boa
   return (
     <div className={`board-concealed board-concealed-${position}`} aria-label={`${SEAT_NAMES[player.seat]}手牌背面`}>
       {Array.from({ length: count }, (_, index) => (
-        <TileView key={`${player.seat}-hand-${index}`} back small className="board-concealed-tile" />
+        <TileView key={`${player.seat}-hand-${index}`} back small pose="rack" className="board-concealed-tile" />
       ))}
     </div>
   );
@@ -132,16 +120,13 @@ function DiscardRiver({
 
   return (
     <div className={`board-discard board-discard-${position}`} aria-label={`${SEAT_NAMES[player.seat]}弃牌区`}>
-      <div className="board-discard-meta">
-        <span className="river-seat-mark">{SEAT_NAMES[player.seat]}</span>
-        <span className="river-count">{String(discards.length).padStart(2, '0')}</span>
-      </div>
       <div className="board-discard-grid">
         {discards.map((tile) => (
           <TileView
             key={tile.id}
             tile={tile}
             small
+            pose="lie"
             last={tile.id === lastDiscardId}
             highlightSame={Boolean(highlightKey && tile.key === highlightKey)}
             onHover={(hovered) => onTileHover?.(hovered ? tile.key : null)}
@@ -491,10 +476,6 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
         </div>
       ) : null}
 
-      <WallRail position="top" wallCount={view.wallCount} />
-      <WallRail position="left" wallCount={view.wallCount} />
-      <WallRail position="right" wallCount={view.wallCount} />
-
       {byRel[2] ? <BoardPlayer player={byRel[2]} position="top" current={view.currentSeat === byRel[2].seat} /> : null}
       {byRel[3] ? <BoardPlayer player={byRel[3]} position="left" current={view.currentSeat === byRel[3].seat} /> : null}
       {byRel[1] ? <BoardPlayer player={byRel[1]} position="right" current={view.currentSeat === byRel[1].seat} /> : null}
@@ -543,6 +524,12 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
           <span>局</span>
         </div>
         <div className="board-turn-copy">{phaseText}</div>
+        {view.lastDiscard ? (
+          <div className="board-last-discard">
+            <span>{view.players.find((p) => p.seat === view.lastDiscard?.fromSeat)?.nickname ?? '刚打'}</span>
+            <TileView tile={view.lastDiscard.tile} pose="lie" last />
+          </div>
+        ) : null}
       </div>
 
       <div className="board-discard-layer" aria-label="四方弃牌">
@@ -575,6 +562,7 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
                 drawn={lastDrawnId === tile.id}
                 tenpaiHint={tenpaiTileIds.has(tile.id)}
                 entering={enteringId === tile.id}
+                pose="hand"
                 highlightSame={Boolean(focusKey && tile.key === focusKey)}
                 onHover={(hovered) => {
                   setHoveredTileKey(hovered ? tile.key : null);
@@ -603,6 +591,7 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
               onAction={handleAction}
               onDiscard={discard}
               canDiscard={canDiscard && Boolean(selectedId)}
+              selectedTileId={selectedId}
             />
           </div>
         </div>
