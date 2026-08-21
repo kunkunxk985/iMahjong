@@ -1,8 +1,8 @@
 # 邳州麻将联机桌面版
 
-正统邳州麻将（查胡麻将）桌面端应用，支持 **四人联机对局**（通过 6 位房间号加入）与 **单机陪练模式**（与 3 位智能陪练练习打牌）。
+正统邳州麻将（查胡麻将）桌面端应用，支持 **四人联机对局**（通过 6 位数字房间号加入）与 **单机陪练模式**（与 3 位智能陪练练习打牌）。
 
-项目结构和当前运行链见 [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md)。当前正式牌桌使用 3D 牌桌场景，运行时素材统一从 `apps/desktop/public/assets/` 加载。
+项目结构和当前运行链见 [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md)。牌桌是 2.5D CSS 实体牌，运行时素材在 `apps/desktop/public/assets/tiles/`。
 
 ## 规则特性
 - **牌库 120 张**：一至九万、一至九筒、一至九条、中发白（无风牌、无花牌）。

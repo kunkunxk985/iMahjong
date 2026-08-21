@@ -1,10 +1,14 @@
-# 素材目录说明
+# 素材目录
 
-运行时素材放在 `apps/desktop/public/assets/`，Vite 构建时会原样复制到桌面客户端。
+运行时只读 `apps/desktop/public/assets/`：
 
-本目录只保存不会直接进入客户端的源素材和参考素材：
+- `tiles/`：万、筒、条、中发白牌面
+- `tile-back.png`：牌背
+- `felt.jpg` / `wood.jpg` / `corner.png`：桌面材质
 
-- `source/tile-front.png`：牌面生成脚本使用的空白牌胚。
-- `reference/tile-sheets/`：牌面参考图集。
+本目录是源素材备份，不进安装包：
 
-客户端实际显示的牌面统一放在 `apps/desktop/public/assets/tiles/`。替换牌面后重新运行 `npm run build` 或打包命令即可。
+- `source/tile-faces/`：牌面原图
+- `source/tile-front.png`：空白牌胚
+
+替换牌面：把 PNG 放到 `apps/desktop/public/assets/tiles/`，再 `npm run build` 或打包。

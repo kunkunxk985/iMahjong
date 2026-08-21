@@ -11,20 +11,17 @@
     "dev:server": "npm run dev -w @pizhou/server",
     "dev:desktop": "npm run dev -w @pizhou/desktop",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "smoke": "tsx apps/server/scripts/smoke.mts",
+    "smoke": "node --import tsx apps/server/scripts/smoke.mts",
     "verify": "npm run typecheck && npm test && npm run smoke && npm run build",
     "clean": "npm run clean -w @pizhou/desktop",
     "build": "npm run build -w @pizhou/desktop",
     "package": "npm run package:mac -w @pizhou/desktop",
     "package:win": "npm run package:win -w @pizhou/desktop",
     "package:mac": "npm run package:mac -w @pizhou/desktop",
-    "test": "npm run test -w @pizhou/rules",
+    "test": "npm run test --workspaces --if-present",
     "dev": "npm run dev:desktop"
   },
   "devDependencies": {
-    "@react-three/postprocessing": "^3.0.5",
-    "concurrently": "^9.2.1",
-    "postprocessing": "^6.39.4",
     "tsx": "^4.19.3"
   },
   "engines": {
@@ -35,8 +32,5 @@
     "esbuild@0.28.2": true,
     "esbuild@0.21.5": true,
     "fsevents@2.3.3": true
-  },
-  "dependencies": {
-    "@react-three/drei": "^10.7.8"
   }
 }
