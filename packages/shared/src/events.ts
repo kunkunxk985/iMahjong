@@ -17,9 +17,7 @@ export const C2S = {
 export const S2C = {
   ROOM_CREATED: 'room:created',
   ROOM_JOINED: 'room:joined',
-  ROOM_STATE: 'room:state',
   GAME_STATE: 'game:state',
-  GAME_ACTION_REQUIRED: 'game:actionRequired',
   GAME_SETTLEMENT: 'game:settlement',
   GAME_ROUND_STARTED: 'game:roundStarted',
   PLAYER_RECONNECTED: 'player:reconnected',
@@ -45,9 +43,7 @@ export type C2SMessage =
 export type S2CMessage =
   | { type: 'room:created'; roomCode: string; token: string; seat: number }
   | { type: 'room:joined'; roomCode: string; token: string; seat: number }
-  | { type: 'room:state'; view: ClientView }
   | { type: 'game:state'; view: ClientView }
-  | { type: 'game:actionRequired'; view: ClientView }
   | { type: 'game:settlement'; settlement: Settlement; view: ClientView }
   | { type: 'game:roundStarted'; view: ClientView }
   | { type: 'player:reconnected'; roomCode: string; token: string; seat: number }
@@ -67,16 +63,12 @@ export function isViewMessage(
   message: S2CMessage,
 ): message is Extract<
   S2CMessage,
-  | { type: 'room:state' }
   | { type: 'game:state' }
-  | { type: 'game:actionRequired' }
   | { type: 'game:settlement' }
   | { type: 'game:roundStarted' }
 > {
   return (
-    message.type === 'room:state' ||
     message.type === 'game:state' ||
-    message.type === 'game:actionRequired' ||
     message.type === 'game:settlement' ||
     message.type === 'game:roundStarted'
   );

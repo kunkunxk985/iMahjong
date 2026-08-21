@@ -9,6 +9,7 @@ export interface SeatRuntime {
   changed: boolean;
   closed: boolean;
   closedTwoPair: boolean;
+  closedTwoPairKeys: string[];
   discardedBeforeClose: string[];
   waitKey?: string;
 }

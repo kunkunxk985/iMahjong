@@ -112,6 +112,8 @@ export interface PublicPlayerView {
   online: boolean;
   isHost: boolean;
   isDealer: boolean;
+  /** 单钓自动关门或两对主动关门，均对牌桌公开显示。 */
+  closed: boolean;
   isBot?: boolean;
   score: number;
   handCount: number;

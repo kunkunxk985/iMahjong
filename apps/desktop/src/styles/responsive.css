@@ -80,6 +80,32 @@
     display: none;
   }
 
+  .board-melds-top {
+    top: 102px;
+    width: min(430px, calc(100% - 130px));
+  }
+
+  .board-melds-left,
+  .board-melds-right {
+    top: 58%;
+    width: 128px;
+    padding: 3px;
+  }
+
+  .board-melds-left { left: 56px; }
+  .board-melds-right { right: 56px; }
+
+  .board-melds-left .melds-container.vertical,
+  .board-melds-right .melds-container.vertical {
+    grid-template-columns: max-content;
+    gap: 4px;
+  }
+
+  .board-opponent-melds .tile {
+    width: 20px !important;
+    height: 29px !important;
+  }
+
   .board-discard-tile {
     width: 28px !important;
     height: 40px !important;

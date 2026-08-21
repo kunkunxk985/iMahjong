@@ -17,7 +17,7 @@ import {
 } from '@pizhou/shared';
 import { findWinDecompositions, type WinDecomp } from './win.ts';
 
-export type UnitKind = 'pair' | 'peng' | 'pung' | 'song_kong' | 'zi_kong';
+export type UnitKind = 'peng' | 'pung' | 'song_kong' | 'zi_kong';
 
 export interface ScoreResult {
   hu: number;
@@ -34,6 +34,8 @@ export interface SeatScoreInput {
   exposed: Meld[];
   /** 点炮胡进来的牌只用于组成胡牌，不得把手里的对子升级为坎。 */
   winningDiscardId?: string;
+  /** 自摸胡时，只有这张摸进来的牌形成的坎才按自摸坎计分。 */
+  winningTileId?: string;
   changed?: boolean;
   closedTwoPair?: boolean;
   discardedBeforeClose?: string[];
@@ -67,7 +69,6 @@ export interface ChaHuResult {
 }
 
 const KIND_CN: Record<UnitKind, string> = {
-  pair: '对',
   peng: '碰',
   pung: '坎',
   song_kong: '送杠',
@@ -92,8 +93,6 @@ export function nextDealer(
 export function unitValue(key: string, kind: UnitKind): { hu: number; yao: number } {
   const yaoTou = isYaoJiu(key);
   const table: Record<`${UnitKind}:${'yao' | 'plain'}`, { hu: number; yao: number }> = {
-    'pair:yao': { hu: 2, yao: 0 },
-    'pair:plain': { hu: 1, yao: 0 },
     'peng:yao': { hu: 2, yao: 0 },
     'peng:plain': { hu: 1, yao: 0 },
     'pung:yao': { hu: 4, yao: 1 },
@@ -149,10 +148,10 @@ function exposedUnits(exposed: Meld[]): Array<{ key: string; kind: UnitKind }> {
   return units;
 }
 
-/** 按张数拆：4=自杠，3=坎，2=对。顺子和单张不计。 */
+/** 按张数拆：4=自杠，3=坎。两张将牌、顺子和单张不计。 */
 function countBasedUnits(
   hand: Array<{ key: string }>,
-  options: { pairs: boolean; pungs: boolean },
+  options: { pungs: boolean },
 ): Array<{ key: string; kind: UnitKind }> {
   const units: Array<{ key: string; kind: UnitKind }> = [];
   for (const [key, raw] of Object.entries(countKeys(hand))) {
@@ -165,15 +164,29 @@ function countBasedUnits(
       units.push({ key, kind: 'pung' });
       n -= 3;
     }
-    if (n >= 2 && options.pairs) {
-      units.push({ key, kind: 'pair' });
-    }
   }
   return units;
 }
 
-function pickWinDecomp(decomps: WinDecomp[]): WinDecomp {
+function pickWinDecomp(
+  decomps: WinDecomp[],
+  winningKey?: string,
+  preferWinningPung = false,
+): WinDecomp {
   return decomps.reduce((best, item) => {
+    // 双碰胡时，优先把最后一张拆进刻子，而不是误拆成将牌。
+    if (winningKey) {
+      const itemHasWinningPung = item.melds.some((meld) => meld.type === 'pung' && meld.key === winningKey);
+      const bestHasWinningPung = best.melds.some((meld) => meld.type === 'pung' && meld.key === winningKey);
+      if (preferWinningPung && itemHasWinningPung !== bestHasWinningPung) {
+        return itemHasWinningPung ? item : best;
+      }
+      // 如果最后一张是将牌，优先保留它作为将牌。
+      if (!preferWinningPung) {
+        if (item.pairKey === winningKey && best.pairKey !== winningKey) return item;
+        if (best.pairKey === winningKey && item.pairKey !== winningKey) return best;
+      }
+    }
     const pungs = item.melds.filter((meld) => meld.type === 'pung').length;
     const bestPungs = best.melds.filter((meld) => meld.type === 'pung').length;
     return pungs > bestPungs ? item : best;
@@ -183,20 +196,23 @@ function pickWinDecomp(decomps: WinDecomp[]): WinDecomp {
 /**
  * 正统查胡拆牌：
  * - 吃/顺子不计胡
- * - 手上的对子（含将牌）0胡
+ * - 暗手里的两张将牌只用于组成胡牌，不计胡
  * - 别人打出来碰的（明碰）普通1胡，幺牌2胡
- * - 自己主动砍上的（坎）普通2胡，幺牌4胡1幺
+ * - 自己主动砍上的坎，或自摸最后一张形成的坎，普通2胡，幺牌4胡1幺
  * - 送杠（明杠）普通4胡，幺牌8胡2幺
  * - 自杠（暗杠）普通6胡，幺牌12胡3幺
- * - 没胡的人只计亮出来/主动坎上的（碰/坎/杠），手牌未锁定的散牌不计胡
- * - 胡的人计胡牌10胡底分 + 碰/坎/杠
- * - 点炮进来的第三张不成坎
+ * - 没胡的人只计亮出来/主动砍上的（碰/坎/杠），手牌未锁定的散牌不计胡
+ * - 双碰点炮时，点炮形成的三张算碰，另一对子不计分
+ * - 双碰自摸时，自摸形成的三张算坎，另一对子不计分
+ * - 单钓补成的最后对子不计胡，只加胡牌基础10胡
+ * - 未主动坎上的手牌刻子不自动计为坎
  */
 export function extractUnits(
   hand: Array<{ key: string; id?: string }>,
   exposed: Meld[],
   isWinner = false,
   winningDiscardId?: string,
+  winningTileId?: string,
   winType?: WinType,
 ): Array<{ key: string; kind: UnitKind }> {
   const units = exposedUnits(exposed);
@@ -207,7 +223,7 @@ export function extractUnits(
   }
 
   if (winType === 'qidong-gang-hu') {
-    units.push(...countBasedUnits(hand, { pairs: true, pungs: true }));
+    units.push(...countBasedUnits(hand, { pungs: true }));
     return units;
   }
 
@@ -217,36 +233,41 @@ export function extractUnits(
     decomps = findWinDecompositions(hand);
   }
   if (decomps.length === 0) {
-    units.push(...countBasedUnits(hand, { pairs: true, pungs: true }));
+    units.push(...countBasedUnits(hand, { pungs: true }));
     return units;
   }
 
-  const decomp = pickWinDecomp(decomps);
-  const winningKey = winningDiscardId
-    ? hand.find((tile) => tile.id === winningDiscardId)?.key
+  const winningId = winningDiscardId ?? winningTileId;
+  const winningKey = winningId
+    ? hand.find((tile) => tile.id === winningId)?.key
     : undefined;
-  const beforeWin = winningDiscardId
-    ? hand.filter((tile) => tile.id !== winningDiscardId)
+  const beforeWin = winningId
+    ? hand.filter((tile) => tile.id !== winningId)
     : hand;
   const countsBefore = countKeys(beforeWin);
+  const winningCompletesPung = Boolean(
+    winningKey && (countsBefore[winningKey] ?? 0) === 2,
+  );
 
-  units.push({ key: decomp.pairKey, kind: 'pair' });
+  const decomp = pickWinDecomp(decomps, winningKey, winningCompletesPung);
+  const winningPung = Boolean(
+    winningCompletesPung
+    && winningKey
+    && decomp.melds.some((meld) => meld.type === 'pung' && meld.key === winningKey),
+  );
+  // 将牌无论是原有对子还是最后一张补成，都只负责完成牌型，不生成计分项。
   for (const meld of decomp.melds) {
     if (meld.type !== 'pung') continue;
-    const ronIncomplete = Boolean(
-      winningKey
-      && meld.key === winningKey
-      && (countsBefore[winningKey] ?? 0) < 3,
-    );
-    units.push({ key: meld.key, kind: ronIncomplete ? 'pair' : 'pung' });
+    // 只有最后一张形成的刻子才在这里计分；其它未主动坎上的暗刻不计分。
+    if (!winningPung || meld.key !== winningKey) continue;
+    units.push({ key: meld.key, kind: winningDiscardId ? 'peng' : 'pung' });
   }
   return units;
 }
 
-export function countPk(hand: Array<{ key: string }>, exposed: Meld[]): {
+export function countPk(_hand: Array<{ key: string }>, exposed: Meld[]): {
   pk: number;
   chow: number;
-  concealedPung: number;
 } {
   let pk = 0;
   let chow = 0;
@@ -254,25 +275,22 @@ export function countPk(hand: Array<{ key: string }>, exposed: Meld[]): {
     if (meld.type === 'chi') chow += 1;
     else if (meldKind(meld)) pk += 1;
   }
-  let concealedPung = 0;
-  for (const n of Object.values(countKeys(hand))) {
-    if ((n ?? 0) >= 3) concealedPung += 1;
-  }
-  return { pk, chow, concealedPung };
+  // 未主动“坎上”的三张仍可拆打，不进入坎数、飘荤或包庄判断。
+  return { pk, chow };
 }
 
 export function isPiaoHun(hand: Array<{ key: string }>, exposed: Meld[]): boolean {
-  const { pk, concealedPung } = countPk(hand, exposed);
-  const totalPk = pk + concealedPung;
+  const { pk } = countPk(hand, exposed);
+  const totalPk = pk;
   const pairs = Object.values(countKeys(hand)).filter((n) => n === 2).length;
   if (totalPk === 4 && hand.length === 1) return true;
   if (totalPk === 3 && pairs === 2 && hand.length === 4) return true;
   return false;
 }
 
-function handBeforeRon(hand: Array<{ key: string }>, discardKey: string): Array<{ key: string }> {
+function handBeforeRon(hand: Array<{ key: string }>, discardKey: string): Array<{ key: string }> | null {
   const index = hand.findIndex((tile) => tile.key === discardKey);
-  if (index < 0) return hand;
+  if (index < 0) return null;
   return hand.filter((_, i) => i !== index);
 }
 
@@ -288,15 +306,16 @@ export function detectBaoZhuang(input: {
   const discardKey = input.discardKey;
   if (!input.ron || !discardKey) return null;
   const waitHand = handBeforeRon(input.hand, discardKey);
-  const { pk, chow, concealedPung } = countPk(waitHand, input.exposed);
-  const totalPk = pk + concealedPung;
+  if (!waitHand) return null;
+  const { pk, chow } = countPk(waitHand, input.exposed);
+  const totalPk = pk;
   const pairs = Object.values(countKeys(waitHand)).filter((n) => n === 2).length;
   const waitKey = waitHand[0]?.key;
 
-  if (totalPk === 4 && waitHand.length === 1 && !input.changed && waitKey) {
+  if (totalPk === 4 && waitHand.length === 1 && waitKey) {
     if (canFormSequence(waitKey, discardKey)) return 'four_wait_seq';
   }
-  if (totalPk >= 1 && chow >= 1 && waitHand.length === 1 && !input.changed && waitKey) {
+  if (totalPk >= 1 && chow >= 1 && waitHand.length === 1 && waitKey) {
     if (canFormSequence(waitKey, discardKey)) return 'chow_wait_seq';
   }
   if (totalPk === 3 && pairs === 2 && waitHand.length === 4) {
@@ -320,6 +339,7 @@ export function scoreSeat(input: {
   hand: Array<{ key: string; id?: string }>;
   exposed: Meld[];
   winningDiscardId?: string;
+  winningTileId?: string;
   isWinner: boolean;
   isDealer: boolean;
   forcePiaoHun?: boolean;
@@ -330,6 +350,7 @@ export function scoreSeat(input: {
     input.exposed,
     input.isWinner,
     input.winningDiscardId,
+    input.winningTileId,
     input.winType,
   );
   const breakdown: ScoreBreakdownItem[] = [];
@@ -367,7 +388,7 @@ export function scoreSeat(input: {
   const huBeforeDealer = hu;
 
   const decomp = input.isWinner
-    ? (findWinDecompositions(input.hand)[0] ?? { pairKey: units.find((u) => u.kind === 'pair')?.key ?? 'wan-5', melds: [] })
+    ? (findWinDecompositions(input.hand)[0] ?? { pairKey: 'wan-5', melds: [] })
     : { pairKey: 'wan-5', melds: [] };
 
   return {
@@ -445,6 +466,7 @@ export function settleChaHu(input: {
     hand: seat.hand,
     exposed: seat.exposed,
     winningDiscardId: seat.winningDiscardId,
+    winningTileId: seat.winningTileId,
     isWinner: index === input.winnerSeat,
     isDealer: index === input.dealer,
     forcePiaoHun: forcePiao && index === input.winnerSeat,
@@ -616,6 +638,7 @@ export function scoreWin(input: {
   exposed: Meld[];
   isDealer: boolean;
   winType: WinType;
+  winningTileId?: string;
 }): ScoreResult | null {
   const needMelds = 4 - input.exposed.length;
   const decomps = findWinDecompositions(input.concealed).filter((item) => item.melds.length === needMelds);
@@ -626,6 +649,7 @@ export function scoreWin(input: {
     exposed: input.exposed,
     isWinner: true,
     isDealer: input.isDealer,
+    winningTileId: input.winningTileId,
     winType: input.winType,
   });
   return {
