@@ -12,8 +12,7 @@
     "build": "node scripts/build.mjs",
     "package:win": "npm run build && electron-builder --win --x64 --dir && node scripts/copy-to-desktop.mjs",
     "package:win:portable": "npm run build && electron-builder --win portable --x64",
-    "package:mac": "npm run build && electron-builder --mac --arm64 && node scripts/copy-to-desktop.mjs",
-    "package:mac:desktop": "npm run package:mac && node scripts/copy-to-desktop.mjs"
+    "package:mac": "npm run build && electron-builder --mac --arm64 && node scripts/copy-to-desktop.mjs"
   },
   "dependencies": {
     "@pizhou/rules": "*",
@@ -28,7 +27,6 @@
     "@vitejs/plugin-react": "^4.3.4",
     "electron": "33.4.5",
     "electron-builder": "^25.1.8",
-    "typescript": "^5.7.3",
     "vite": "^5.4.14",
     "vite-plugin-electron": "^0.28.8",
     "vite-plugin-electron-renderer": "^0.14.6"

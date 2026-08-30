@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { DEFAULT_WS_URL, type ClientView, type GameAction, type Settlement } from '@pizhou/shared';
+import { HuCelebration } from './components/HuCelebration';
 import { RulesModal } from './components/RulesModal';
 import { SettingsModal } from './components/SettingsModal';
 import { GameClient, isLoopbackWs } from './ws/client';
@@ -38,6 +39,7 @@ export function App() {
   const [networkStatus, setNetworkStatus] = useState<NetworkStatus>('connecting');
   const [view, setView] = useState<ClientView | null>(null);
   const [settlement, setSettlement] = useState<Settlement | null>(null);
+  const [celebrating, setCelebrating] = useState(false);
   const [error, setError] = useState('');
   const [rulesOpen, setRulesOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -45,18 +47,30 @@ export function App() {
   const clientRef = useRef<GameClient | null>(null);
   const requestedModeRef = useRef<Mode>('home');
   const pendingSoloRef = useRef(false);
+  const seenSettlementRef = useRef<Settlement | null>(null);
 
   if (!clientRef.current) {
     clientRef.current = new GameClient({
       onView: (next) => {
         setMode(requestedModeRef.current === 'local' ? 'local' : 'online');
         setView(next);
+        if (next.settlement && next.settlement !== seenSettlementRef.current) {
+          seenSettlementRef.current = next.settlement;
+          setCelebrating(true);
+        } else if (!next.settlement) {
+          seenSettlementRef.current = null;
+          setCelebrating(false);
+        }
         setSettlement(next.settlement);
         setError('');
       },
       onSettlement: (nextSettlement, nextView) => {
         setMode(requestedModeRef.current === 'local' ? 'local' : 'online');
         setView(nextView);
+        if (nextSettlement !== seenSettlementRef.current) {
+          seenSettlementRef.current = nextSettlement;
+          setCelebrating(true);
+        }
         setSettlement(nextSettlement);
         setError('');
       },
@@ -242,8 +256,15 @@ export function App() {
           />
         )}
 
-        {settlement && view?.phase === 'settlement' ? (
+        {settlement && view?.phase === 'settlement' && celebrating ? (
+          <HuCelebration
+            view={view}
+            settlement={settlement}
+            onFinish={() => setCelebrating(false)}
+          />
+        ) : settlement && view?.phase === 'settlement' ? (
           <SettlementModal
+            view={view}
             settlement={settlement}
             onAgain={again}
             onLeave={leave}

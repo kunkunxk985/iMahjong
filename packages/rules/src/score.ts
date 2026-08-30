@@ -37,13 +37,17 @@ export interface SeatScoreInput {
   /** 自摸胡时，只有这张摸进来的牌形成的坎才按自摸坎计分。 */
   winningTileId?: string;
   changed?: boolean;
+  /** 四组单钓后是否换过等牌；只用于“不换张”包庄条件，不改变关门状态。 */
+  singleWaitChanged?: boolean;
   closedTwoPair?: boolean;
   discardedBeforeClose?: string[];
 }
 
 export interface SeatScore {
   seat: number;
+  /** 牌面基础胡数；不包含飘荤或庄家结算倍数。 */
   hu: number;
+  /** 历史字段名，现表示结算倍数前的牌面胡数。 */
   huBeforeDealer: number;
   yao: number;
   fen: number;
@@ -54,6 +58,10 @@ export interface SeatScore {
   notes: string[];
   breakdown: ScoreBreakdownItem[];
   decomp: WinDecomp;
+}
+
+function piaoMultiplierForPair(a: SeatScore, b: SeatScore): number {
+  return a.piaoHun || b.piaoHun ? 2 : 1;
 }
 
 export interface ChaHuResult {
@@ -128,7 +136,7 @@ function meldKind(meld: Meld): UnitKind | null {
   if (meld.type === 'peng') return 'peng';
   if (meld.type === 'kan') return 'pung';
   if (meld.type === 'ming-gang') return 'song_kong';
-  if (meld.type === 'an-gang' || meld.type === 'bu-gang') return 'zi_kong';
+  if (meld.type === 'an-gang' || meld.type === 'zi-gang') return 'zi_kong';
   return null;
 }
 
@@ -136,6 +144,19 @@ function countKeys(hand: Array<{ key: string }>): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const tile of hand) counts[tile.key] = (counts[tile.key] ?? 0) + 1;
   return counts;
+}
+
+/**
+ * 飘荤判断要看“胡前一张”：
+ * 四组牌剩一张，或三组牌剩两对，都是关门/飘荤的等牌状态。
+ * 结算传入的手牌已经包含胡进来的那张，不能直接拿完成牌型判断。
+ */
+function handBeforeWinningTile(input: Pick<SeatScoreInput, 'hand' | 'winningDiscardId' | 'winningTileId'>): Array<{ key: string; id?: string }> {
+  const winningId = input.winningDiscardId ?? input.winningTileId;
+  if (!winningId) return input.hand;
+  const index = input.hand.findIndex((tile) => tile.id === winningId);
+  if (index < 0) return input.hand;
+  return input.hand.filter((_, tileIndex) => tileIndex !== index);
 }
 
 function exposedUnits(exposed: Meld[]): Array<{ key: string; kind: UnitKind }> {
@@ -294,15 +315,18 @@ function handBeforeRon(hand: Array<{ key: string }>, discardKey: string): Array<
   return hand.filter((_, i) => i !== index);
 }
 
-export function detectBaoZhuang(input: {
+export interface BaoZhuangCheckInput {
   hand: Array<{ key: string }>;
   exposed: Meld[];
   ron: boolean;
   discardKey?: string | null;
-  changed?: boolean;
+  /** 四组单钓后换过等牌时，不满足公开规则要求的“不换张”。 */
+  singleWaitChanged?: boolean;
   closedTwoPair?: boolean;
   discardedBeforeClose?: string[];
-}): BaoZhuangReason | null {
+}
+
+export function detectBaoZhuang(input: BaoZhuangCheckInput): BaoZhuangReason | null {
   const discardKey = input.discardKey;
   if (!input.ron || !discardKey) return null;
   const waitHand = handBeforeRon(input.hand, discardKey);
@@ -312,10 +336,10 @@ export function detectBaoZhuang(input: {
   const pairs = Object.values(countKeys(waitHand)).filter((n) => n === 2).length;
   const waitKey = waitHand[0]?.key;
 
-  if (totalPk === 4 && waitHand.length === 1 && waitKey) {
+  if (!input.singleWaitChanged && totalPk === 4 && waitHand.length === 1 && waitKey) {
     if (canFormSequence(waitKey, discardKey)) return 'four_wait_seq';
   }
-  if (totalPk >= 1 && chow >= 1 && waitHand.length === 1 && waitKey) {
+  if (!input.singleWaitChanged && totalPk >= 1 && chow >= 1 && waitHand.length === 1 && waitKey) {
     if (canFormSequence(waitKey, discardKey)) return 'chow_wait_seq';
   }
   if (totalPk === 3 && pairs === 2 && waitHand.length === 4) {
@@ -323,6 +347,15 @@ export function detectBaoZhuang(input: {
     if (!(input.discardedBeforeClose ?? []).includes(discardKey)) return 'xiang';
   }
   return null;
+}
+
+/**
+ * 四组单钓听顺和带吃单钓听顺是邳州麻将的特殊点炮胡入口，
+ * 它们不满足大众麻将“一对将牌”的普通胡牌结构，但仍必须给出“胡”。
+ */
+export function isSpecialBaoZhuangHu(input: BaoZhuangCheckInput): boolean {
+  const reason = detectBaoZhuang(input);
+  return reason === 'four_wait_seq' || reason === 'chow_wait_seq';
 }
 
 function describeUnit(key: string, kind: UnitKind): ScoreBreakdownItem {
@@ -373,8 +406,7 @@ export function scoreSeat(input: {
     breakdown.unshift({ label: input.winType === 'qidong-gang-hu' ? '起手杠胡' : '胡牌', hu: BASE_HU, yao: 0 });
     notes.push('胡牌+10胡');
     if (piao) {
-      hu *= 2;
-      notes.push('飘荤×2');
+      notes.push('飘荤（结算胡差×2）');
     }
   }
   if (input.isDealer) {
@@ -449,16 +481,23 @@ export function settleChaHu(input: {
   let forcePiao = false;
   if (input.winnerSeat !== null) {
     const winner = input.seats[input.winnerSeat]!;
+    const waitingHand = handBeforeWinningTile(winner);
     baoReason = detectBaoZhuang({
       hand: winner.hand,
       exposed: winner.exposed,
       ron: Boolean(input.ron),
       discardKey: input.discardKey,
-      changed: winner.changed,
+      singleWaitChanged: winner.singleWaitChanged,
       closedTwoPair: winner.closedTwoPair,
       discardedBeforeClose: winner.discardedBeforeClose,
     });
-    if (baoReason === 'four_wait_seq' || baoReason === 'xiang') forcePiao = true;
+    // 关门不加胡，但三组两对/四组单钓的胡牌仍然按等牌状态飘荤；
+    // 包庄识别只负责决定是否包香，不应替代飘荤判断。
+    if (isPiaoHun(waitingHand, winner.exposed)
+      || baoReason === 'four_wait_seq'
+      || baoReason === 'xiang') {
+      forcePiao = true;
+    }
   }
 
   const seats = input.seats.map((seat, index) => scoreSeat({
@@ -481,8 +520,10 @@ export function settleChaHu(input: {
   for (let i = 0; i < 4; i += 1) {
     for (let j = i + 1; j < 4; j += 1) {
       const isDealerPair = i === input.dealer || j === input.dealer;
-      const huMultiplier = isDealerPair ? 2 : 1;
-      const diffHu = (seats[i]!.hu - seats[j]!.hu) * huMultiplier;
+      const dealerMultiplier = isDealerPair ? 2 : 1;
+      const piaoMultiplier = piaoMultiplierForPair(seats[i]!, seats[j]!);
+      const diffHu =
+        (seats[i]!.hu - seats[j]!.hu) * piaoMultiplier * dealerMultiplier;
       const diffYao = seats[i]!.yao - seats[j]!.yao;
       const pairPoints = diffHu * HU_RATE + diffYao * YAO_RATE;
 
@@ -505,6 +546,7 @@ export function settleChaHu(input: {
         yaoA: seats[i]!.yao,
         yaoB: seats[j]!.yao,
         isDealerPair,
+        piaoMultiplier,
         deltaHu: diffHu,
         deltaYao: diffYao,
         points: pairPoints,
@@ -544,8 +586,12 @@ export function settleChaHu(input: {
     for (let seat = 0; seat < 4; seat += 1) {
       if (seat === winnerSeat || seat === pack) continue;
       const isDealerPair = seat === input.dealer || winnerSeat === input.dealer;
-      const huMultiplier = isDealerPair ? 2 : 1;
-      const diffHu = (seats[winnerSeat]!.hu - seats[seat]!.hu) * huMultiplier;
+      const dealerMultiplier = isDealerPair ? 2 : 1;
+      const piaoMultiplier = piaoMultiplierForPair(seats[winnerSeat]!, seats[seat]!);
+      const diffHu =
+        (seats[winnerSeat]!.hu - seats[seat]!.hu) *
+        piaoMultiplier *
+        dealerMultiplier;
       const diffYao = seats[winnerSeat]!.yao - seats[seat]!.yao;
       const owe = diffHu * HU_RATE + diffYao * YAO_RATE;
       if (owe > 0) {
@@ -649,6 +695,11 @@ export function scoreWin(input: {
     exposed: input.exposed,
     isWinner: true,
     isDealer: input.isDealer,
+    forcePiaoHun: input.winType !== 'qidong-gang-hu'
+      && isPiaoHun(
+        handBeforeWinningTile({ hand: input.concealed, winningTileId: input.winningTileId }),
+        input.exposed,
+      ),
     winningTileId: input.winningTileId,
     winType: input.winType,
   });

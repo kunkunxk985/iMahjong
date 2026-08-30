@@ -9,14 +9,12 @@ import {
   playMyTurn,
   playPeng,
   playTick,
+  playReject,
+  playSettle,
+  playHover,
 } from './sfx';
+import { speakAction, speakDiscardTile } from './voice';
 
-/**
- * Diff two consecutive ClientView frames and trigger appropriate sound effects.
- *
- * Runs as a side-effect on every view update. Uses refs to track the previous
- * frame so we can detect exactly what changed.
- */
 export function useSoundEffects(view: ClientView): void {
   const prev = useRef<ClientView | null>(null);
   const lastTickTime = useRef(0);
@@ -24,22 +22,19 @@ export function useSoundEffects(view: ClientView): void {
   useEffect(() => {
     const old = prev.current;
     prev.current = view;
-
-    // Skip the very first frame — nothing to diff against
     if (!old) return;
-
-    // Same sequence means no game-state change
     if (old.sequence === view.sequence) return;
 
-    // ── Discard sound ──
+    // Discard sound + voice
     if (
       view.lastDiscard &&
       (!old.lastDiscard || old.lastDiscard.tile.id !== view.lastDiscard.tile.id)
     ) {
       playDiscard();
+      speakDiscardTile(view.lastDiscard.tile.key);
     }
 
-    // ── Draw sound (my turn, new drawn tile appeared) ──
+    // Draw sound
     const me = view.players.find((p) => p.seat === view.mySeat);
     const oldMe = old.players.find((p) => p.seat === old.mySeat);
     const myLastDrawn = me && 'lastDrawnId' in me ? (me as { lastDrawnId?: string }).lastDrawnId : undefined;
@@ -48,7 +43,7 @@ export function useSoundEffects(view: ClientView): void {
       playDraw();
     }
 
-    // ── Meld sounds (detect new melds across all players) ──
+    // Meld sounds + voice
     for (const player of view.players) {
       const oldPlayer = old.players.find((p) => p.seat === player.seat);
       if (!oldPlayer) continue;
@@ -56,23 +51,52 @@ export function useSoundEffects(view: ClientView): void {
         const newMeld = player.melds[player.melds.length - 1];
         if (newMeld) {
           const t = newMeld.type;
-          if (t === 'chi') playChi();
-          else if (t === 'peng') playPeng();
-          else if (t === 'ming-gang' || t === 'an-gang' || t === 'bu-gang') playGang();
+          if (t === 'chi') {
+            playChi();
+            speakAction('chi');
+          } else if (t === 'peng') {
+            playPeng();
+            speakAction('peng');
+          } else if (t === 'kan') {
+            playPeng();
+            speakAction('kan');
+          } else if (t === 'ming-gang' || t === 'an-gang' || t === 'zi-gang') {
+            playGang();
+            speakAction(t === 'an-gang' ? 'an-gang' : 'gang');
+          }
         }
+      }
+
+      if (player.closed && !oldPlayer.closed) {
+        speakAction('close-gate');
       }
     }
 
-    // ── Hu sound ──
+    // Hu sound + voice
     if (
       view.settlement &&
       !old.settlement &&
       view.settlement.winnerSeat !== null
     ) {
       playHu();
+      if (view.settlement.baoZhuang) {
+        speakAction('baozhuang');
+      } else if (view.settlement.winType === 'qidong-gang-hu') {
+        speakAction('qidong-gang-hu');
+      } else {
+        speakAction('hu');
+      }
     }
 
-    // ── My turn chime ──
+    // Settlement / draw sound
+    if (
+      (!view.settlement && old.settlement) ||
+      (view.settlement?.liuju && !old.settlement?.liuju)
+    ) {
+      playSettle();
+    }
+
+    // My turn chime
     if (
       view.currentSeat === view.mySeat &&
       view.gamePhase === 'self-turn' &&
@@ -80,9 +104,18 @@ export function useSoundEffects(view: ClientView): void {
     ) {
       playMyTurn();
     }
+
+    // Reject sound for expired/invalid actions
+    if (
+      view.availableActions.length === 0 &&
+      old.availableActions.length > 0 &&
+      view.gamePhase !== 'settlement'
+    ) {
+      playReject();
+    }
   }, [view]);
 
-  // ── Countdown tick (runs on a separate timer, not tied to view updates) ──
+  // Countdown tick
   useEffect(() => {
     if (!view.turnDeadline) return;
     if (view.currentSeat !== view.mySeat && view.gamePhase !== 'claim-window') return;
@@ -91,7 +124,6 @@ export function useSoundEffects(view: ClientView): void {
       const remaining = Math.ceil((view.turnDeadline! - Date.now()) / 1000);
       if (remaining > 0 && remaining <= 5) {
         const now = Date.now();
-        // Rate-limit to at most 1 tick per 800ms
         if (now - lastTickTime.current > 800) {
           lastTickTime.current = now;
           playTick();
@@ -101,4 +133,17 @@ export function useSoundEffects(view: ClientView): void {
 
     return () => clearInterval(interval);
   }, [view.turnDeadline, view.currentSeat, view.mySeat, view.gamePhase]);
+}
+
+export function useButtonHoverSound() {
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.matches('button, .btn-action, .tab-btn, .rate-chip, .room-code-banner')) {
+        playHover();
+      }
+    };
+    window.addEventListener('mouseover', handler, { passive: true });
+    return () => window.removeEventListener('mouseover', handler);
+  }, []);
 }

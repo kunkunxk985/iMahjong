@@ -1,0 +1,18 @@
+services:
+  mahjong-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pizhou-mahjong-server:latest
+    container_name: pizhou-mahjong-server
+    restart: always
+    ports:
+      - "27985:27985"
+    environment:
+      - PORT=27985
+      - NODE_ENV=production
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

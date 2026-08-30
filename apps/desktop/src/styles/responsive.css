@@ -8,6 +8,25 @@
     padding-right: 22px;
   }
 
+  .settlement-replay-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .replay-player {
+    grid-template-columns: 1fr;
+    row-gap: 8px;
+  }
+
+  .replay-player-score {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .replay-tile {
+    width: 26px !important;
+    height: 37px !important;
+  }
+
   .seat-grid {
     grid-template-columns: 1fr;
   }
@@ -35,38 +54,41 @@
   }
 
   .board-player-top {
-    top: 54px;
-    left: 8px;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
   }
 
   .board-player-left {
-    top: 38%;
-    left: 5px;
-  }
-
-  .board-player-right {
-    top: 38%;
-    right: 5px;
-  }
-
-  .board-player-bottom {
-    bottom: 110px;
-    left: 6px;
-  }
-
-  .board-concealed-top {
-    top: 104px;
+    top: 20%;
     left: 8px;
   }
 
+  .board-player-right {
+    top: 20%;
+    right: 8px;
+  }
+
+  .board-player-bottom {
+    bottom: 12px;
+    left: 12px;
+    transform: none;
+  }
+
+  .board-concealed-top {
+    top: 64px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
   .board-concealed-left {
-    top: 19%;
-    left: 42px;
+    top: 58%;
+    left: 36px;
   }
 
   .board-concealed-right {
-    top: 19%;
-    right: 42px;
+    top: 58%;
+    right: 36px;
   }
 
   .board-wall-left { left: 2%; }
@@ -81,8 +103,8 @@
   .board-discard-right {
     display: flex;
     top: 31%;
-    width: 74px;
-    padding: 17px 3px 5px;
+    width: auto;
+    padding: 0;
   }
 
   .board-discard-left {
@@ -106,8 +128,8 @@
   .board-melds-left,
   .board-melds-right {
     top: 61%;
-    width: 118px;
-    padding: 3px;
+    width: auto;
+    padding: 0;
   }
 
   .board-melds-left { left: 6px; }
@@ -146,7 +168,7 @@
   .board-own-melds {
     right: 0;
     max-width: 58%;
-    padding: 16px 4px 4px;
+    padding: 0;
   }
 
   .board-own-hand {

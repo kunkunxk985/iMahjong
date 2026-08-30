@@ -1,5 +1,8 @@
-import { useState } from 'react';
-import type { BaoZhuangReason, PairwiseTransaction, Settlement, SettlementScore } from '@pizhou/shared';
+import { useEffect, useState } from 'react';
+import { isPrivatePlayerView, type BaoZhuangReason, type ClientView, type Settlement } from '@pizhou/shared';
+import { Melds } from '../components/Melds';
+import { TileView } from '../components/TileView';
+import { saveMatchToHistory } from '../storage/history';
 
 const SEAT_NAMES = ['东', '南', '西', '北'] as const;
 
@@ -10,9 +13,15 @@ const WIN_LABEL: Record<string, string> = {
 };
 
 const BAO_LABEL: Record<BaoZhuangReason, string> = {
-  four_wait_seq: '四坎听顺包庄',
+  four_wait_seq: '四组听顺包庄',
   chow_wait_seq: '吃牌听顺包庄',
   xiang: '香牌包庄',
+};
+
+const BAO_EXPLANATION: Record<BaoZhuangReason, string> = {
+  four_wait_seq: '胡家已有四组碰、坎或杠，单张听牌且始终未换张；该点炮牌与手中单张能相连成顺，本局按飘荤结算。',
+  chow_wait_seq: '胡家已有四组牌且其中含吃，单张听牌且始终未换张；该点炮牌与手中单张能相连成顺，本局按普通胡结算。',
+  xiang: '胡家已有三组碰、坎或杠并剩两对，且未两对关门；该点炮牌此前全桌从未打出，属于香牌，本局按飘荤结算。',
 };
 
 const DRAW_LABEL: Record<string, string> = {
@@ -20,20 +29,101 @@ const DRAW_LABEL: Record<string, string> = {
   wall: '牌墙摸完流局',
 };
 
+function ReplayHands({ view, settlement }: { view: ClientView; settlement: Settlement }) {
+  return (
+    <div className="settlement-replay">
+      <div className="settlement-replay-intro">
+        <strong>本局牌面复盘</strong>
+        <span>结算后公开四家手牌，副露与牌河清晰展示，便于核对查胡分。</span>
+      </div>
+      <div className="settlement-replay-grid">
+        {view.players.map((player) => {
+          const hand = isPrivatePlayerView(player) ? player.hand : [];
+          const winner = player.seat === settlement.winnerSeat;
+          const winningDiscardId = !settlement.selfDraw && winner ? view.lastDiscard?.tile.id : undefined;
+          const score = settlement.scores.find((item) => item.seat === player.seat);
+          const delta = score?.delta ?? 0;
+          const deltaLabel = delta > 0 ? `+${delta}` : String(delta);
+
+          return (
+            <article key={player.seat} className={`replay-player-card ${winner ? 'is-winner' : ''}`}>
+              <div className="replay-card-header">
+                <div className="replay-card-identity">
+                  <span className="seat-badge">{SEAT_NAMES[player.seat]}</span>
+                  <b className="replay-player-name">{player.nickname}</b>
+                  {player.isDealer ? <span className="tag-dealer">庄</span> : null}
+                  {winner ? <span className="tag-winner">胡牌</span> : null}
+                  {player.closed ? <span className="tag-closed">关门</span> : null}
+                  <span className="replay-hand-count">{hand.length}张手牌</span>
+                </div>
+
+                <div className="replay-card-score">
+                  <strong className={`score-delta ${delta > 0 ? 'up' : delta < 0 ? 'down' : ''}`}>{deltaLabel}</strong>
+                  <span className="score-detail">{score?.hu ?? 0}胡 · {score?.yao ?? 0}幺</span>
+                  <small className="score-type">{score?.piaoHun ? '飘荤' : winner ? '本局赢家' : '两两对账'}</small>
+                </div>
+              </div>
+
+              <div className="replay-card-body">
+                <div className="replay-main-row">
+                  {player.melds.length > 0 ? (
+                    <div className="replay-melds-cluster">
+                      <Melds melds={player.melds} highlightKey={null} />
+                    </div>
+                  ) : null}
+
+                  {hand.length > 0 ? (
+                    <div className="replay-hand-cluster" aria-label={`${player.nickname}手牌`}>
+                      {hand.map((tile) => (
+                        <TileView
+                          key={tile.id}
+                          tile={tile}
+                          pose="hand"
+                          last={tile.id === winningDiscardId}
+                          className="replay-tile"
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="replay-empty">手牌未公开</span>
+                  )}
+                </div>
+
+                {player.discards.length > 0 ? (
+                  <div className="replay-discards-row">
+                    <span className="replay-discards-label">弃牌</span>
+                    <div className="replay-discard-tiles">
+                      {player.discards.map((tile) => (
+                        <TileView key={tile.id} tile={tile} small pose="lie" className="replay-discard-tile" />
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function SettlementModal({
+  view,
   settlement,
   onAgain,
   onLeave,
   readyCount,
   alreadyReady = false,
 }: {
+  view: ClientView;
   settlement: Settlement;
   onAgain: () => void;
   onLeave?: () => void;
   readyCount: number;
   alreadyReady?: boolean;
 }) {
-  const [activeTab, setActiveTab] = useState<'summary' | 'ledger' | 'breakdown'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'ledger' | 'breakdown' | 'replay'>('summary');
   const [ratePerPoint, setRatePerPoint] = useState<number>(0.1);
   const [showMoney, setShowMoney] = useState<boolean>(false);
 
@@ -41,6 +131,36 @@ export function SettlementModal({
     ? BAO_LABEL[settlement.baoZhuang.reason]
     : null;
   const drawText = settlement.drawReason ? DRAW_LABEL[settlement.drawReason] ?? settlement.drawReason : null;
+  const [minimized, setMinimized] = useState(false);
+
+  useEffect(() => {
+    const now = new Date();
+    const dateStr = `${now.getMonth() + 1}月${now.getDate()}日 ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    saveMatchToHistory({
+      id: `${view.roomCode || '888888'}-${settlement.winnerSeat ?? 'draw'}-${Date.now()}`,
+      timestamp: Date.now(),
+      dateStr,
+      roomCode: view.roomCode || '单机练习',
+      winType: WIN_LABEL[settlement.winType] ?? settlement.winType,
+      winnerNickname: settlement.winnerNickname ?? undefined,
+      winnerSeat: settlement.winnerSeat,
+      hu: settlement.hu,
+      yao: settlement.yao,
+      dealerMultiplier: settlement.dealerMultiplier,
+      hunDi: Boolean(settlement.hunDi),
+      liuju: Boolean(settlement.liuju),
+      drawReason: settlement.drawReason ?? undefined,
+      baoZhuang: settlement.baoZhuang,
+      scores: settlement.scores.map((s) => ({
+        seat: s.seat,
+        nickname: s.nickname,
+        score: s.total ?? s.delta ?? 0,
+        isWinner: Boolean(s.isWinner),
+        isDealer: Boolean(s.isDealer),
+        notes: s.notes,
+      })),
+    });
+  }, [settlement, view.roomCode]);
 
   const getNickname = (seat: number) => {
     const found = settlement.scores.find((s) => s.seat === seat);
@@ -51,6 +171,25 @@ export function SettlementModal({
     const found = settlement.scores.find((s) => s.seat === seat);
     return Boolean(found?.isDealer);
   };
+
+  if (minimized) {
+    return (
+      <div className="settlement-floating-bar">
+        <button type="button" className="btn-action primary" onClick={() => setMinimized(false)}>
+          📊 展开对账结算单
+        </button>
+        <button type="button" className="btn-action" disabled={alreadyReady} onClick={onAgain}>
+          {alreadyReady ? '已准备，等朋友' : '再来一局'}
+        </button>
+        {onLeave ? (
+          <button type="button" className="btn-action ghost" onClick={onLeave}>
+            回大厅
+          </button>
+        ) : null}
+        <span className="floating-ready-pill">已准备 {readyCount}/4</span>
+      </div>
+    );
+  }
 
   return (
     <div className="overlay">
@@ -68,8 +207,9 @@ export function SettlementModal({
         </header>
 
         {/* Tab Switcher */}
-        {!settlement.liuju ? (
-          <div className="settlement-tabs">
+        <div className="settlement-tabs">
+          {!settlement.liuju ? (
+            <>
             <button
               type="button"
               className={`tab-btn ${activeTab === 'summary' ? 'active' : ''}`}
@@ -93,6 +233,29 @@ export function SettlementModal({
                 🀄 赢家牌面拆解
               </button>
             ) : null}
+            </>
+          ) : null}
+          <button
+            type="button"
+            className={`tab-btn ${activeTab === 'replay' ? 'active' : ''}`}
+            onClick={() => setActiveTab('replay')}
+          >
+            🀄 牌局复盘
+          </button>
+        </div>
+
+        {/* Bao-Zhuang Penalty Alert Card */}
+        {settlement.baoZhuang ? (
+          <div className="settlement-baozhuang-card">
+            <div className="baozhuang-icon">⚠️</div>
+            <div className="baozhuang-content">
+              <b className="baozhuang-title">
+                判定包庄 · 【{getNickname(settlement.baoZhuang.payerSeat)}】{BAO_LABEL[settlement.baoZhuang.reason]}
+              </b>
+              <p className="baozhuang-desc">
+                {BAO_EXPLANATION[settlement.baoZhuang.reason]} 另外两家原本应向胡家支付的份额，由【{getNickname(settlement.baoZhuang.payerSeat)}】代付；若本局有荤底，三家的荤底也由包庄者承担。
+              </p>
+            </div>
           </div>
         ) : null}
 
@@ -127,7 +290,9 @@ export function SettlementModal({
 
         {/* Content Area */}
         <div className="settlement-body">
-          {settlement.liuju ? (
+          {activeTab === 'replay' ? (
+            <ReplayHands view={view} settlement={settlement} />
+          ) : settlement.liuju ? (
             <div className="liuju-notice">
               <p>本局流局，不进行查胡结算与分数结算。</p>
             </div>
@@ -182,12 +347,12 @@ export function SettlementModal({
               </table>
 
               <div className="rule-note">
-                <small>💡 计分说明：四家基础胡数平等计算；两两结算时庄闲差胡翻倍（幺不翻倍），闲闲结算差胡不翻倍。</small>
+                <small>💡 计分说明：放炮与自摸不附加结算倍率；四家牌面胡/幺固定，两两结算时飘荤胡差×2、庄闲胡差×2，幺差始终不翻倍。</small>
               </div>
             </div>
           ) : activeTab === 'ledger' ? (
             <div className="ledger-view">
-              <div className="tx-list">
+              <div className="tx-grid">
                 {(settlement.transactions ?? []).map((tx, idx) => {
                   const nameA = getNickname(tx.seatA);
                   const nameB = getNickname(tx.seatB);
@@ -196,49 +361,86 @@ export function SettlementModal({
                   const seatNameA = SEAT_NAMES[tx.seatA];
                   const seatNameB = SEAT_NAMES[tx.seatB];
 
-                  const winnerName = tx.points > 0 ? nameA : tx.points < 0 ? nameB : null;
-                  const loserName = tx.points > 0 ? nameB : tx.points < 0 ? nameA : null;
-                  const winSeat = tx.points > 0 ? seatNameA : seatNameB;
-                  const loseSeat = tx.points > 0 ? seatNameB : seatNameA;
+                  const isTie = tx.points === 0;
+                  const winnerName = tx.points > 0 ? nameA : nameB;
+                  const loserName = tx.points > 0 ? nameB : nameA;
+                  const winnerSeat = tx.points > 0 ? seatNameA : seatNameB;
+                  const loserSeat = tx.points > 0 ? seatNameB : seatNameA;
+                  const isWinnerDealer = tx.points > 0 ? isDealerA : isDealerB;
+                  const isLoserDealer = tx.points > 0 ? isDealerB : isDealerA;
+                  const winnerHu = tx.points > 0 ? tx.huA : tx.huB;
+                  const winnerYao = tx.points > 0 ? tx.yaoA : tx.yaoB;
+                  const loserHu = tx.points > 0 ? tx.huB : tx.huA;
+                  const loserYao = tx.points > 0 ? tx.yaoB : tx.yaoA;
+
                   const absPoints = Math.abs(tx.points);
                   const absMoney = (absPoints * ratePerPoint).toFixed(1);
 
+                  const huMultiplierLabel = tx.piaoMultiplier > 1 && tx.isDealerPair
+                    ? '庄×飘荤×4'
+                    : tx.piaoMultiplier > 1
+                      ? `飘荤×${tx.piaoMultiplier}`
+                      : tx.isDealerPair
+                        ? '庄家×2'
+                        : null;
+
                   return (
-                    <div key={idx} className={`tx-card ${tx.isDealerPair ? 'dealer-pair' : ''}`}>
-                      <div className="tx-header">
-                        <div className="tx-player">
-                          <span className="seat-badge">{seatNameA}</span>
-                          <b>{nameA}</b>
-                          {isDealerA ? <span className="tag-dealer">庄</span> : null}
-                          <span className="player-hu">({tx.huA}胡 {tx.yaoA}幺)</span>
-                        </div>
-                        <span className="tx-vs">VS</span>
-                        <div className="tx-player">
-                          <span className="seat-badge">{seatNameB}</span>
-                          <b>{nameB}</b>
-                          {isDealerB ? <span className="tag-dealer">庄</span> : null}
-                          <span className="player-hu">({tx.huB}胡 {tx.yaoB}幺)</span>
-                        </div>
-                      </div>
-
-                      <div className="tx-formula">
-                        <span className="formula-tag">{tx.isDealerPair ? '庄闲对账 (差胡×2)' : '闲闲对账 (差胡×1)'}</span>
-                        <span className="formula-text">
-                          差胡: {Math.abs(tx.huA - tx.huB)} {tx.isDealerPair ? '×2' : '×1'} = {Math.abs(tx.deltaHu)}分
-                          {tx.deltaYao !== 0 ? ` | 差幺: ${Math.abs(tx.deltaYao)}×10 = ${Math.abs(tx.deltaYao) * 10}分` : ''}
-                        </span>
-                      </div>
-
-                      <div className="tx-result">
-                        {tx.points === 0 ? (
-                          <span className="result-tie">双方平手（0分）</span>
+                    <div key={idx} className={`tx-flow-card ${tx.isDealerPair ? 'is-dealer-pair' : ''} ${isTie ? 'is-tie' : ''}`}>
+                      {/* Main Transaction Transfer Row */}
+                      <div className="tx-main-row">
+                        {isTie ? (
+                          <div className="tx-tie-wrap">
+                            <div className="tx-party">
+                              <span className="seat-badge">{seatNameA}</span>
+                              <b className="party-name">{nameA}</b>
+                              {isDealerA ? <span className="tag-dealer">庄</span> : null}
+                              <span className="party-score">({tx.huA}胡{tx.yaoA ? ` ${tx.yaoA}幺` : ''})</span>
+                            </div>
+                            <span className="tx-tie-badge">双方平手 (0分)</span>
+                            <div className="tx-party">
+                              <span className="seat-badge">{seatNameB}</span>
+                              <b className="party-name">{nameB}</b>
+                              {isDealerB ? <span className="tag-dealer">庄</span> : null}
+                              <span className="party-score">({tx.huB}胡{tx.yaoB ? ` ${tx.yaoB}幺` : ''})</span>
+                            </div>
+                          </div>
                         ) : (
-                          <span className="result-flow">
-                            【{winSeat}】<b>{winnerName}</b> 向 【{loseSeat}】<b>{loserName}</b> 收取{' '}
-                            <strong className="up">+{absPoints}分</strong>
-                            {showMoney ? <em className="money-tag">(¥{absMoney})</em> : null}
-                          </span>
+                          <div className="tx-transfer-wrap">
+                            {/* Winner Party */}
+                            <div className="tx-party is-winner">
+                              <span className="seat-badge">{winnerSeat}</span>
+                              <b className="party-name">{winnerName}</b>
+                              {isWinnerDealer ? <span className="tag-dealer">庄</span> : null}
+                              <span className="party-score">({winnerHu}胡{winnerYao ? ` ${winnerYao}幺` : ''})</span>
+                            </div>
+
+                            {/* Arrow & Amount */}
+                            <div className="tx-arrow-pill">
+                              <span className="tx-arrow-label">收取</span>
+                              <strong className="tx-points-val">+{absPoints}分</strong>
+                              {showMoney ? <span className="tx-money-val">¥{absMoney}</span> : null}
+                            </div>
+
+                            {/* Loser Party */}
+                            <div className="tx-party is-loser">
+                              <span className="seat-badge">{loserSeat}</span>
+                              <b className="party-name">{loserName}</b>
+                              {isLoserDealer ? <span className="tag-dealer">庄</span> : null}
+                              <span className="party-score">({loserHu}胡{loserYao ? ` ${loserYao}幺` : ''})</span>
+                            </div>
+                          </div>
                         )}
+                      </div>
+
+                      {/* Formula & Rule Footer */}
+                      <div className="tx-formula-bar">
+                        {huMultiplierLabel ? (
+                          <span className="tx-mult-tag">{huMultiplierLabel}</span>
+                        ) : null}
+                        <span className="tx-formula-text">
+                          胡差 {Math.abs(tx.huA - tx.huB)}{huMultiplierLabel ? ` (${huMultiplierLabel}) = ${Math.abs(tx.deltaHu)}胡` : ''}
+                          {tx.deltaYao !== 0 ? ` · 差幺 ${Math.abs(tx.deltaYao)}×10 = ${Math.abs(tx.deltaYao) * 10}分` : ''}
+                        </span>
                       </div>
                     </div>
                   );
@@ -293,6 +495,9 @@ export function SettlementModal({
         <div className="split slim settlement-actions">
           <button type="button" className="btn-action primary" disabled={alreadyReady} onClick={onAgain}>
             {alreadyReady ? '已准备，等朋友' : '再来一局'}
+          </button>
+          <button type="button" className="btn-action ghost" onClick={() => setMinimized(true)}>
+            👁️ 查看牌桌
           </button>
           {onLeave ? (
             <button type="button" className="btn-action ghost" onClick={onLeave}>
