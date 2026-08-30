@@ -10,9 +10,10 @@
   "scripts": {
     "dev:server": "npm run dev -w @pizhou/server",
     "dev:desktop": "npm run dev -w @pizhou/desktop",
+    "check:architecture": "node --import tsx scripts/check-architecture.mts",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "smoke": "node --import tsx apps/server/scripts/smoke.mts",
-    "verify": "npm run typecheck && npm test && npm run smoke && npm run build",
+    "smoke": "node --import tsx scripts/smoke.mts",
+    "verify": "npm run check:architecture && npm run typecheck && npm test && npm run smoke && npm run build",
     "clean": "npm run clean -w @pizhou/desktop",
     "build": "npm run build -w @pizhou/desktop",
     "package": "npm run package:mac -w @pizhou/desktop",
@@ -22,15 +23,11 @@
     "dev": "npm run dev:desktop"
   },
   "devDependencies": {
-    "tsx": "^4.19.3"
+    "@types/node": "^22.13.10",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
   },
   "engines": {
     "node": ">=20"
-  },
-  "allowScripts": {
-    "electron@33.4.5": true,
-    "esbuild@0.28.2": true,
-    "esbuild@0.21.5": true,
-    "fsevents@2.3.3": true
   }
 }

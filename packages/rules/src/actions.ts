@@ -4,6 +4,7 @@ import {
   type GameAction,
   type Tile,
 } from '@pizhou/shared';
+import { isSpecialBaoZhuangHu } from './score.ts';
 import { canHuTiles } from './win.ts';
 import type { SeatRuntime } from './types.ts';
 
@@ -97,15 +98,16 @@ export function concealedKanActions(hand: Tile[]): AvailableAction[] {
   return actions;
 }
 
-export function buGangActions(seat: SeatRuntime): AvailableAction[] {
+/** 已坎上的三张只可在自己摸到第四张时升级为自杠；碰牌不能升级。 */
+export function ziGangActions(seat: SeatRuntime): AvailableAction[] {
   const actions: AvailableAction[] = [];
   for (const meld of seat.melds) {
-    if ((meld.type !== 'peng' && meld.type !== 'kan') || !meld.tiles[0]) continue;
+    if (meld.type !== 'kan' || !meld.tiles[0]) continue;
     const key = meld.tiles[0].key;
     const extra = seat.hand.find((tile) => tile.key === key);
     if (extra) {
       actions.push({
-        kind: 'bu-gang',
+        kind: 'zi-gang',
         key,
         tileId: extra.id,
         tiles: [...meld.tiles, extra],
@@ -143,13 +145,16 @@ export function selfTurnActions(seat: SeatRuntime): AvailableAction[] {
   if (canHuTiles(seat.hand, seat.melds.length)) {
     actions.push({ kind: 'hu' });
   }
-  if (canCloseGate(seat)) {
-    const tileIds = closeGateDiscardIds(seat);
-    actions.push({ kind: 'close-gate', tileIds: tileIds.length > 0 ? tileIds : undefined });
+  // 未关门状态下才可声明关门、主动坎上或暗杠/自杠
+  if (!seat.closed) {
+    if (canCloseGate(seat)) {
+      const tileIds = closeGateDiscardIds(seat);
+      actions.push({ kind: 'close-gate', tileIds: tileIds.length > 0 ? tileIds : undefined });
+    }
+    actions.push(...concealedAnGangActions(seat.hand));
+    actions.push(...concealedKanActions(seat.hand));
+    actions.push(...ziGangActions(seat));
   }
-  actions.push(...concealedAnGangActions(seat.hand));
-  actions.push(...concealedKanActions(seat.hand));
-  actions.push(...buGangActions(seat));
   return actions;
 }
 
@@ -158,37 +163,44 @@ export function claimActions(input: {
   discard: Tile;
   fromSeat: number;
   claimerSeat: number;
-  reason: 'discard' | 'bu-gang';
+  currentSeat?: number;
 }): AvailableAction[] {
   const actions: AvailableAction[] = [];
   const winningTiles = [...input.seat.hand, input.discard];
-  if (canHuTiles(winningTiles, input.seat.melds.length)) {
+  const specialBaoZhuangHu = isSpecialBaoZhuangHu({
+    hand: winningTiles,
+    exposed: input.seat.melds,
+    ron: true,
+    discardKey: input.discard.key,
+    singleWaitChanged: input.seat.singleWaitChanged,
+    closedTwoPair: input.seat.closedTwoPair,
+    discardedBeforeClose: input.seat.discardedBeforeClose,
+  });
+  if (canHuTiles(winningTiles, input.seat.melds.length) || specialBaoZhuangHu) {
     actions.push({ kind: 'hu' });
   }
-  if (input.reason === 'bu-gang') {
-    if (actions.length > 0) actions.push({ kind: 'pass' });
-    return actions;
-  }
-
-  const copies = tilesOfKey(input.seat.hand, input.discard.key);
-  const lockedKan = input.seat.melds.find((meld) => meld.type === 'kan' && meld.tiles[0]?.key === input.discard.key);
-  if (lockedKan || copies.length >= 3) {
-    actions.push({
-      kind: 'ming-gang',
-      key: input.discard.key,
-      tileIds: lockedKan ? lockedKan.tiles.map((tile) => tile.id) : copies.slice(0, 3).map((tile) => tile.id),
-    });
-  }
-  if (copies.length >= 2) {
-    actions.push({
-      kind: 'peng',
-      key: input.discard.key,
-      tileIds: copies.slice(0, 2).map((tile) => tile.id),
-    });
-  }
-  const isXiajia = input.claimerSeat === (input.fromSeat + 1) % 4;
-  if (isXiajia) {
-    actions.push(...findChiOptions(input.seat.hand, input.discard));
+  // 关门听牌后锁闭手牌，绝对不可再吃、碰、送杠别家的弃牌，只等自摸或点炮胡牌
+  if (!input.seat.closed) {
+    const copies = tilesOfKey(input.seat.hand, input.discard.key);
+    const lockedKan = input.seat.melds.find((meld) => meld.type === 'kan' && meld.tiles[0]?.key === input.discard.key);
+    if (lockedKan || copies.length >= 3) {
+      actions.push({
+        kind: 'ming-gang',
+        key: input.discard.key,
+        tileIds: lockedKan ? lockedKan.tiles.map((tile) => tile.id) : copies.slice(0, 3).map((tile) => tile.id),
+      });
+    }
+    if (copies.length >= 2) {
+      actions.push({
+        kind: 'peng',
+        key: input.discard.key,
+        tileIds: copies.slice(0, 2).map((tile) => tile.id),
+      });
+    }
+    const isXiajia = input.claimerSeat === (input.fromSeat + 1) % 4;
+    if (isXiajia) {
+      actions.push(...findChiOptions(input.seat.hand, input.discard));
+    }
   }
   if (actions.length > 0) actions.push({ kind: 'pass' });
   return actions;
@@ -198,7 +210,7 @@ export const ACTION_RANK: Record<string, number> = {
   hu: 4,
   'ming-gang': 3,
   'an-gang': 3,
-  'bu-gang': 3,
+  'zi-gang': 3,
   kan: 2,
   peng: 2,
   chi: 1,
@@ -238,8 +250,8 @@ export function actionMatchesAvailable(action: GameAction, available: AvailableA
   if (action.kind === 'an-gang') {
     return available.some((item) => item.kind === 'an-gang' && item.key === action.key);
   }
-  if (action.kind === 'bu-gang') {
-    return available.some((item) => item.kind === 'bu-gang' && (item.key === action.key || item.tileId === action.tileId));
+  if (action.kind === 'zi-gang') {
+    return available.some((item) => item.kind === 'zi-gang' && (item.key === action.key || item.tileId === action.tileId));
   }
   if (action.kind === 'chi') {
     const want = (action.tileIds ?? []).slice().sort().join(',');

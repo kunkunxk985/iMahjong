@@ -11,8 +11,12 @@ interface TileViewProps {
   tenpaiHint?: boolean;
   entering?: boolean;
   highlightSame?: boolean;
+  closeGateHint?: boolean;
+  xiangHint?: boolean;
+  chouHint?: boolean;
   className?: string;
   pose?: 'hand' | 'lie' | 'rack';
+  dataTileId?: string;
   onClick?: () => void;
   onDoubleClick?: () => void;
   onHover?: (hovered: boolean) => void;
@@ -24,6 +28,7 @@ function faceSrc(tile: Tile): string {
   if (tile.key === 'back' || !tile.suit || !tile.rank) return './assets/tile-back.png';
   return `./assets/tiles/${tile.suit}-${tile.rank}.png`;
 }
+export { faceSrc };
 
 export function TileView({
   tile,
@@ -36,8 +41,12 @@ export function TileView({
   tenpaiHint,
   entering,
   highlightSame,
+  closeGateHint,
+  xiangHint,
+  chouHint,
   className: extraClassName,
   pose = 'hand',
+  dataTileId,
   onClick,
   onDoubleClick,
   onHover,
@@ -55,6 +64,9 @@ export function TileView({
     highlightSame && !isBack ? 'highlight-same' : '',
     isBack ? 'is-back' : '',
     tenpaiHint ? 'tenpai-hint' : '',
+    closeGateHint ? 'close-gate-hint' : '',
+    xiangHint ? 'xiang-hint' : '',
+    chouHint ? 'chou-hint' : '',
     entering ? 'entering' : '',
     extraClassName ?? '',
     `pose-${pose}`,
@@ -74,19 +86,21 @@ export function TileView({
 
   const body = (
     <>
-      <span className="tile-3d">
-        <span className="tile-face">
-          <img
-            className="tile-skin"
-            src={isBack ? './assets/tile-back.png' : faceSrc(tile!)}
-            alt=""
-            draggable={false}
-          />
-        </span>
-        <span className="tile-edge-x" aria-hidden="true" />
-        <span className="tile-edge-y" aria-hidden="true" />
-      </span>
-      {tenpaiHint ? <span className="tenpai-badge">听</span> : null}
+      <img
+        className="tile-skin"
+        src={isBack ? './assets/tile-back.png' : faceSrc(tile!)}
+        alt=""
+        draggable={false}
+      />
+      {closeGateHint ? (
+        <span className="close-gate-badge">关门</span>
+      ) : tenpaiHint ? (
+        <span className="tenpai-badge">听</span>
+      ) : xiangHint ? (
+        <span className="xiang-badge" title="香牌（生张·点炮包庄）">香</span>
+      ) : chouHint ? (
+        <span className="chou-badge" title="臭牌（熟张·点炮免包）">臭</span>
+      ) : null}
     </>
   );
 
@@ -94,6 +108,7 @@ export function TileView({
     return (
       <div
         className={className}
+        data-tile-id={dataTileId}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
@@ -106,6 +121,7 @@ export function TileView({
     <button
       type="button"
       className={className}
+      data-tile-id={dataTileId}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
       onMouseEnter={handleMouseEnter}

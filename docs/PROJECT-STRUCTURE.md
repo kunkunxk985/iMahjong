@@ -47,6 +47,8 @@ shared ← rules ← server-core ← desktop/server
 | `packages/` | 多个应用共用的规则、服务和协议。 |
 | `assets/` | 新版麻将牌源素材备份，不直接进入安装包。 |
 | `docs/` | 架构与玩法规则文档。 |
+| `scripts/check-architecture.mts` | 阻止 shared/rules/server-core 反向依赖，并检查 34 个运行时牌桌素材是否缺失。 |
+| `scripts/smoke.mts` | 四人联机、重连、下一局和单机陪练的端到端验证。 |
 
 ## 3. `apps/desktop`：桌面客户端
 
@@ -76,6 +78,15 @@ shared ← rules ← server-core ← desktop/server
 | `App.tsx` | 页面总控制器；管理本机/联机模式、WebSocket、房间状态和页面切换。 |
 | `styles.css` | CSS 总入口，按顺序引入四个样式模块。 |
 | `vite-env.d.ts` | Vite 和 preload API 的类型声明入口。 |
+
+### `src/table/`：牌桌展示子模块
+
+| 文件 | 作用 |
+|---|---|
+| `BoardSeats.tsx` | 四个座位、暗手和四方牌河的纯展示组件。 |
+| `DiscardFlight.tsx` | 出牌飞行动画；只负责动画呈现，不处理规则。 |
+| `TenpaiBar.tsx` | 可见牌统计和听牌余张提示。 |
+| `clock.tsx` | 回合倒计时与桌面时钟，避免高频刷新整个牌桌。 |
 
 ### `src/views/`：完整页面
 
@@ -146,12 +157,11 @@ shared ← rules ← server-core ← desktop/server
 
 | 文件 | 作用 |
 |---|---|
-| `src/index.ts` | 服务端入口；监听所有网卡并输出本机及局域网 WebSocket 地址。 |
-| `scripts/smoke.mts` | 四人建房、准备、开局、断线重连、下一局和单机陪练全流程测试。 |
-| `package.json` | 独立服务的启动和类型检查脚本。 |
-| `tsconfig.json` | 服务端 TypeScript 配置。 |
+| `src/index.ts` | 薄适配入口；监听所有网卡并输出本机及局域网 WebSocket 地址。规则和房间逻辑仍由 `server-core` 提供。 |
+| `package.json` | 独立服务的开发、启动和类型检查命令。 |
+| `tsconfig.json` | 服务端入口的 TypeScript 配置。 |
 
-只有一台电脑作为纯主机、不打开桌面客户端时，才需要单独运行它。
+只有一台电脑作为纯主机、不打开桌面客户端时，才需要 `npm run dev:server` 单独运行它。根目录的 `scripts/smoke.mts` 负责四人联机、重连、下一局和单机陪练全流程验证。
 
 ## 5. `packages/shared`：共享模型与协议
 

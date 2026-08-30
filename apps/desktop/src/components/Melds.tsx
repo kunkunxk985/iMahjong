@@ -7,7 +7,7 @@ const MELD_LABEL: Record<string, string> = {
   kan: '坎',
   'ming-gang': '明杠',
   'an-gang': '暗杠',
-  'bu-gang': '补杠',
+  'zi-gang': '自杠',
 };
 
 interface MeldsProps {
@@ -27,8 +27,8 @@ export function Melds({
 }: MeldsProps) {
   if (melds.length === 0) return null;
 
-  const kanMelds = melds.filter((m) => m.type === 'kan' || m.type === 'an-gang');
-  const openMelds = melds.filter((m) => m.type !== 'kan' && m.type !== 'an-gang');
+  const kanMelds = melds.filter((m) => m.type === 'kan' || m.type === 'an-gang' || m.type === 'zi-gang');
+  const openMelds = melds.filter((m) => m.type !== 'kan' && m.type !== 'an-gang' && m.type !== 'zi-gang');
   const orderedMelds = [
     ...kanMelds.map((meld) => ({ meld, isKan: true })),
     ...openMelds.map((meld) => ({ meld, isKan: false })),
@@ -37,10 +37,12 @@ export function Melds({
   const renderMeld = (meld: Meld, index: number, isKan: boolean) => {
     const isSecret = isKan && isOpponent;
     const label = isSecret
-      ? meld.type === 'an-gang' ? '暗杠' : '暗坎'
+      ? meld.type === 'zi-gang' ? '自杠' : meld.type === 'an-gang' ? '暗杠' : '暗坎'
       : isKan
-        ? meld.type === 'an-gang' ? '🔒 暗杠' : '🔒 坎'
+        ? meld.type === 'zi-gang' ? '🔒 自杠' : meld.type === 'an-gang' ? '🔒 暗杠' : '🔒 坎'
         : MELD_LABEL[meld.type] ?? '副露';
+    const isSelfKan = meld.type === 'kan' && !isOpponent;
+    const visibleKanIndex = Math.floor(meld.tiles.length / 2);
 
     return (
       <div
@@ -49,21 +51,27 @@ export function Melds({
       >
         <span className="meld-badge">{label}</span>
         <div className="meld-tiles">
-          {meld.tiles.map((tile) => (
-            <TileView
-              key={tile.id}
-              tile={tile}
-              back={isSecret || tile.key === 'back'}
-              small
-              pose={isSecret ? 'rack' : 'lie'}
-              highlightSame={Boolean(highlightKey && !isSecret && tile.key !== 'back' && tile.key === highlightKey)}
-              onHover={(hovered) => {
-                if (!isSecret && tile.key !== 'back') {
-                  onTileHover?.(hovered ? tile.key : null);
-                }
-              }}
-            />
-          ))}
+          {meld.tiles.map((tile, tileIndex) => {
+            // A self-declared 坎上 is kept visually concealed as 背、面、背.
+            // Other seats receive fully redacted tiles from the rules layer.
+            const isFaceUpSelfKan = isSelfKan && tileIndex === visibleKanIndex;
+            const isMasked = isSecret || tile.key === 'back' || (isSelfKan && !isFaceUpSelfKan);
+            return (
+              <TileView
+                key={tile.id}
+                tile={tile}
+                back={isMasked}
+                small
+                pose={isSecret ? 'rack' : 'lie'}
+                highlightSame={Boolean(highlightKey && !isMasked && tile.key === highlightKey)}
+                onHover={(hovered) => {
+                  if (!isMasked) {
+                    onTileHover?.(hovered ? tile.key : null);
+                  }
+                }}
+              />
+            );
+          })}
         </div>
       </div>
     );

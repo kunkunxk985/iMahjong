@@ -14,6 +14,7 @@ function seat(hand = [makeTile('wan', 1, 0)]): SeatRuntime {
     closedTwoPair: false,
     closedTwoPairKeys: [],
     discardedBeforeClose: [],
+    singleWaitChanged: false,
   };
 }
 

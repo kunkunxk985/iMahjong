@@ -3,9 +3,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const WINDOW_DEFAULT_WIDTH = 1280;
-const WINDOW_DEFAULT_HEIGHT = 800;
+const WINDOW_DEFAULT_HEIGHT = 720;
 const WINDOW_MIN_WIDTH = 1024;
-const WINDOW_MIN_HEIGHT = 700;
+const WINDOW_MIN_HEIGHT = 576;
 
 function iconPath(): string | undefined {
   const icns = path.join(__dirname, '../build/icon.icns');
@@ -40,8 +40,12 @@ export function createWindow(): BrowserWindow {
     },
   });
 
+  // Lock strict 16:9 aspect ratio on macOS and supported platforms
+  win.setAspectRatio(16 / 9);
+
   win.once('ready-to-show', () => {
     win.webContents.setZoomFactor(1);
+    win.setAspectRatio(16 / 9);
     win.show();
   });
   win.webContents.setVisualZoomLevelLimits(1, 1).catch(() => undefined);

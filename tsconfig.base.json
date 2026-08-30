@@ -11,8 +11,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "allowImportingTsExtensions": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "declaration": true
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   }
 }

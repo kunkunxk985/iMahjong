@@ -1,3 +1,4 @@
+/** Thin executable adapter; room and rule behavior lives in shared packages. */
 import { SERVER_PORT } from '@pizhou/shared';
 import { startMahjongServer } from '@pizhou/server-core';
 

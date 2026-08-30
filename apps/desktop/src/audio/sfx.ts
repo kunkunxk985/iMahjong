@@ -27,13 +27,22 @@ export function toggleMute(): boolean {
 
 /* ─── Helpers ─────────────────────────────────────────────── */
 
-function noise(ac: AudioContext, duration: number, gain: number): AudioBufferSourceNode {
-  const len = Math.floor(ac.sampleRate * duration);
-  const buf = ac.createBuffer(1, len, ac.sampleRate);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) {
-    data[i] = (Math.random() * 2 - 1) * gain;
+let cachedNoiseBuf: AudioBuffer | null = null;
+
+function getNoiseBuffer(ac: AudioContext): AudioBuffer {
+  if (!cachedNoiseBuf || cachedNoiseBuf.sampleRate !== ac.sampleRate) {
+    const len = Math.floor(ac.sampleRate * 0.5);
+    cachedNoiseBuf = ac.createBuffer(1, len, ac.sampleRate);
+    const data = cachedNoiseBuf.getChannelData(0);
+    for (let i = 0; i < len; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
   }
+  return cachedNoiseBuf;
+}
+
+function noise(ac: AudioContext, _duration: number, _gain: number): AudioBufferSourceNode {
+  const buf = getNoiseBuffer(ac);
   const src = ac.createBufferSource();
   src.buffer = buf;
   return src;
@@ -196,6 +205,57 @@ export function playTick(): void {
 }
 
 /** Gentle chime — it's your turn */
+
+/** Quick buzz — illegal action / claim rejected */
+export function playReject(): void {
+  if (_muted) return;
+  const ac = getCtx();
+  const t = ac.currentTime;
+  const osc = ac.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(180, t);
+  osc.frequency.exponentialRampToValueAtTime(90, t + 0.1);
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.12, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+  const bp = ac.createBiquadFilter();
+  bp.type = 'lowpass';
+  bp.frequency.value = 600;
+  osc.connect(bp).connect(g).connect(ac.destination);
+  osc.start(t);
+  osc.stop(t + 0.12);
+}
+
+/** Soft chime cluster — settlement / draw closure */
+export function playSettle(): void {
+  if (_muted) return;
+  const ac = getCtx();
+  const t = ac.currentTime;
+  const notes = [523, 659, 784];
+  for (let i = 0; i < notes.length; i++) {
+    const offset = i * 0.1;
+    const { osc, gain } = beep(ac, notes[i]!, 0.35, 'sine');
+    gain.gain.setValueAtTime(0.12, t + offset);
+    gain.gain.linearRampToValueAtTime(0.16, t + offset + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + offset + 0.35);
+    gain.connect(ac.destination);
+    osc.start(t + offset);
+    osc.stop(t + offset + 0.36);
+  }
+}
+
+/** Ultra-light tick — button hover feedback */
+export function playHover(): void {
+  if (_muted) return;
+  const ac = getCtx();
+  const t = ac.currentTime;
+  const { osc, gain } = beep(ac, 2200, 0.03, 'sine');
+  gain.gain.setValueAtTime(0.04, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+  gain.connect(ac.destination);
+  osc.start(t);
+  osc.stop(t + 0.04);
+}
 export function playMyTurn(): void {
   if (_muted) return;
   const ac = getCtx();

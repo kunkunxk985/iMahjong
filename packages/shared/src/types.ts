@@ -6,7 +6,7 @@ export type RoomPhase = 'lobby' | 'playing' | 'settlement';
 
 export type GamePhase = 'qidong' | 'self-turn' | 'claim-window' | 'settlement';
 
-export type MeldType = 'chi' | 'peng' | 'kan' | 'ming-gang' | 'an-gang' | 'bu-gang';
+export type MeldType = 'chi' | 'peng' | 'kan' | 'ming-gang' | 'an-gang' | 'zi-gang';
 
 export type ActionKind =
   | 'discard'
@@ -15,7 +15,7 @@ export type ActionKind =
   | 'kan'
   | 'ming-gang'
   | 'an-gang'
-  | 'bu-gang'
+  | 'zi-gang'
   | 'hu'
   | 'pass'
   | 'close-gate';
@@ -59,6 +59,8 @@ export interface PairwiseTransaction {
   yaoA: number;
   yaoB: number;
   isDealerPair: boolean;
+  /** 飘荤只作用于胡差结算，不改变 huA / huB 本身。 */
+  piaoMultiplier: number;
   deltaHu: number;
   deltaYao: number;
   points: number;

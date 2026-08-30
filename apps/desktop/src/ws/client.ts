@@ -1,3 +1,4 @@
+/** Renderer-side WebSocket transport. Domain rules stay on the server. */
 import {
   DEFAULT_WS_URL,
   HEARTBEAT_INTERVAL_MS,

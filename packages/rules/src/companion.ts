@@ -81,8 +81,8 @@ export function chooseCompanionAction(
   const anGang = actions.find((item) => item.kind === 'an-gang');
   if (anGang) return { kind: 'an-gang', key: anGang.key, tileIds: anGang.tileIds };
 
-  const buGang = actions.find((item) => item.kind === 'bu-gang');
-  if (buGang) return { kind: 'bu-gang', key: buGang.key, tileId: buGang.tileId };
+  const ziGang = actions.find((item) => item.kind === 'zi-gang');
+  if (ziGang) return { kind: 'zi-gang', key: ziGang.key, tileId: ziGang.tileId };
 
   const mingGang = actions.find((item) => item.kind === 'ming-gang');
   if (mingGang && rng() < 0.85) {

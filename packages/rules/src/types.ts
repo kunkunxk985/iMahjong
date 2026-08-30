@@ -12,4 +12,6 @@ export interface SeatRuntime {
   closedTwoPairKeys: string[];
   discardedBeforeClose: string[];
   waitKey?: string;
+  /** 四组单钓后是否换过手里的等牌；换过即不再满足“不换张”包庄条件。 */
+  singleWaitChanged: boolean;
 }

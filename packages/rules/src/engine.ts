@@ -7,7 +7,6 @@ import {
   type ClientView,
   type GameAction,
   type GamePhase,
-  type Meld,
   type PublicPlayerView,
   type Settlement,
   type Tile,
@@ -16,7 +15,7 @@ import {
 import {
   ACTION_RANK,
   actionMatchesAvailable,
-  buGangActions,
+  ziGangActions,
   claimActions,
   concealedAnGangActions,
   isBetterAction,
@@ -24,7 +23,7 @@ import {
   selfTurnActions,
   takeTiles,
 } from './actions.ts';
-import { settleChaHu, toSettlement, type SeatScoreInput } from './score.ts';
+import { isSpecialBaoZhuangHu, settleChaHu, toSettlement, type SeatScoreInput } from './score.ts';
 import { canHuTiles } from './win.ts';
 import type { SeatRuntime } from './types.ts';
 
@@ -50,13 +49,12 @@ interface PendingCandidate {
 }
 
 interface PendingWindow {
-  reason: 'discard' | 'bu-gang' | 'qidong';
+  reason: 'discard' | 'qidong';
   tile: Tile;
   fromSeat: number;
   deadline: number;
   candidates: PendingCandidate[];
   responses: Map<number, GameAction>;
-  pendingMeld?: Meld;
 }
 
 export interface EngineOptions {
@@ -218,6 +216,17 @@ export class PizhouGame {
     const players = [0, 1, 2, 3].map((seat) => {
       const runtime = this.seats[seat]!;
       const meta = input.metas[seat]!;
+      const winningTile = this.settlement?.winnerSeat === seat
+        && !this.settlement.selfDraw
+        && this.lastDiscard
+        && this.lastDiscard.fromSeat !== seat
+        && !runtime.hand.some((tile) => tile.id === this.lastDiscard!.tile.id)
+        ? { ...this.lastDiscard.tile }
+        : null;
+      const revealedHand = [
+        ...runtime.hand.map((tile) => ({ ...tile })),
+        ...(winningTile ? [winningTile] : []),
+      ];
       const publicView: PublicPlayerView = {
         seat,
         nickname: meta.nickname,
@@ -228,10 +237,10 @@ export class PizhouGame {
         isBot: meta.isBot,
         score: meta.score,
         closed: runtime.closed,
-        handCount: runtime.hand.length,
+        handCount: this.settlement ? revealedHand.length : runtime.hand.length,
         discards: runtime.discards.map((tile) => ({ ...tile })),
         melds: runtime.melds.map((meld) => {
-          const isSecret = meld.type === 'kan' || meld.type === 'an-gang';
+          const isSecret = meld.type === 'kan' || meld.type === 'an-gang' || meld.type === 'zi-gang';
           if (isSecret && seat !== input.mySeat && !this.settlement) {
             return {
               ...meld,
@@ -250,11 +259,11 @@ export class PizhouGame {
           };
         }),
       };
-      if (seat === input.mySeat) {
+      if (seat === input.mySeat || this.settlement) {
         return {
           ...publicView,
-          hand: runtime.hand.map((tile) => ({ ...tile })),
-          lastDrawnId: runtime.lastDrawnId,
+          hand: revealedHand,
+          ...(seat === input.mySeat ? { lastDrawnId: runtime.lastDrawnId } : {}),
         };
       }
       return publicView;
@@ -312,8 +321,8 @@ export class PizhouGame {
     if (action.kind === 'an-gang') {
       return this.declareAnGang(seat, action.key);
     }
-    if (action.kind === 'bu-gang') {
-      return this.declareBuGang(seat, action.key, action.tileId);
+    if (action.kind === 'zi-gang') {
+      return this.declareZiGang(seat, action.key, action.tileId);
     }
     return { ok: false, error: '当前不能这样操作', changed: false };
   }
@@ -340,21 +349,17 @@ export class PizhouGame {
     runtime.lastDrawnId = undefined;
     runtime.hand = sortTiles(runtime.hand);
     if (!runtime.firstDiscardKey) runtime.firstDiscardKey = tile.key;
-    // 臭牌按全桌历史判断；尚未关门的玩家持续记录每一家打出的牌。
-    for (const target of this.seats) {
-      if (!target.closed && !target.discardedBeforeClose.includes(tile.key)) {
-        target.discardedBeforeClose.push(tile.key);
-      }
-    }
     this.refreshTwoPairClose(runtime);
     this.refreshWaitFlags(runtime);
     this.lastDiscard = { tile, fromSeat: seat };
     this.firstDiscardDone = true;
     if (this.isFourSameOpening()) {
+      this.recordResolvedDiscard(tile);
       return this.finishDraw(true, 'four_same');
     }
-    const candidates = this.buildClaimCandidates(tile, seat, 'discard');
+    const candidates = this.buildClaimCandidates(tile, seat);
     if (candidates.length === 0) {
+      this.recordResolvedDiscard(tile);
       return this.advanceDraw((seat + 1) % 4);
     }
     this.pending = {
@@ -399,43 +404,19 @@ export class PizhouGame {
     return { ok: true, changed: true };
   }
 
-  private declareBuGang(seat: number, key?: string, tileId?: string): ApplyResult {
-    const runtime = this.seats[seat]!;
-    const peng = runtime.melds.find((meld) => (meld.type === 'peng' || meld.type === 'kan') && meld.tiles[0]?.key === key);
-    if (!peng) return { ok: false, error: '没有可以升级的碰或坎', changed: false };
-    const extra = runtime.hand.find((tile) => tile.id === tileId || tile.key === key);
-    if (!extra) return { ok: false, error: '手牌中没有补杠的牌', changed: false };
-    const candidates = this.buildClaimCandidates(extra, seat, 'bu-gang');
-    const pendingMeld: Meld = { type: 'bu-gang', tiles: [...peng.tiles, extra], fromSeat: peng.fromSeat };
-    if (candidates.length === 0) {
-      return this.completeBuGang(seat, extra.id);
-    }
-    this.pending = {
-      reason: 'bu-gang',
-      tile: extra,
-      fromSeat: seat,
-      deadline: this.now() + this.timeoutMs,
-      candidates,
-      responses: new Map(),
-      pendingMeld,
-    };
-    this.phase = 'claim-window';
-    this.bump();
-    return { ok: true, changed: true };
-  }
-
-  private completeBuGang(seat: number, tileId: string): ApplyResult {
+  private declareZiGang(seat: number, key?: string, tileId?: string): ApplyResult {
     if (this.wall.length === 0) return { ok: false, error: '牌墙已空，不能杠', changed: false };
     const runtime = this.seats[seat]!;
-    const extraIndex = runtime.hand.findIndex((tile) => tile.id === tileId);
-    if (extraIndex < 0) return { ok: false, error: '补杠失败', changed: false };
-    const extra = runtime.hand.splice(extraIndex, 1)[0]!;
-    const pengIndex = runtime.melds.findIndex((meld) => (meld.type === 'peng' || meld.type === 'kan') && meld.tiles[0]?.key === extra.key);
-    if (pengIndex < 0) return { ok: false, error: '补杠失败', changed: false };
-    const peng = runtime.melds[pengIndex]!;
-    runtime.melds[pengIndex] = { type: 'bu-gang', tiles: [...peng.tiles, extra], fromSeat: peng.fromSeat };
+    const kanIndex = runtime.melds.findIndex((meld) => meld.type === 'kan' && meld.tiles[0]?.key === key);
+    if (kanIndex < 0) return { ok: false, error: '只有坎上的牌可以自杠', changed: false };
+    const extra = runtime.hand.find((tile) => tile.id === tileId || tile.key === key);
+    if (!extra) return { ok: false, error: '手牌中没有自杠的第四张牌', changed: false };
+    const extraIndex = runtime.hand.findIndex((tile) => tile.id === extra.id);
+    if (extraIndex < 0) return { ok: false, error: '自杠失败', changed: false };
+    const usedExtra = runtime.hand.splice(extraIndex, 1)[0]!;
+    const kan = runtime.melds[kanIndex]!;
+    runtime.melds[kanIndex] = { type: 'zi-gang', tiles: [...kan.tiles, usedExtra] };
     runtime.changed = true;
-    this.pending = null;
     return this.drawReplacement(seat);
   }
 
@@ -467,7 +448,7 @@ export class PizhouGame {
     return { ok: true, changed: true };
   }
 
-  private buildClaimCandidates(tile: Tile, fromSeat: number, reason: 'discard' | 'bu-gang'): PendingCandidate[] {
+  private buildClaimCandidates(tile: Tile, fromSeat: number): PendingCandidate[] {
     const candidates: PendingCandidate[] = [];
     for (let seat = 0; seat < 4; seat += 1) {
       if (seat === fromSeat) continue;
@@ -476,7 +457,6 @@ export class PizhouGame {
         discard: tile,
         fromSeat,
         claimerSeat: seat,
-        reason,
       });
       const playable = actions.filter((item) => item.kind !== 'pass');
       if (playable.length > 0) {
@@ -534,10 +514,7 @@ export class PizhouGame {
       return;
     }
     if (!best) {
-      if (pending.reason === 'bu-gang') {
-        this.completeBuGang(pending.fromSeat, pending.tile.id);
-        return;
-      }
+      this.recordResolvedDiscard(pending.tile);
       this.advanceDraw((pending.fromSeat + 1) % 4);
       return;
     }
@@ -546,10 +523,7 @@ export class PizhouGame {
       this.declareHu(best.seat, [...winner.hand, pending.tile], false, pending.tile);
       return;
     }
-    if (pending.reason === 'bu-gang') {
-      this.advanceDraw((pending.fromSeat + 1) % 4);
-      return;
-    }
+    this.recordResolvedDiscard(pending.tile);
     this.takeDiscard(pending);
     if (best.action.kind === 'ming-gang') {
       this.applyMingGang(best.seat, pending.tile);
@@ -571,6 +545,18 @@ export class PizhouGame {
       from.discards.pop();
     }
     this.lastDiscard = null;
+  }
+
+  /**
+   * 只有一张弃牌确定没有直接导致胡牌后，才把它写入香/臭牌历史。
+   * 否则“刚打出的生张”会先被误记成臭牌，闯香包庄将永远无法成立。
+   */
+  private recordResolvedDiscard(tile: Tile): void {
+    for (const target of this.seats) {
+      if (!target.discardedBeforeClose.includes(tile.key)) {
+        target.discardedBeforeClose.push(tile.key);
+      }
+    }
   }
 
   private applyPeng(seat: number, tile: Tile): void {
@@ -629,7 +615,19 @@ export class PizhouGame {
   }
 
   private declareHu(seat: number, concealed: Tile[], selfDraw: boolean, claimedTile?: Tile): ApplyResult {
-    if (!canHuTiles(concealed, this.seats[seat]!.melds.length)) {
+    const runtime = this.seats[seat]!;
+    const specialBaoZhuangHu = !selfDraw && claimedTile
+      ? isSpecialBaoZhuangHu({
+          hand: concealed,
+          exposed: runtime.melds,
+          ron: true,
+          discardKey: claimedTile.key,
+          singleWaitChanged: runtime.singleWaitChanged,
+          closedTwoPair: runtime.closedTwoPair,
+          discardedBeforeClose: runtime.discardedBeforeClose,
+        })
+      : false;
+    if (!canHuTiles(concealed, runtime.melds.length) && !specialBaoZhuangHu) {
       return { ok: false, error: '还不能胡牌', changed: false };
     }
     const winType: WinType = !this.firstDiscardDone && this.hadOpeningKong ? 'qidong-gang-hu' : 'ping-hu';
@@ -660,6 +658,7 @@ export class PizhouGame {
 
     if (!alreadyTwoPairs) {
       if (!discardTileId) return { ok: false, error: '请先选择关门时要出的牌', changed: false };
+      const gateDiscard = runtime.hand.find((tile) => tile.id === discardTileId);
       const remaining = runtime.hand.filter((tile) => tile.id !== discardTileId);
       const remainingCounts: Record<string, number> = {};
       for (const tile of remaining) remainingCounts[tile.key] = (remainingCounts[tile.key] ?? 0) + 1;
@@ -668,7 +667,10 @@ export class PizhouGame {
 
       const discarded = this.discard(seat, discardTileId);
       if (!discarded.ok) return discarded;
-      runtime.discardedBeforeClose = this.allDiscardedKeys();
+      // 用户确认：宣布两对关门这一手打出的牌，对关门者自己也算臭牌。
+      if (gateDiscard && !runtime.discardedBeforeClose.includes(gateDiscard.key)) {
+        runtime.discardedBeforeClose.push(gateDiscard.key);
+      }
       runtime.closed = true;
       runtime.closedTwoPair = true;
       runtime.closedTwoPairKeys = this.twoPairKeys(runtime.hand);
@@ -678,7 +680,6 @@ export class PizhouGame {
     runtime.closed = true;
     runtime.closedTwoPair = true;
     runtime.closedTwoPairKeys = this.twoPairKeys(runtime.hand);
-    runtime.discardedBeforeClose = this.allDiscardedKeys();
     this.bump();
     return { ok: true, changed: true };
   }
@@ -692,10 +693,6 @@ export class PizhouGame {
       .sort();
   }
 
-  private allDiscardedKeys(): string[] {
-    return [...new Set(this.seats.flatMap((seat) => seat.discards.map((tile) => tile.key)))];
-  }
-
   private refreshTwoPairClose(seat: SeatRuntime): void {
     if (!seat.closedTwoPair) return;
     const currentKeys = this.twoPairKeys(seat.hand);
@@ -705,8 +702,6 @@ export class PizhouGame {
     seat.closed = false;
     seat.closedTwoPair = false;
     seat.closedTwoPairKeys = [];
-    // 关门失效后，之前漏记的全桌牌河也全部纳入臭牌历史。
-    seat.discardedBeforeClose = this.allDiscardedKeys();
   }
 
   private refreshWaitFlags(seat: SeatRuntime): void {
@@ -715,9 +710,11 @@ export class PizhouGame {
       if (!seat.waitKey) {
         seat.waitKey = key;
         seat.closed = true;
+        seat.singleWaitChanged = false;
       } else if (seat.waitKey !== key) {
-        // 单钓允许换听口，关门和包庄资格继续保留。
+        // 仍可继续单钓，但已不满足公开规则中包庄要求的“不换张”。
         seat.waitKey = key;
+        seat.singleWaitChanged = true;
       }
       return;
     }
@@ -744,6 +741,7 @@ export class PizhouGame {
       winningDiscardId: index === winnerSeat ? winningDiscardId : undefined,
       winningTileId: index === winnerSeat ? winningTileId : undefined,
       changed: seat.changed,
+      singleWaitChanged: seat.singleWaitChanged,
       closedTwoPair: seat.closedTwoPair,
       discardedBeforeClose: seat.discardedBeforeClose.slice(),
     }));
@@ -807,9 +805,10 @@ function emptySeat(): SeatRuntime {
     closedTwoPair: false,
     closedTwoPairKeys: [],
     discardedBeforeClose: [],
+    singleWaitChanged: false,
   };
 }
 
-export function legalBuGangKeys(seat: SeatRuntime): string[] {
-  return buGangActions(seat).map((action) => action.key!).filter(Boolean);
+export function legalZiGangKeys(seat: SeatRuntime): string[] {
+  return ziGangActions(seat).map((action) => action.key!).filter(Boolean);
 }

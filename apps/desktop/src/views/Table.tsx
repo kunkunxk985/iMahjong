@@ -1,23 +1,26 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   ACTION_TIMEOUT_MS,
   isPrivatePlayerView,
   SEAT_NAMES,
   tileLabel,
-  TILE_COPIES,
   type AvailableAction,
   type ClientView,
   type GameAction,
   type Meld,
-  type PublicPlayerView,
-  type Tile,
 } from '@pizhou/shared';
 import { getDiscardTenpaiOptions, type DiscardTenpaiOption } from '@pizhou/rules';
 import { ActionBar } from '../components/ActionBar';
+import { ActionSplash } from '../components/ActionSplash';
 import { Melds } from '../components/Melds';
 import { TileView } from '../components/TileView';
+import { QuickChat } from '../components/QuickChat';
+import { ChatBubbleOverlay, type ActiveChatBubble } from '../components/ChatBubble';
 import { useSoundEffects } from '../audio/useSoundEffects';
 import { isMuted, toggleMute } from '../audio/sfx';
+import { BoardPlayer, ConcealedHand, DiscardRiver, relativeSeat } from '../table/BoardSeats';
+import { countVisibleTiles, TenpaiBar } from '../table/TenpaiBar';
+import { GameClock, useCountdown } from '../table/clock';
 
 interface TableProps {
   view: ClientView;
@@ -28,187 +31,67 @@ interface TableProps {
   practice?: boolean;
 }
 
-function relative(seat: number, me: number): number {
-  return (seat - me + 4) % 4;
-}
-
-function useCountdown(deadline: number | null): number {
-  const [left, setLeft] = useState(0);
-  useEffect(() => {
-    if (!deadline) {
-      setLeft(0);
-      return;
-    }
-    const tick = () => setLeft(Math.max(0, Math.ceil((deadline - Date.now()) / 1000)));
-    tick();
-    const id = setInterval(tick, 200);
-    return () => clearInterval(id);
-  }, [deadline]);
-  return left;
-}
-
-function useClock(): string {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
-  return now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
-}
-
-type ViewPlayer = ClientView['players'][number];
-type BoardPosition = 'top' | 'right' | 'bottom' | 'left';
-
-function BoardPlayer({
-  player,
-  position,
-  you,
-  current,
-}: {
-  player: ViewPlayer;
-  position: BoardPosition;
-  you?: boolean;
-  current: boolean;
-}) {
-  const avatar = player.isBot ? '陪' : player.nickname.slice(0, 1);
-  return (
-    <div className={`board-player board-player-${position} ${current ? 'is-current' : ''} ${you ? 'is-you' : ''}`}>
-      <div className={`board-avatar avatar-${player.seat}`}>
-        <span>{avatar}</span>
-        <i>{SEAT_NAMES[player.seat]}</i>
-      </div>
-      <div className="board-player-copy">
-        <strong>{player.nickname}{you ? ' · 你' : ''}</strong>
-        <span>
-          {player.isDealer ? <b className="board-dealer">庄</b> : null}
-          {player.closed ? <b className="board-closed">关</b> : null}
-          {player.isBot ? '陪练' : player.isHost ? '房主' : player.online ? '在线' : '离线'}
-        </span>
-      </div>
-      <em>{player.score}</em>
-    </div>
-  );
-}
-
-function ConcealedHand({ player, position }: { player: ViewPlayer; position: BoardPosition }) {
-  const count = Math.min(player.handCount, 14);
-  if (count === 0) return null;
-  return (
-    <div className={`board-concealed board-concealed-${position}`} aria-label={`${SEAT_NAMES[player.seat]}手牌背面`}>
-      {Array.from({ length: count }, (_, index) => (
-        <TileView key={`${player.seat}-hand-${index}`} back small pose="rack" className="board-concealed-tile" />
-      ))}
-    </div>
-  );
-}
-
-function DiscardRiver({
-  player,
-  position,
-  lastDiscardId,
-  highlightKey,
-  onTileHover,
-}: {
-  player: PublicPlayerView;
-  position: BoardPosition;
-  lastDiscardId?: string;
-  highlightKey?: string | null;
-  onTileHover?: (key: string | null) => void;
-}) {
-  const discards = player.discards;
-  if (discards.length === 0) return null;
-
-  return (
-    <div className={`board-discard board-discard-${position}`} aria-label={`${SEAT_NAMES[player.seat]}弃牌区`}>
-      <div className="board-discard-grid">
-        {discards.map((tile) => (
-          <TileView
-            key={tile.id}
-            tile={tile}
-            small
-            pose="lie"
-            last={tile.id === lastDiscardId}
-            highlightSame={Boolean(highlightKey && tile.key === highlightKey)}
-            onHover={(hovered) => onTileHover?.(hovered ? tile.key : null)}
-            className="board-discard-tile"
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ─── Count visible tiles to compute remaining for tenpai ──── */
-
-function countVisibleTiles(view: ClientView, myHand: Tile[]): Record<string, number> {
-  const seen: Record<string, number> = {};
-  const add = (key: string) => {
-    if (key && key !== 'back') {
-      seen[key] = (seen[key] ?? 0) + 1;
-    }
-  };
-
-  // My hand
-  for (const tile of myHand) add(tile.key);
-
-  // All players' discards and melds
-  for (const player of view.players) {
-    for (const tile of player.discards) add(tile.key);
-    for (const meld of player.melds) {
-      if (player.seat === view.mySeat || (meld.type !== 'kan' && meld.type !== 'an-gang')) {
-        for (const tile of meld.tiles) add(tile.key);
-      }
-    }
-  }
-
-  return seen;
-}
-
-function remainingCount(key: string, visible: Record<string, number>): number {
-  return Math.max(0, TILE_COPIES - (visible[key] ?? 0));
-}
-
-/* ─── Tenpai Info Bar Component ────────────────────────────── */
-
-function TenpaiBar({
-  waits,
-  visible,
-  previewLabel,
-  elevated,
-}: {
-  waits: string[];
-  visible: Record<string, number>;
-  previewLabel?: string;
-  elevated?: boolean;
-}) {
-  if (waits.length === 0) return null;
-  const totalRemaining = waits.reduce((sum, key) => sum + remainingCount(key, visible), 0);
-
-  return (
-    <div className={`tenpai-bar ${elevated ? 'elevated' : ''}`}>
-      <span className="tenpai-label">{previewLabel ? `打【${previewLabel}】听` : '听'}</span>
-      {waits.map((key) => {
-        const left = remainingCount(key, visible);
-        return (
-          <span key={key} className={`wait-tile ${left === 0 ? 'is-empty' : ''}`}>
-            {tileLabel(key)}
-            <span className="wait-count">×{left}</span>
-          </span>
-        );
-      })}
-      <span className="wait-total">共{totalRemaining}张</span>
-    </div>
-  );
-}
-
 /* ─── Main Table Component ─────────────────────────────────── */
 
 export function Table({ view, onAction, onRules, onLeave, networkStatus, practice = false }: TableProps) {
+  const boardRef = useRef<HTMLDivElement | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredTileKey, setHoveredTileKey] = useState<string | null>(null);
   const [hoveredTileId, setHoveredTileId] = useState<string | null>(null);
   const [enteringId, setEnteringId] = useState<string | undefined>(undefined);
   const [muted, setMuted] = useState(isMuted());
+  const [showQuickChat, setShowQuickChat] = useState(false);
+  const [chatBubbles, setChatBubbles] = useState<ActiveChatBubble[]>([]);
+
+  const handleSendChat = (message: string, isEmote = false) => {
+    const bubbleId = Date.now() + Math.random();
+    const newBubble: ActiveChatBubble = {
+      id: bubbleId,
+      seat: view.mySeat,
+      position: 'bottom',
+      message,
+      isEmote,
+    };
+    setChatBubbles((prev) => [...prev, newBubble]);
+    setTimeout(() => {
+      setChatBubbles((prev) => prev.filter((b) => b.id !== bubbleId));
+    }, 3200);
+
+    // In companion / practice mode: simulate occasional AI companion response
+    if (practice) {
+      setTimeout(() => {
+        const randSeat = (view.mySeat + 1 + Math.floor(Math.random() * 3)) % 4;
+        const rel = relativeSeat(randSeat, view.mySeat);
+        const posMap: Record<number, 'bottom' | 'top' | 'left' | 'right'> = {
+          0: 'bottom',
+          1: 'right',
+          2: 'top',
+          3: 'left',
+        };
+        const aiQuotes = ['碰得好！', '别急别急，慢慢来', '这把看谁先胡', '🍵 喝口水压压惊', '手气挺旺啊'];
+        const aiMsg = aiQuotes[Math.floor(Math.random() * aiQuotes.length)]!;
+        const aiBubbleId = Date.now() + Math.random();
+        setChatBubbles((prev) => [
+          ...prev,
+          {
+            id: aiBubbleId,
+            seat: randSeat,
+            position: posMap[rel] || 'top',
+            message: aiMsg,
+            isEmote: aiMsg.startsWith('🍵'),
+          },
+        ]);
+        setTimeout(() => {
+          setChatBubbles((prev) => prev.filter((b) => b.id !== aiBubbleId));
+        }, 3200);
+      }, 1200);
+    }
+  };
+
+  const noteDiscardSource = useCallback((_tileId: string) => {
+    // No-op
+  }, []);
+
   const left = useCountdown(view.turnDeadline);
   const me = view.players.find((player) => player.seat === view.mySeat);
   const myHand = me && isPrivatePlayerView(me) ? me.hand : [];
@@ -222,15 +105,53 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
   // Track previous lastDrawnId to detect new draws for entering animation
   const prevDrawnRef = useRef<string | undefined>(undefined);
   useEffect(() => {
-    if (lastDrawnId && lastDrawnId !== prevDrawnRef.current) {
-      setEnteringId(lastDrawnId);
-      const timer = setTimeout(() => setEnteringId(undefined), 350);
-      prevDrawnRef.current = lastDrawnId;
-      return () => clearTimeout(timer);
-    }
-    setEnteringId(undefined);
+    // Only react to an actual NEW drawn tile; never clear early on unrelated
+    // view.sequence bumps, or the 0.48s arc gets cut off mid-flight.
+    if (!lastDrawnId || lastDrawnId === prevDrawnRef.current) return;
+    setEnteringId(lastDrawnId);
     prevDrawnRef.current = lastDrawnId;
-  }, [lastDrawnId, view.sequence]);
+    // Keep the class until draw-arc-in (0.48s) fully finishes
+    const timer = setTimeout(() => setEnteringId(undefined), 540);
+    return () => clearTimeout(timer);
+  }, [lastDrawnId]);
+
+  // ── Smooth hand re-sorting: FLIP-slide tiles whose position changed ──
+  const handRectsRef = useRef<Map<string, DOMRect>>(new Map());
+  useLayoutEffect(() => {
+    const row = boardRef.current?.querySelector<HTMLElement>('.board-own-hand');
+    if (!row) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const els = Array.from(row.querySelectorAll<HTMLElement>('.tile[data-tile-id]'));
+    const prev = handRectsRef.current;
+    const next = new Map<string, DOMRect>();
+    const animations: Array<{ el: HTMLElement; dx: number }> = [];
+
+    // Read phase: measure all rects without layout thrashing
+    for (const el of els) {
+      const key = el.dataset.tileId!;
+      const rect = el.getBoundingClientRect();
+      next.set(key, rect);
+      const old = prev.get(key);
+      if (old && !el.classList.contains('entering')) {
+        const dx = old.left - rect.left;
+        if (dx !== 0 && Math.abs(dx) < 400) {
+          animations.push({ el, dx });
+        }
+      }
+    }
+    handRectsRef.current = next;
+
+    // Animate phase: batch start GPU-accelerated transforms
+    for (const { el, dx } of animations) {
+      el.animate(
+        [
+          { transform: `translate3d(${dx}px, 0, 0)` },
+          { transform: 'translate3d(0, 0, 0)' },
+        ],
+        { duration: 200, easing: 'cubic-bezier(0.2, 0.85, 0.25, 1)' },
+      );
+    }
+  }, [myHand]);
 
   // Sound effects hook
   useSoundEffects(view);
@@ -242,7 +163,7 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
   const byRel = useMemo(() => {
     const map: Record<number, (typeof view.players)[number] | undefined> = {};
     for (const player of view.players) {
-      map[relative(player.seat, view.mySeat)] = player;
+      map[relativeSeat(player.seat, view.mySeat)] = player;
     }
     return map;
   }, [view]);
@@ -250,6 +171,12 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
   // Focus key for highlighting: hovered tile's key, or selected tile's key
   const selectedTile = useMemo(() => myHand.find((t) => t.id === selectedId), [myHand, selectedId]);
   const focusKey = hoveredTileKey ?? selectedTile?.key ?? null;
+
+  // ── Close gate candidate calculation ──
+  const closeGateAction = view.availableActions.find((a) => a.kind === 'close-gate');
+  const closeGateTileIds = useMemo(() => {
+    return new Set(closeGateAction?.tileIds ?? []);
+  }, [closeGateAction]);
 
   // ── Tenpai calculation ──
   const tenpaiOptions = useMemo((): DiscardTenpaiOption[] => {
@@ -263,33 +190,41 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
 
   // Hovered or selected tenpai waits
   const activeTenpaiInfo = useMemo(() => {
-    if (hoveredTileId) {
-      const opt = tenpaiOptions.find((o) => o.discardTileId === hoveredTileId);
+    const targetId = hoveredTileId ?? selectedId;
+    if (targetId) {
+      const opt = tenpaiOptions.find((o) => o.discardTileId === targetId);
       if (opt && opt.waits.length > 0) {
-        const tile = myHand.find((t) => t.id === hoveredTileId);
+        const tile = myHand.find((t) => t.id === targetId);
+        const isClose = closeGateTileIds.has(targetId);
         return {
           waits: opt.waits,
-          previewLabel: tile ? tileLabel(tile) : undefined,
-        };
-      }
-    }
-    if (selectedId) {
-      const opt = tenpaiOptions.find((o) => o.discardTileId === selectedId);
-      if (opt && opt.waits.length > 0) {
-        const tile = myHand.find((t) => t.id === selectedId);
-        return {
-          waits: opt.waits,
-          previewLabel: tile ? tileLabel(tile) : undefined,
+          previewLabel: tile ? `${tileLabel(tile)}${isClose ? ' · 关门' : ''}` : undefined,
         };
       }
     }
     return null;
-  }, [hoveredTileId, selectedId, tenpaiOptions, myHand]);
+  }, [hoveredTileId, selectedId, tenpaiOptions, myHand, closeGateTileIds]);
 
   const visibleTiles = useMemo(() => countVisibleTiles(view, myHand), [view, myHand]);
 
+  // Full table discard keys (for Xiang/Chou detection)
+  const allTableDiscards = useMemo(() => {
+    const set = new Set<string>();
+    for (const player of view.players) {
+      for (const t of player.discards) {
+        set.add(t.key);
+      }
+    }
+    return set;
+  }, [view.players]);
+
+  // Player is in Bao-Zhuang risk phase if having >= 3 melds and NOT closed
+  const inXiangRiskPhase = Boolean(me && me.melds.length >= 3 && !me.closed);
+
   const discard = () => {
     if (!selectedId || !canDiscard) return;
+    const tile = myHand.find((t) => t.id === selectedId);
+    if (tile) noteDiscardSource(tile.id);
     onAction({ kind: 'discard', tileId: selectedId });
     setSelectedId(null);
   };
@@ -415,7 +350,6 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
 
   const timeoutSeconds = practice ? 18 : ACTION_TIMEOUT_MS / 1000;
   const ring = Math.max(0, Math.min(100, (left / timeoutSeconds) * 100));
-  const clock = useClock();
   const phaseText =
     view.gamePhase === 'qidong'
       ? '起手杠：可胡可过'
@@ -426,15 +360,8 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
           : `${currentPlayer?.nickname ?? '下家'} 出牌`;
 
   return (
-    <div className="mahjong-board">
-      <div className="board-wood" />
+    <div className="mahjong-board" ref={boardRef}>
       <div className="board-felt" />
-      <div className="board-corners" aria-hidden="true">
-        <span className="board-corner tl" />
-        <span className="board-corner tr" />
-        <span className="board-corner bl" />
-        <span className="board-corner br" />
-      </div>
 
       <header className="board-topbar">
         <div className="board-room-info">
@@ -446,9 +373,17 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
           <span>房间号</span>
           <strong>{practice ? '单机练习' : view.roomCode}</strong>
         </div>
-        <div className="board-title">邳州麻将</div>
         <div className="board-top-tools">
-          <span className="board-clock">{clock}</span>
+          <GameClock />
+          <button
+            type="button"
+            className="board-icon-button"
+            onClick={() => setShowQuickChat((prev) => !prev)}
+            title="快捷互动与表情"
+            aria-label="快捷互动与表情"
+          >
+            💬
+          </button>
           <button
             type="button"
             className="board-icon-button"
@@ -481,9 +416,9 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
       {byRel[1] ? <BoardPlayer player={byRel[1]} position="right" current={view.currentSeat === byRel[1].seat} /> : null}
       {me ? <BoardPlayer player={me} position="bottom" you current={view.currentSeat === me.seat} /> : null}
 
-      {byRel[2] ? <ConcealedHand player={byRel[2]} position="top" /> : null}
-      {byRel[3] ? <ConcealedHand player={byRel[3]} position="left" /> : null}
-      {byRel[1] ? <ConcealedHand player={byRel[1]} position="right" /> : null}
+      {byRel[2] ? <ConcealedHand player={byRel[2]} position="top" reveal={view.phase === 'settlement'} /> : null}
+      {byRel[3] ? <ConcealedHand player={byRel[3]} position="left" reveal={view.phase === 'settlement'} /> : null}
+      {byRel[1] ? <ConcealedHand player={byRel[1]} position="right" reveal={view.phase === 'settlement'} /> : null}
 
       {/* Opponents' melds */}
       {byRel[2]?.melds && byRel[2].melds.length > 0 ? (
@@ -502,35 +437,48 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
         </div>
       ) : null}
 
-      <div className="board-watermark">邳州麻将</div>
+      {/* ── Central Grand Mahjong Compass Disc ── */}
+      {(() => {
+        const currentRel = view.currentSeat !== null && view.currentSeat !== undefined
+          ? relativeSeat(view.currentSeat, view.mySeat)
+          : null;
+        return (
+          <div className={`board-controller ${myTurn || claiming ? 'is-active' : ''}`}>
+            <div className="compass-meta-bar">
+              <span className="meta-wall">剩余 <b>{view.wallCount}</b> 张</span>
+              <span className="meta-dot">·</span>
+              <span className="meta-round">第 <b>{view.round || 1}</b> 局</span>
+            </div>
 
-      <div className={`board-controller ${myTurn || claiming ? 'is-active' : ''}`}>
-        <div className="board-counter board-counter-left">
-          <b>{view.wallCount}</b>
-          <span>张</span>
-        </div>
-        <div className="board-dial" style={{ background: `conic-gradient(#f3c34f ${ring}%, rgba(255, 255, 255, 0.08) 0)` }}>
-          <div className="board-dial-inner">
-            <i className="dial-arrow dial-arrow-top">◆</i>
-            <i className="dial-arrow dial-arrow-right">◆</i>
-            <i className="dial-arrow dial-arrow-bottom">◆</i>
-            <i className="dial-arrow dial-arrow-left">◆</i>
-            <strong>{left > 0 ? left : '--'}</strong>
-            <small>{view.round || 1} 局</small>
+            <div className="board-compass-disc" style={{ background: `conic-gradient(#f3c34f ${ring}%, rgba(255, 255, 255, 0.08) 0)` }}>
+              <div className="compass-disc-inner">
+                <div className={`compass-wind-node wind-top ${currentRel === 2 ? 'is-turn' : ''}`}>
+                  <span className="wind-label">{SEAT_NAMES[(view.mySeat + 2) % 4]}</span>
+                  <i className="wind-pointer">▲</i>
+                </div>
+                <div className={`compass-wind-node wind-right ${currentRel === 1 ? 'is-turn' : ''}`}>
+                  <span className="wind-label">{SEAT_NAMES[(view.mySeat + 1) % 4]}</span>
+                  <i className="wind-pointer">▶</i>
+                </div>
+                <div className={`compass-wind-node wind-bottom ${currentRel === 0 ? 'is-turn' : ''}`}>
+                  <span className="wind-label">{SEAT_NAMES[view.mySeat]}</span>
+                  <i className="wind-pointer">▼</i>
+                </div>
+                <div className={`compass-wind-node wind-left ${currentRel === 3 ? 'is-turn' : ''}`}>
+                  <span className="wind-label">{SEAT_NAMES[(view.mySeat + 3) % 4]}</span>
+                  <i className="wind-pointer">◀</i>
+                </div>
+
+                <div className="compass-countdown">
+                  <strong className="countdown-number">{left > 0 ? left : '--'}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="compass-phase-badge">{phaseText}</div>
           </div>
-        </div>
-        <div className="board-counter board-counter-right">
-          <b>{view.round || 1}</b>
-          <span>局</span>
-        </div>
-        <div className="board-turn-copy">{phaseText}</div>
-        {view.lastDiscard ? (
-          <div className="board-last-discard">
-            <span>{view.players.find((p) => p.seat === view.lastDiscard?.fromSeat)?.nickname ?? '刚打'}</span>
-            <TileView tile={view.lastDiscard.tile} pose="lie" last />
-          </div>
-        ) : null}
-      </div>
+        );
+      })()}
 
       <div className="board-discard-layer" aria-label="四方弃牌">
         {([0, 1, 2, 3] as const).map((rel) => {
@@ -565,8 +513,12 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
                 selected={selectedId === tile.id}
                 drawn={lastDrawnId === tile.id}
                 tenpaiHint={tenpaiTileIds.has(tile.id)}
+                closeGateHint={closeGateTileIds.has(tile.id)}
+                xiangHint={inXiangRiskPhase && !closeGateTileIds.has(tile.id) && !tenpaiTileIds.has(tile.id) && !allTableDiscards.has(tile.key)}
+                chouHint={inXiangRiskPhase && !closeGateTileIds.has(tile.id) && !tenpaiTileIds.has(tile.id) && allTableDiscards.has(tile.key)}
                 entering={enteringId === tile.id}
                 pose="hand"
+                dataTileId={tile.id}
                 highlightSame={Boolean(focusKey && tile.key === focusKey)}
                 onHover={(hovered) => {
                   setHoveredTileKey(hovered ? tile.key : null);
@@ -575,6 +527,7 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
                 onClick={() => setSelectedId(tile.id === selectedId ? null : tile.id)}
                 onDoubleClick={() => {
                   if (!canDiscard) return;
+                  noteDiscardSource(tile.id);
                   onAction({ kind: 'discard', tileId: tile.id });
                   setSelectedId(null);
                 }}
@@ -586,6 +539,8 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
               waits={activeTenpaiInfo.waits}
               visible={visibleTiles}
               previewLabel={activeTenpaiInfo.previewLabel}
+              isClosed={Boolean(me?.closed)}
+              meldsCount={me?.melds.length ?? 0}
               elevated={view.availableActions.filter((a) => a.kind !== 'discard').length > 0 || (canDiscard && Boolean(selectedId))}
             />
           ) : null}
@@ -602,6 +557,11 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
       ) : null}
 
       <div className="board-bottom-rule" />
+      <ActionSplash view={view} />
+      <ChatBubbleOverlay bubbles={chatBubbles} />
+      {showQuickChat ? (
+        <QuickChat onSend={handleSendChat} onClose={() => setShowQuickChat(false)} />
+      ) : null}
     </div>
   );
 }
