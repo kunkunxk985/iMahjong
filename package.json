@@ -19,6 +19,7 @@
     "package": "npm run package:mac -w @pizhou/desktop",
     "package:win": "npm run package:win -w @pizhou/desktop",
     "package:mac": "npm run package:mac -w @pizhou/desktop",
+    "deploy:cf": "npm run deploy -w @pizhou/worker",
     "test": "npm run test --workspaces --if-present",
     "dev": "npm run dev:desktop"
   },

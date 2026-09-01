@@ -9,20 +9,32 @@ const releaseDir = path.resolve(__dirname, '../release');
 const desktopDir = path.join(os.homedir(), 'Desktop');
 
 if (fs.existsSync(releaseDir) && fs.existsSync(desktopDir)) {
-  // 1. Copy only the current architecture's app. The release folder can also
-  // contain stale universal-build temp folders from previous packaging runs.
-  const currentDir = path.join(releaseDir, `mac-${process.arch}`);
-  if (fs.existsSync(currentDir)) {
-    const appFile = fs.readdirSync(currentDir).find((item) => item.endsWith('.app'));
+  // 1. Copy Mac .app and create Mac .zip
+  const macDir = path.join(releaseDir, `mac-${process.arch}`);
+  if (fs.existsSync(macDir)) {
+    const appFile = fs.readdirSync(macDir).find((item) => item.endsWith('.app'));
     if (appFile) {
-      const srcApp = path.join(currentDir, appFile);
+      const srcApp = path.join(macDir, appFile);
       const destApp = path.join(desktopDir, appFile);
       execSync(`rm -rf "${destApp}" && cp -R "${srcApp}" "${destApp}"`);
       console.log(`✓ 已成功将最新 .app 应用覆盖生成到桌面: ${destApp}`);
+
+      const destMacZip = path.join(desktopDir, '邳州麻将-Mac版.zip');
+      execSync(`rm -f "${destMacZip}" && cd "${macDir}" && zip -r -q -y "${destMacZip}" "${appFile}"`);
+      console.log(`✓ 已成功将 Mac 独立压缩包生成到桌面: ${destMacZip}`);
     }
   }
 
-  // 2. Clean up any obsolete .dmg on desktop if present
+  // 2. Copy Windows package if present
+  const winZip = fs.readdirSync(releaseDir).find((item) => item.includes('win') && item.endsWith('.zip'));
+  if (winZip) {
+    const srcWinZip = path.join(releaseDir, winZip);
+    const destWinZip = path.join(desktopDir, '邳州麻将-Windows版.zip');
+    fs.copyFileSync(srcWinZip, destWinZip);
+    console.log(`✓ 已成功将 Windows 独立免安装版压缩包生成到桌面: ${destWinZip}`);
+  }
+
+  // 3. Clean up any obsolete .dmg on desktop if present
   const desktopFiles = fs.readdirSync(desktopDir);
   for (const file of desktopFiles) {
     if (file.startsWith('邳州麻将') && file.endsWith('.dmg')) {

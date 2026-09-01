@@ -1,5 +1,5 @@
 import { createServer, type Server } from 'node:http';
-import { WebSocketServer, type WebSocket } from 'ws';
+import { WebSocketServer } from 'ws';
 import { SERVER_PORT } from '@pizhou/shared';
 import { lanAddresses } from './lan.ts';
 import {
@@ -9,6 +9,7 @@ import {
   handleAction,
   parseClientMessage,
   send,
+  type UniversalWebSocket,
 } from './room.ts';
 import { cancelAllBots, cancelBots, scheduleBots } from './bots.ts';
 
@@ -103,9 +104,9 @@ export async function startMahjongServer(options: {
   };
 }
 
-function handleMessage(
+export function handleMessage(
   manager: RoomManager,
-  ws: WebSocket,
+  ws: UniversalWebSocket,
   message: ReturnType<typeof parseClientMessage> & object,
 ): void {
   if (!message) return;

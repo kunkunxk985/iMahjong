@@ -1,0 +1,13 @@
+name = "pizhou-mahjong-server"
+main = "src/index.ts"
+compatibility_date = "2024-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+[durable_objects]
+bindings = [
+  { name = "PIZHOU_HUB", class_name = "PizhouHubDO" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["PizhouHubDO"]

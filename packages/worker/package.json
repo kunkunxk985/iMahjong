@@ -1,0 +1,19 @@
+{
+  "name": "@pizhou/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  },
+  "dependencies": {
+    "@pizhou/rules": "*",
+    "@pizhou/server-core": "*",
+    "@pizhou/shared": "*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241022.0",
+    "wrangler": "^3.80.0"
+  }
+}
