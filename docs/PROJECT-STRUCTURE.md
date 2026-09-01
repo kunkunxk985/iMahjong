@@ -186,12 +186,12 @@ shared ← rules ← server-core ← desktop/server
 | `src/win.ts` | 判断是否能胡，并枚举“四组面子加一对”的合法拆法。 |
 | `src/tenpai.ts` | 计算听哪些牌，以及打哪张后进入听牌。 |
 | `src/actions.ts` | 生成吃、碰、杠、坎、胡、关门等合法操作并定义优先级。 |
-| `src/score.ts` | 查胡核心：胡/幺计分、点炮/自摸拆法、庄家与飘荤本人倍率、关门、包庄和两两结账。 |
+| `src/score.ts` | 查胡核心：胡/幺计分、点炮/自摸拆法、飘荤先折算与庄家胡差倍率、关门、包庄和两两结账。 |
 | `src/engine.ts` | 纯内存牌局状态机；发牌、轮转、声明、超时、流局与结算。 |
 | `src/companion.ts` | 单机陪练的出牌和操作决策。 |
 | `tests/win.test.ts` | 胡牌合法性和120张牌型测试。 |
 | `tests/tenpai.test.ts` | 听牌与打牌后听口测试。 |
-| `tests/score.test.ts` | 查胡、对子与暗坎、本人倍率、关门、飘荤和包庄边界测试。 |
+| `tests/score.test.ts` | 查胡、对子与暗坎、飘荤/庄家胡差倍率、关门和包庄边界测试。 |
 | `tests/engine.test.ts` | 完整状态机、操作优先级、关门锁牌和流局测试。 |
 | `tests/companion.test.ts` | 陪练决策和思考时间测试。 |
 | `package.json` | 规则包入口与测试脚本。 |

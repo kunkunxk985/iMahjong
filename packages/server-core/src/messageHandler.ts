@@ -24,7 +24,13 @@ export function handleMessage(
   }
 
   if (message.type === 'room:create') {
-    const { room, player } = manager.create(message.nickname, ws, Boolean(message.solo), message.pointRate);
+    const { room, player } = manager.create(
+      message.nickname,
+      ws,
+      Boolean(message.solo),
+      message.pointRate,
+      message.avatar,
+    );
     send(ws, { type: 'room:created', roomCode: room.code, token: player.token, seat: player.seat });
     if (room.solo) {
       const error = room.startGame();
@@ -43,7 +49,7 @@ export function handleMessage(
   }
 
   if (message.type === 'room:join') {
-    const result = manager.join(message.roomCode.trim(), message.nickname, ws);
+    const result = manager.join(message.roomCode.trim(), message.nickname, ws, message.avatar);
     if (typeof result === 'string') {
       send(ws, { type: 'error', message: result, code: 'join-failed' });
       return;
@@ -63,6 +69,10 @@ export function handleMessage(
     if (typeof result === 'string') {
       send(ws, { type: 'error', message: result, code: 'reconnect-failed' });
       return;
+    }
+    if (message.nickname !== undefined) {
+      const profileError = result.room.updatePlayerProfile(result.player, message.nickname, message.avatar);
+      if (profileError) send(ws, { type: 'error', message: profileError, code: 'profile-update-failed' });
     }
     send(ws, {
       type: 'player:reconnected',
@@ -88,6 +98,16 @@ export function handleMessage(
       return;
     }
     player.ready = message.ready ?? !player.ready;
+    broadcastState(room);
+    return;
+  }
+
+  if (message.type === 'player:updateProfile') {
+    const profileError = room.updatePlayerProfile(player, message.nickname, message.avatar);
+    if (profileError) {
+      send(ws, { type: 'error', message: profileError, code: 'profile-update-failed' });
+      return;
+    }
     broadcastState(room);
     return;
   }

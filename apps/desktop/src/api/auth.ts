@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR, sanitizeAvatar } from '@pizhou/shared';
 import type {
   AuthResponse,
   FriendItem,
@@ -11,6 +12,23 @@ import type {
 
 const TOKEN_KEY = 'pizhou.auth_token_v1';
 const USER_KEY = 'pizhou.auth_user_v1';
+
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+async function readApiResponse<T>(res: Response, fallback: string): Promise<T> {
+  const data = await res.json().catch(() => ({}));
+  const message = data && typeof data === 'object' && typeof data.error === 'string' ? data.error : fallback;
+  if (!res.ok) throw new ApiError(message, res.status);
+  return data as T;
+}
 
 export function wsToHttpUrl(wsUrl: string): string {
   if (!wsUrl) return 'http://127.0.0.1:8787';
@@ -28,9 +46,27 @@ export function getStoredAuth(): { token: string | null; user: UserProfile | nul
   try {
     const token = localStorage.getItem(TOKEN_KEY);
     const userRaw = localStorage.getItem(USER_KEY);
-    const user = userRaw ? (JSON.parse(userRaw) as UserProfile) : null;
+    if (!token || !userRaw) return { token: null, user: null };
+    const candidate = JSON.parse(userRaw) as Partial<UserProfile> | null;
+    if (!candidate || typeof candidate.userId !== 'string' || typeof candidate.username !== 'string') {
+      saveStoredAuth(null, null);
+      return { token: null, user: null };
+    }
+    const createdAt = typeof candidate.createdAt === 'number' ? candidate.createdAt : Date.now();
+    const user: UserProfile = {
+      userId: candidate.userId,
+      username: candidate.username,
+      nickname: typeof candidate.nickname === 'string' && candidate.nickname ? candidate.nickname : candidate.username,
+      avatar: sanitizeAvatar(candidate.avatar, DEFAULT_AVATAR),
+      title: typeof candidate.title === 'string' && candidate.title ? candidate.title : '初学雀友',
+      bio: typeof candidate.bio === 'string' ? candidate.bio : '不碰坎不上，单钓不换张！',
+      isGuest: Boolean(candidate.isGuest),
+      createdAt,
+      updatedAt: typeof candidate.updatedAt === 'number' ? candidate.updatedAt : createdAt,
+    };
     return { token, user };
   } catch {
+    saveStoredAuth(null, null);
     return { token: null, user: null };
   }
 }
@@ -57,10 +93,9 @@ export async function apiGuestLogin(serverWsUrl: string, nickname?: string): Pro
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ nickname }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '游客登录失败');
+  const data = await readApiResponse<AuthResponse>(res, '游客登录失败');
   saveStoredAuth(data.token, data.user);
-  return data as AuthResponse;
+  return data;
 }
 
 export async function apiRegister(
@@ -75,10 +110,9 @@ export async function apiRegister(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password, nickname }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '注册失败');
+  const data = await readApiResponse<AuthResponse>(res, '注册失败');
   saveStoredAuth(data.token, data.user);
-  return data as AuthResponse;
+  return data;
 }
 
 export async function apiLogin(serverWsUrl: string, username: string, password: string): Promise<AuthResponse> {
@@ -88,10 +122,61 @@ export async function apiLogin(serverWsUrl: string, username: string, password: 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '登录失败');
+  const data = await readApiResponse<AuthResponse>(res, '登录失败');
   saveStoredAuth(data.token, data.user);
-  return data as AuthResponse;
+  return data;
+}
+
+export async function apiUpgradeGuest(
+  serverWsUrl: string,
+  token: string,
+  username: string,
+  password: string,
+  nickname?: string,
+): Promise<AuthResponse> {
+  const httpUrl = wsToHttpUrl(serverWsUrl);
+  const res = await fetch(`${httpUrl}/api/auth/upgrade`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ username, password, nickname }),
+  });
+  const data = await readApiResponse<AuthResponse>(res, '升级正式账号失败');
+  saveStoredAuth(data.token, data.user);
+  return data;
+}
+
+export async function apiChangePassword(
+  serverWsUrl: string,
+  token: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<AuthResponse> {
+  const httpUrl = wsToHttpUrl(serverWsUrl);
+  const res = await fetch(`${httpUrl}/api/auth/password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  const data = await readApiResponse<AuthResponse>(res, '修改密码失败');
+  saveStoredAuth(data.token, data.user);
+  return data;
+}
+
+export async function apiLogout(serverWsUrl: string, token: string): Promise<void> {
+  const httpUrl = wsToHttpUrl(serverWsUrl);
+  const res = await fetch(`${httpUrl}/api/auth/logout`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  await readApiResponse<{ success: boolean }>(res, '退出登录失败');
 }
 
 export async function apiGetProfile(serverWsUrl: string, token: string): Promise<UserProfile> {
@@ -102,10 +187,9 @@ export async function apiGetProfile(serverWsUrl: string, token: string): Promise
       Authorization: `Bearer ${token}`,
     },
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '获取个人资料失败');
+  const data = await readApiResponse<{ user: UserProfile }>(res, '获取个人资料失败');
   saveStoredAuth(token, data.user);
-  return data.user as UserProfile;
+  return data.user;
 }
 
 export async function apiUpdateProfile(
@@ -122,10 +206,9 @@ export async function apiUpdateProfile(
     },
     body: JSON.stringify(payload),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '更新个人资料失败');
+  const data = await readApiResponse<{ user: UserProfile }>(res, '更新个人资料失败');
   saveStoredAuth(token, data.user);
-  return data.user as UserProfile;
+  return data.user;
 }
 
 export async function apiGetMatches(
@@ -141,9 +224,7 @@ export async function apiGetMatches(
       Authorization: `Bearer ${token}`,
     },
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '获取战绩失败');
-  return data as { matches: MatchRecord[]; stats: ModeStats };
+  return readApiResponse<{ matches: MatchRecord[]; stats: ModeStats }>(res, '获取战绩失败');
 }
 
 export async function apiSaveMatch(serverWsUrl: string, token: string, record: MatchRecord): Promise<void> {
@@ -156,10 +237,7 @@ export async function apiSaveMatch(serverWsUrl: string, token: string, record: M
     },
     body: JSON.stringify(record),
   });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || '同步战绩失败');
-  }
+  await readApiResponse<{ success: boolean }>(res, '同步战绩失败');
 }
 
 // ==========================================
@@ -178,8 +256,7 @@ export async function apiSearchUsers(
       Authorization: `Bearer ${token}`,
     },
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '搜索雀友失败');
+  const data = await readApiResponse<{ results?: UserSearchResult[] }>(res, '搜索雀友失败');
   return (data.results || []) as UserSearchResult[];
 }
 
@@ -191,8 +268,7 @@ export async function apiGetFriends(serverWsUrl: string, token: string): Promise
       Authorization: `Bearer ${token}`,
     },
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '获取好友列表失败');
+  const data = await readApiResponse<{ friends?: FriendItem[] }>(res, '获取好友列表失败');
   return (data.friends || []) as FriendItem[];
 }
 
@@ -204,8 +280,7 @@ export async function apiGetFriendRequests(serverWsUrl: string, token: string): 
       Authorization: `Bearer ${token}`,
     },
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '获取好友申请失败');
+  const data = await readApiResponse<{ requests?: FriendRequestItem[] }>(res, '获取好友申请失败');
   return (data.requests || []) as FriendRequestItem[];
 }
 
@@ -223,8 +298,7 @@ export async function apiSendFriendRequest(
     },
     body: JSON.stringify({ toUserId }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '发送好友申请失败');
+  await readApiResponse<{ success: boolean }>(res, '发送好友申请失败');
 }
 
 export async function apiRespondFriendRequest(
@@ -242,8 +316,7 @@ export async function apiRespondFriendRequest(
     },
     body: JSON.stringify({ requestId, accept }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '处理好友申请失败');
+  await readApiResponse<{ success: boolean }>(res, '处理好友申请失败');
 }
 
 export async function apiDeleteFriend(serverWsUrl: string, token: string, friendId: string): Promise<void> {
@@ -256,8 +329,7 @@ export async function apiDeleteFriend(serverWsUrl: string, token: string, friend
     },
     body: JSON.stringify({ friendId }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '删除好友失败');
+  await readApiResponse<{ success: boolean }>(res, '删除好友失败');
 }
 
 export async function apiGetFriendStats(
@@ -278,7 +350,5 @@ export async function apiGetFriendStats(
       Authorization: `Bearer ${token}`,
     },
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '获取好友战绩失败');
-  return data;
+  return readApiResponse(res, '获取好友战绩失败');
 }

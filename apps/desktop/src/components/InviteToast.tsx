@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import type { FriendInvite } from '@pizhou/shared';
+import { AvatarView } from './AvatarView';
 
 interface InviteToastProps {
   invite: FriendInvite;
@@ -18,7 +19,9 @@ export function InviteToast({ invite, onAccept, onDecline }: InviteToastProps) {
   return (
     <div className="invite-toast-container">
       <div className="invite-toast-card">
-        <div className="invite-toast-avatar">{invite.fromAvatar || '🀄'}</div>
+        <div className="invite-toast-avatar">
+          <AvatarView avatar={invite.fromAvatar} alt={`${invite.fromNickname}头像`} />
+        </div>
         <div className="invite-toast-body">
           <div className="invite-toast-title">
             <b>{invite.fromNickname}</b> 邀请你对局

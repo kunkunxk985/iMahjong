@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  DEFAULT_AVATAR,
   DEFAULT_WS_URL,
   type ClientView,
   type FriendInvite,
@@ -7,7 +8,7 @@ import {
   type Settlement,
   type UserProfile,
 } from '@pizhou/shared';
-import { apiGetProfile, getStoredAuth, saveStoredAuth } from './api/auth';
+import { ApiError, apiGetProfile, apiLogout, getStoredAuth, saveStoredAuth } from './api/auth';
 import { AuthModal } from './components/AuthModal';
 import { FriendsModal } from './components/FriendsModal';
 import { HuCelebration } from './components/HuCelebration';
@@ -156,16 +157,27 @@ export function App() {
 
   // Background refresh profile if token exists
   useEffect(() => {
+    let active = true;
     if (!targetUrl) return;
     const currentAuth = getStoredAuth();
     if (currentAuth.token) {
       apiGetProfile(targetUrl, currentAuth.token)
         .then((user) => {
+          if (!active) return;
           setAuth({ token: currentAuth.token, user });
           if (user.nickname) setNicknameState(user.nickname);
         })
-        .catch(() => {});
+        .catch((err: unknown) => {
+          if (!active || !(err instanceof ApiError) || err.status !== 401) return;
+          saveStoredAuth(null, null);
+          setAuth({ token: null, user: null });
+          setProfileOpen(false);
+          setFriendsOpen(false);
+        });
     }
+    return () => {
+      active = false;
+    };
   }, [targetUrl]);
 
   useEffect(() => {
@@ -181,6 +193,12 @@ export function App() {
     }
   }, [networkStatus, auth.user, auth.token]);
 
+  useEffect(() => {
+    if (auth.user) {
+      clientRef.current?.setPlayerProfile(auth.user.nickname, auth.user.avatar || DEFAULT_AVATAR);
+    }
+  }, [auth.user]);
+
   useEffect(() => () => clientRef.current?.disconnect(), []);
 
   useEffect(() => {
@@ -188,26 +206,37 @@ export function App() {
     if (networkStatus !== 'open') return;
     if (!isLoopbackWs(clientRef.current?.url ?? '')) return;
     pendingSoloRef.current = false;
-    clientRef.current?.createRoom(nickname.trim() || '玩家', true);
-  }, [networkStatus, nickname]);
+    clientRef.current?.createRoom(
+      nickname.trim() || '玩家',
+      auth.user?.avatar || DEFAULT_AVATAR,
+      true,
+    );
+  }, [networkStatus, nickname, auth.user]);
 
-  const handleAuthSuccess = (user: UserProfile) => {
+  const handleAuthSuccess = (user: UserProfile, nextToken?: string) => {
     const current = getStoredAuth();
-    setAuth({ token: current.token, user });
+    const token = nextToken ?? current.token;
+    setAuth({ token, user });
     if (user.nickname) {
       setNicknameState(user.nickname);
     }
-    if (current.token) {
-      clientRef.current?.bindUser(user.userId, current.token);
+    if (token) {
+      clientRef.current?.bindUser(user.userId, token);
     }
   };
 
   const handleLogout = () => {
+    const activeToken = auth.token;
+    if (activeToken) {
+      void apiLogout(clientRef.current?.url || targetUrl, activeToken).catch(() => {});
+    }
+    clientRef.current?.unbindUser();
     saveStoredAuth(null, null);
     setAuth({ token: null, user: null });
     setProfileOpen(false);
     setAuthOpen(false);
     setFriendsOpen(false);
+    setIncomingInvite(null);
   };
 
   const requireOnline = (): boolean => {
@@ -226,13 +255,13 @@ export function App() {
   const createRoom = () => {
     if (!requireOnline()) return;
     requestedModeRef.current = 'online';
-    clientRef.current?.createRoom(nickname.trim());
+    clientRef.current?.createRoom(nickname.trim(), auth.user?.avatar || DEFAULT_AVATAR);
   };
 
   const joinRoom = (roomCode: string) => {
     if (!requireOnline()) return;
     requestedModeRef.current = 'online';
-    clientRef.current?.joinRoom(roomCode, nickname.trim());
+    clientRef.current?.joinRoom(roomCode, nickname.trim(), auth.user?.avatar || DEFAULT_AVATAR);
   };
 
   const startLocal = () => {
@@ -247,7 +276,11 @@ export function App() {
     setSoloIntent(true);
     if (networkStatus === 'open' && isLoopbackWs(clientRef.current?.url ?? '')) {
       pendingSoloRef.current = false;
-      clientRef.current?.createRoom(nickname.trim(), true);
+      clientRef.current?.createRoom(
+        nickname.trim(),
+        auth.user?.avatar || DEFAULT_AVATAR,
+        true,
+      );
     }
   };
 

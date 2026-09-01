@@ -4,9 +4,11 @@ import {
   HEARTBEAT_TIMEOUT_MS,
   PLAYER_COUNT,
   RECONNECT_WINDOW_MS,
+  DEFAULT_AVATAR,
   generateRoomCode,
   isValidRoomCode,
   normalizeRoomCode,
+  sanitizeAvatar,
   sanitizeNickname,
   type C2SMessage,
   type ClientView,
@@ -26,6 +28,7 @@ export type UniversalWebSocket = {
 export interface RoomPlayer {
   seat: number;
   nickname: string;
+  avatar: string;
   token: string;
   ready: boolean;
   ws: UniversalWebSocket | null;
@@ -59,7 +62,7 @@ export class Room {
     return this.occupied.filter((player) => player.isBot || (player.ws && player.offlineAt === null)).length;
   }
 
-  addPlayer(nickname: string, ws: UniversalWebSocket): RoomPlayer | string {
+  addPlayer(nickname: string, ws: UniversalWebSocket, avatar = DEFAULT_AVATAR): RoomPlayer | string {
     const seat = this.players.findIndex((player) => player === null);
     if (seat < 0) return '房间已满';
     const name = sanitizeNickname(nickname, `玩家${seat + 1}`);
@@ -67,6 +70,7 @@ export class Room {
     const player: RoomPlayer = {
       seat,
       nickname: name,
+      avatar: sanitizeAvatar(avatar),
       token: randomUUID(),
       ready: false,
       ws,
@@ -86,6 +90,7 @@ export class Room {
     const player: RoomPlayer = {
       seat,
       nickname,
+      avatar: DEFAULT_AVATAR,
       token: randomUUID(),
       ready: true,
       ws: null,
@@ -183,6 +188,16 @@ export class Room {
     this.phase = 'lobby';
   }
 
+  updatePlayerProfile(player: RoomPlayer, nickname: string, avatar?: string): string | null {
+    const name = sanitizeNickname(nickname, player.nickname);
+    if (this.occupied.some((item) => item !== player && item.nickname === name)) {
+      return '昵称已被使用';
+    }
+    player.nickname = name;
+    player.avatar = sanitizeAvatar(avatar, player.avatar);
+    return null;
+  }
+
   heartbeat(player: RoomPlayer, now = Date.now()): void {
     player.lastSeen = now;
   }
@@ -209,6 +224,7 @@ export class Room {
       const item = this.players[seat];
       return {
         nickname: item?.nickname ?? `空位${seat + 1}`,
+        avatar: item?.avatar ?? DEFAULT_AVATAR,
         ready: item?.ready ?? false,
         online: Boolean(item && (item.isBot || (item.ws && item.offlineAt === null))),
         isHost: seat === this.hostSeat,
@@ -244,6 +260,7 @@ export class Room {
       players: [0, 1, 2, 3].map((seat) => ({
         seat,
         nickname: metas[seat]!.nickname,
+        avatar: metas[seat]!.avatar ?? DEFAULT_AVATAR,
         ready: metas[seat]!.ready,
         online: metas[seat]!.online,
         isHost: metas[seat]!.isHost,
@@ -268,10 +285,16 @@ export class Room {
 export class RoomManager {
   private readonly rooms = new Map<string, Room>();
 
-  create(nickname: string, ws: UniversalWebSocket, solo = false, pointRate = 0.1): { room: Room; player: RoomPlayer } {
+  create(
+    nickname: string,
+    ws: UniversalWebSocket,
+    solo = false,
+    pointRate = 0.1,
+    avatar = DEFAULT_AVATAR,
+  ): { room: Room; player: RoomPlayer } {
     const room = new Room(generateRoomCode((code) => this.rooms.has(code)));
     room.pointRate = typeof pointRate === 'number' && pointRate >= 0 ? pointRate : 0.1;
-    const player = room.addPlayer(nickname, ws);
+    const player = room.addPlayer(nickname, ws, avatar);
     if (typeof player === 'string') throw new Error(player);
     if (solo) {
       room.solo = true;
@@ -282,14 +305,19 @@ export class RoomManager {
     return { room, player };
   }
 
-  join(roomCode: string, nickname: string, ws: UniversalWebSocket): { room: Room; player: RoomPlayer } | string {
+  join(
+    roomCode: string,
+    nickname: string,
+    ws: UniversalWebSocket,
+    avatar = DEFAULT_AVATAR,
+  ): { room: Room; player: RoomPlayer } | string {
     const code = normalizeRoomCode(roomCode);
     if (!isValidRoomCode(code)) return '房间号应为6位数字';
     const room = this.rooms.get(code);
     if (!room) return '房间不存在';
     if (room.phase === 'playing') return '对局已开始，请使用重连';
     if (room.occupied.length >= PLAYER_COUNT) return '房间已满';
-    const player = room.addPlayer(nickname, ws);
+    const player = room.addPlayer(nickname, ws, avatar);
     if (typeof player === 'string') return player;
     return { room, player };
   }

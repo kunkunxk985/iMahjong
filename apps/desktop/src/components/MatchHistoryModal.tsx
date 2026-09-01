@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { SEAT_NAMES, type GameMode, type ModeStats, type UserProfile } from '@pizhou/shared';
 import { apiGetMatches } from '../api/auth';
+import { AvatarView } from './AvatarView';
 import { calculateStats, clearMatchHistory, getMatchHistory, type MatchRecord } from '../storage/history';
 
 interface MatchHistoryModalProps {
@@ -101,7 +102,8 @@ export function MatchHistoryModal({
             <h2>📜 雀士战绩与生涯看板</h2>
             {currentUser && (
               <span className="history-user-badge">
-                {currentUser.avatar} {currentUser.nickname} ({currentUser.title})
+                <AvatarView avatar={currentUser.avatar} alt="我的头像" />
+                {currentUser.nickname} ({currentUser.title})
               </span>
             )}
           </div>

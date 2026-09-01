@@ -169,7 +169,7 @@ test('点炮牌可落入不同牌组时，仍优先采用实际结算分更高�
   assert.equal(winner.units.some((unit) => unit.key === 'tiao-9' && unit.kind === 'pung'), true);
 });
 
-test('庄家牌面胡不改；结算先把庄家本人胡数翻倍再两两相减', () => {
+test('庄家牌面胡不改；涉及庄家时把两两胡差整体翻倍', () => {
   const concealed = tiles(
     ['wan', 1, 0], ['wan', 1, 1], ['wan', 1, 2],
     ['tong', 2, 0], ['tong', 3, 0], ['tong', 4, 0],
@@ -197,13 +197,13 @@ test('庄家牌面胡不改；结算先把庄家本人胡数翻倍再两两相�
     dealer: 0,
   });
 
-  // 庄家折算胡=16×2=32；每笔另有1幺，故每家付32胡+1幺。
+  // 庄家牌面胡仍为16；每笔涉及庄家，原始胡差16整体×2=32，另有1幺。
   const each = 32 * HU_RATE + YAO_RATE;
   assert.equal(settlement.deltas[0], each * 3);
   assert.equal(settlement.deltas[1], -each);
   assert.equal(settlement.deltas[2], -each);
   assert.equal(settlement.deltas[3], -each);
-  assert.equal(settlement.transactions[0]?.effectiveHuA, 32);
+  assert.equal(settlement.transactions[0]?.effectiveHuA, 16);
   assert.equal(settlement.transactions[0]?.effectiveHuB, 0);
   assert.equal(settlement.transactions.length, 6);
 });
@@ -491,7 +491,7 @@ test('明杠与暗杠计分不同', () => {
   assert.equal(ziGangResult.yao, 5);
 });
 
-test('飘荤：四组单钓，飘荤者本人胡数翻倍并收荤底', () => {
+test('飘荤：四组单钓，飘荤者先翻胡数并收荤底，涉及庄家再翻胡差', () => {
   const exposed: Meld[] = [
     { type: 'peng', tiles: tiles(['tiao', 2, 0], ['tiao', 2, 1], ['tiao', 2, 2]) },
     { type: 'peng', tiles: tiles(['tiao', 3, 0], ['tiao', 3, 1], ['tiao', 3, 2]) },
@@ -511,12 +511,27 @@ test('飘荤：四组单钓，飘荤者本人胡数翻倍并收荤底', () => {
   });
   assert.equal(result.hunDi, true);
   assert.equal(result.seats[0]?.piaoHun, true);
-  // 赢家牌面14胡，飘荤折算28胡；三家各付28胡+30荤底。
-  assert.deepEqual(result.deltas, [174, -58, -58, -58]);
+  // 赢家牌面14胡，飘荤后28胡；对庄家胡差×2，三家荤底仍各30。
+  assert.deepEqual(result.deltas, [202, -86, -58, -58]);
   assertAccounting(result);
 });
 
-test('飘荤与庄家只翻对应玩家本人胡数，折算后结差且幺差不翻', () => {
+test('含吃的三组碰坎杠加两对不误判为飘荤', () => {
+  const exposed: Meld[] = [
+    { type: 'chi', tiles: tiles(['wan', 1, 0], ['wan', 2, 0], ['wan', 3, 0]) },
+    { type: 'peng', tiles: tiles(['tiao', 2, 0], ['tiao', 2, 1], ['tiao', 2, 2]) },
+    { type: 'kan', tiles: tiles(['tiao', 3, 0], ['tiao', 3, 1], ['tiao', 3, 2]) },
+    { type: 'peng', tiles: tiles(['tiao', 4, 0], ['tiao', 4, 1], ['tiao', 4, 2]) },
+  ];
+  const hand = tiles(
+    ['tong', 5, 0], ['tong', 5, 1],
+    ['tong', 6, 0], ['tong', 6, 1],
+  );
+
+  assert.equal(isPiaoHun(hand, exposed), false);
+});
+
+test('飘荤先折算胡数，涉及庄家时整体翻胡差且幺差不翻', () => {
   const winnerExposed: Meld[] = [
     { type: 'kan', tiles: tiles(['dragon', 1, 0], ['dragon', 1, 1], ['dragon', 1, 2]) },
     { type: 'peng', tiles: tiles(['tiao', 2, 0], ['tiao', 2, 1], ['tiao', 2, 2]) },
@@ -563,26 +578,26 @@ test('飘荤与庄家只翻对应玩家本人胡数，折算后结差且幺差�
     (tx) => tx.seatA === 0 && tx.seatB === 1,
   )!;
   assert.equal(dealerTx.huMultiplierA, 2);
-  assert.equal(dealerTx.huMultiplierB, 2);
+  assert.equal(dealerTx.huMultiplierB, 1);
   assert.equal(dealerTx.effectiveHuA, 34);
-  assert.equal(dealerTx.effectiveHuB, 12);
+  assert.equal(dealerTx.effectiveHuB, 6);
   assert.equal(dealerTx.isDealerPair, true);
-  assert.equal(dealerTx.deltaHu, 17 * 2 - 6 * 2);
+  assert.equal(dealerTx.deltaHu, (17 * 2 - 6) * 2);
   assert.equal(dealerTx.deltaYao, 1);
-  assert.equal(dealerTx.points, (17 * 2 - 6 * 2) * HU_RATE + YAO_RATE);
+  assert.equal(dealerTx.points, (17 * 2 - 6) * 2 * HU_RATE + YAO_RATE);
 
   const dealerPiaoResult = settleChaHu({ seats, winnerSeat: 0, dealer: 0 });
   const dealerPiaoTx = dealerPiaoResult.transactions.find(
     (tx) => tx.seatA === 0 && tx.seatB === 1,
   )!;
-  assert.equal(dealerPiaoTx.huMultiplierA, 4);
+  assert.equal(dealerPiaoTx.huMultiplierA, 2);
   assert.equal(dealerPiaoTx.huMultiplierB, 1);
-  assert.equal(dealerPiaoTx.effectiveHuA, 68);
+  assert.equal(dealerPiaoTx.effectiveHuA, 34);
   assert.equal(dealerPiaoTx.effectiveHuB, 6);
-  assert.equal(dealerPiaoTx.deltaHu, 17 * 4 - 6);
+  assert.equal(dealerPiaoTx.deltaHu, (17 * 2 - 6) * 2);
 });
 
-test('本人倍率可以反转或抹平原始胡数差', () => {
+test('涉及庄家时先算原始胡差再整体翻倍', () => {
   const dealerExposed: Meld[] = [
     { type: 'kan', tiles: tiles(['tong', 2, 0], ['tong', 2, 1], ['tong', 2, 2]) },
     { type: 'kan', tiles: tiles(['tong', 3, 0], ['tong', 3, 1], ['tong', 3, 2]) },
@@ -590,7 +605,7 @@ test('本人倍率可以反转或抹平原始胡数差', () => {
   ];
   const reversed = settleChaHu({
     seats: [
-      { hand: tiles(['wan', 6, 0]), exposed: dealerExposed }, // 庄家6胡，折算12胡
+      { hand: tiles(['wan', 6, 0]), exposed: dealerExposed }, // 庄家6胡，牌面胡仍为6胡
       { hand: tiles(['tong', 5, 0], ['tong', 5, 1]), exposed: [] }, // 胡家11胡
       emptySeat(),
       emptySeat(),
@@ -601,22 +616,22 @@ test('本人倍率可以反转或抹平原始胡数差', () => {
   const reversedTx = reversed.transactions.find((tx) => tx.seatA === 0 && tx.seatB === 1)!;
   assert.equal(reversedTx.huA, 6);
   assert.equal(reversedTx.huB, 11);
-  assert.equal(reversedTx.deltaHu, 1);
+  assert.equal(reversedTx.deltaHu, -10);
 
-  const tied = settleChaHu({
+  const dealerCompared = settleChaHu({
     seats: [
       { hand: tiles(['wan', 6, 0]), exposed: dealerExposed },
-      { hand: tiles(['dragon', 1, 0], ['dragon', 1, 1]), exposed: [] }, // 胡家12胡
+      { hand: tiles(['dragon', 1, 0], ['dragon', 1, 1]), exposed: [] }, // 闲家12胡
       emptySeat(),
       emptySeat(),
     ],
     winnerSeat: 1,
     dealer: 0,
   });
-  const tiedTx = tied.transactions.find((tx) => tx.seatA === 0 && tx.seatB === 1)!;
-  assert.equal(tiedTx.effectiveHuA, 12);
-  assert.equal(tiedTx.effectiveHuB, 12);
-  assert.equal(tiedTx.deltaHu, 0);
+  const dealerComparedTx = dealerCompared.transactions.find((tx) => tx.seatA === 0 && tx.seatB === 1)!;
+  assert.equal(dealerComparedTx.effectiveHuA, 6);
+  assert.equal(dealerComparedTx.effectiveHuB, 12);
+  assert.equal(dealerComparedTx.deltaHu, -12);
 });
 
 test('两对关门：关门本身不加胡，但胡牌仍按等牌状态飘荤', () => {
@@ -716,7 +731,7 @@ test('查胡两两结：没胡的人手中对子和暗坎也算', () => {
   assert.equal(result.seats[1]?.huBeforeDealer, 11);
 });
 
-test('查胡两两结：没胡的庄家散对也先计胡再翻本人胡数', () => {
+test('查胡两两结：没胡的庄家散对也计胡，涉及庄家时翻整笔胡差', () => {
   const result = settleChaHu({
     seats: [
       {
@@ -737,11 +752,11 @@ test('查胡两两结：没胡的庄家散对也先计胡再翻本人胡数', ()
   assert.equal(result.seats[0]?.hu, 4);
   assert.equal(result.seats[0]?.yao, 0);
   assert.equal(result.seats[1]?.hu, 11);
-  assert.deepEqual(result.deltas, [13, 25, -19, -19]);
+  assert.deepEqual(result.deltas, [2, 36, -19, -19]);
   assert.equal(result.deltas.reduce((sum, n) => sum + n, 0), 0);
 });
 
-test('包庄：三坎两对香牌点炮', () => {
+test('包庄：三坎两对未关门时遇香牌点炮', () => {
   const exposed: Meld[] = [
     { type: 'peng', tiles: tiles(['tiao', 2, 0], ['tiao', 2, 1], ['tiao', 2, 2]) },
     { type: 'peng', tiles: tiles(['tiao', 3, 0], ['tiao', 3, 1], ['tiao', 3, 2]) },
@@ -758,7 +773,7 @@ test('包庄：三坎两对香牌点炮', () => {
         exposed,
         winningDiscardId: hand[2]!.id,
         changed: false,
-        closedTwoPair: true,
+        closedTwoPair: false,
         discardedBeforeClose: [],
       },
       emptySeat(),
@@ -775,12 +790,12 @@ test('包庄：三坎两对香牌点炮', () => {
   assert.equal(result.baoZhuang?.reason, 'xiang');
   assert.equal(result.baoZhuang?.payerSeat, 2);
   assert.equal(result.seats[0]?.piaoHun, true);
-  // 赢家16胡，飘荤后本人折算32胡；三家胡账96，加三份荤底90。
-  // 庄家原始0胡，翻倍后仍为0；2号包庄后独付186。
+  // 赢家16胡，飘荤后32胡；对庄家的胡差按关系×2，另加三份荤底90。
+  // 2号包庄后独付218。
   assert.equal(result.seats[0]?.hu, 16);
-  assert.deepEqual(result.deltas, [186, 0, -186, 0]);
-  assert.deepEqual(result.payables, [0, 0, 186, 0]);
-  assert.deepEqual(result.receivables, [186, 0, 0, 0]);
+  assert.deepEqual(result.deltas, [218, 0, -218, 0]);
+  assert.deepEqual(result.payables, [0, 0, 218, 0]);
+  assert.deepEqual(result.receivables, [218, 0, 0, 0]);
   assertAccounting(result);
 });
 
@@ -810,14 +825,14 @@ test('带吃听顺包庄按普通胡结算，不翻胡差也不收荤底', () =>
   assert.equal(result.seats[0]?.hu, 14);
   assert.equal(result.seats[0]?.piaoHun, false);
   assert.equal(result.hunDi, false);
-  // 赢家14胡；其余三家都是0胡，庄家本人0×2仍是0。1号包庄后代付42。
-  assert.deepEqual(result.deltas, [42, -42, 0, 0]);
-  assert.deepEqual(result.payables, [0, 42, 0, 0]);
-  assert.deepEqual(result.receivables, [42, 0, 0, 0]);
+  // 赢家14胡；对庄家的胡差为28，其余两家各14。1号包庄后代付56。
+  assert.deepEqual(result.deltas, [56, -56, 0, 0]);
+  assert.deepEqual(result.payables, [0, 56, 0, 0]);
+  assert.deepEqual(result.receivables, [56, 0, 0, 0]);
   assertAccounting(result);
 });
 
-test('两对关门后被香牌点炮触发包庄；未关门或臭牌不包庄', () => {
+test('两对关门免包香；未关门时按全桌牌河区分香牌和臭牌', () => {
   const exposed: Meld[] = [
     { type: 'peng', tiles: tiles(['tiao', 2, 0], ['tiao', 2, 1], ['tiao', 2, 2]) },
     { type: 'kan', tiles: tiles(['tiao', 3, 0], ['tiao', 3, 1], ['tiao', 3, 2]) },
@@ -829,12 +844,12 @@ test('两对关门后被香牌点炮触发包庄；未关门或臭牌不包庄',
   );
   const base = { hand, exposed, ron: true, discardKey: 'tong-1' };
 
-  // 1. 赢家两对关门，且点炮牌为生张（香牌）：包庄
-  assert.equal(detectBaoZhuang({ ...base, closedTwoPair: true, discardedBeforeClose: [] }), 'xiang');
-  // 2. 赢家两对关门，但点炮牌为熟张（臭牌）：不包庄
-  assert.equal(detectBaoZhuang({ ...base, closedTwoPair: true, discardedBeforeClose: ['tong-1'] }), null);
-  // 3. 赢家未关门：不包庄
-  assert.equal(detectBaoZhuang({ ...base, closedTwoPair: false, discardedBeforeClose: [] }), null);
+  // 1. 两对关门后，即使是生张也不触发包香。
+  assert.equal(detectBaoZhuang({ ...base, closedTwoPair: true, discardedBeforeClose: [] }), null);
+  // 2. 未关门且点炮牌为生张（香牌）：包庄。
+  assert.equal(detectBaoZhuang({ ...base, closedTwoPair: false, discardedBeforeClose: [] }), 'xiang');
+  // 3. 未关门但点炮牌为熟张（臭牌）：不包庄。
+  assert.equal(detectBaoZhuang({ ...base, closedTwoPair: false, discardedBeforeClose: ['tong-1'] }), null);
 });
 
 test('无关点炮牌不能误触发三坎两对包香', () => {

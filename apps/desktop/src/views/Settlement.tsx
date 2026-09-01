@@ -4,6 +4,7 @@ import { Melds } from '../components/Melds';
 import { TileView } from '../components/TileView';
 import { saveMatchToHistory } from '../storage/history';
 import { apiSaveMatch } from '../api/auth';
+import { AvatarView } from '../components/AvatarView';
 
 const SEAT_NAMES = ['东', '南', '西', '北'] as const;
 
@@ -22,7 +23,7 @@ const BAO_LABEL: Record<BaoZhuangReason, string> = {
 const BAO_EXPLANATION: Record<BaoZhuangReason, string> = {
   four_wait_seq: '胡家已有四组碰、坎或杠，单张听牌且始终未换张；该点炮牌与手中单张能相连成顺，本局按飘荤结算。',
   chow_wait_seq: '胡家已有四组牌且其中含吃，单张听牌且始终未换张；该点炮牌与手中单张能相连成顺，本局按普通胡结算。',
-  xiang: '胡家已有三组碰、坎或杠并已两对关门锁定听口；该点炮牌此前全桌从未打出，属于香牌，由点炮者按飘荤包庄。',
+  xiang: '胡家已有三组碰、坎或杠，手里保留两对但尚未选择两对关门；该点炮牌此前全桌从未打出，属于香牌，由点炮者按飘荤包庄。',
 };
 
 const DRAW_LABEL: Record<string, string> = {
@@ -50,6 +51,7 @@ function ReplayHands({ view, settlement }: { view: ClientView; settlement: Settl
             <article key={player.seat} className={`replay-player-card ${winner ? 'is-winner' : ''}`}>
               <div className="replay-card-header">
                 <div className="replay-card-identity">
+                  <AvatarView avatar={player.avatar} className="replay-player-avatar" alt={`${player.nickname}头像`} />
                   <span className="seat-badge">{SEAT_NAMES[player.seat]}</span>
                   <b className="replay-player-name">{player.nickname}</b>
                   {player.isDealer ? <span className="tag-dealer">庄</span> : null}
@@ -432,7 +434,7 @@ export function SettlementModal({
               </table>
 
               <div className="rule-note">
-                <small>💡 结算顺序：庄家本人的胡数×2，飘荤者本人的胡数×2（同一人兼具时×4）；各家先折算本人胡数，再两两相减。幺差与荤底始终不翻倍。</small>
+                <small>💡 结算顺序：先算飘荤后的胡差；涉及庄家时胡差整体×2。牌面胡数、幺差与荤底不因庄家规则直接改变。</small>
               </div>
             </div>
           ) : activeTab === 'ledger' ? (
@@ -473,12 +475,9 @@ export function SettlementModal({
                   const absMoney = (absPoints * ratePerPoint).toFixed(1);
 
                   const multiplierLabels = [
-                    tx.huMultiplierA > 1
-                      ? `${seatNameA}${isDealerA ? '庄' : ''}${isPiaoA ? '飘' : ''}×${tx.huMultiplierA}`
-                      : null,
-                    tx.huMultiplierB > 1
-                      ? `${seatNameB}${isDealerB ? '庄' : ''}${isPiaoB ? '飘' : ''}×${tx.huMultiplierB}`
-                      : null,
+                    tx.huMultiplierA > 1 ? `${seatNameA}${isPiaoA ? '飘' : ''}×${tx.huMultiplierA}` : null,
+                    tx.huMultiplierB > 1 ? `${seatNameB}${isPiaoB ? '飘' : ''}×${tx.huMultiplierB}` : null,
+                    tx.isDealerPair ? '涉及庄家：胡差×2' : null,
                   ].filter((label): label is string => Boolean(label));
 
                   return (
@@ -543,8 +542,10 @@ export function SettlementModal({
                           <span className="tx-mult-tag">{multiplierLabels.join(' · ')}</span>
                         ) : null}
                         <span className="tx-formula-text">
+                          {tx.isDealerPair ? '(' : ''}
                           {nameA} {tx.huA}胡{tx.huMultiplierA > 1 ? `×${tx.huMultiplierA}=${tx.effectiveHuA}` : ''}
                           {' − '}{nameB} {tx.huB}胡{tx.huMultiplierB > 1 ? `×${tx.huMultiplierB}=${tx.effectiveHuB}` : ''}
+                          {tx.isDealerPair ? ') ×2' : ''}
                           {` = ${tx.deltaHu > 0 ? '+' : ''}${tx.deltaHu}胡`}
                           {tx.deltaYao !== 0 ? ` · 幺差 ${tx.yaoA}−${tx.yaoB}=${tx.deltaYao > 0 ? '+' : ''}${tx.deltaYao}幺` : ''}
                         </span>
@@ -567,7 +568,7 @@ export function SettlementModal({
                 </div>
                 <div>
                   <span>庄家身份</span>
-                  <strong>{settlement.dealerMultiplier === 2 ? '庄家（本人胡数×2）' : '闲家'}</strong>
+                  <strong>{settlement.dealerMultiplier === 2 ? '庄家（涉及胡差时胡差×2）' : '闲家'}</strong>
                 </div>
                 <div>
                   <span>本房牌面折算（倍率前）</span>

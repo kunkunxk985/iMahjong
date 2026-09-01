@@ -120,11 +120,13 @@
   .board-player-left {
     top: 20%;
     left: 25px;
+    transform: none;
   }
 
   .board-player-right {
     top: 20%;
     right: 25px;
+    transform: none;
   }
 
   .board-player-bottom {
