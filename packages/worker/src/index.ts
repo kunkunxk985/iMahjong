@@ -9,7 +9,7 @@ import {
   scheduleBots,
   send,
   type UniversalWebSocket,
-} from '@pizhou/server-core';
+} from '@pizhou/server-core/core';
 
 export interface Env {
   PIZHOU_HUB: DurableObjectNamespace;

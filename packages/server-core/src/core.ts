@@ -1,5 +1,3 @@
-export { probeMahjongServer, startMahjongServer, type StartedServer } from './createServer.ts';
-export { handleMessage } from './messageHandler.ts';
 export {
   RoomManager,
   Room,
@@ -12,3 +10,4 @@ export {
   type UniversalWebSocket,
 } from './room.ts';
 export { cancelAllBots, cancelBots, scheduleBots } from './bots.ts';
+export { handleMessage } from './messageHandler.ts';
