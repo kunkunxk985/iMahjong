@@ -667,7 +667,15 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
                   setHoveredTileKey(hovered ? tile.key : null);
                   setHoveredTileId(hovered ? tile.id : null);
                 }}
-                onClick={() => setSelectedId(tile.id === selectedId ? null : tile.id)}
+                onClick={() => {
+                  if (selectedId === tile.id && canDiscard) {
+                    noteDiscardSource(tile.id);
+                    onAction({ kind: 'discard', tileId: tile.id });
+                    setSelectedId(null);
+                  } else {
+                    setSelectedId(tile.id);
+                  }
+                }}
                 onDoubleClick={() => {
                   if (!canDiscard) return;
                   noteDiscardSource(tile.id);
