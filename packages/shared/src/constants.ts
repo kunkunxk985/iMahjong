@@ -1,7 +1,7 @@
 export const PROTOCOL_VERSION = 1;
 
 export const SERVER_PORT = 8787;
-export const DEFAULT_WS_URL = `ws://localhost:${SERVER_PORT}`;
+export const DEFAULT_WS_URL = 'wss://pizhou-mahjong-server.kunkunxk985.workers.dev';
 
 export const PLAYER_COUNT = 4;
 export const ROOM_CODE_LENGTH = 6;

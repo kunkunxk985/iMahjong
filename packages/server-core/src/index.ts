@@ -1,4 +1,5 @@
-export { probeMahjongServer, startMahjongServer, handleMessage, type StartedServer } from './createServer.ts';
+export { probeMahjongServer, startMahjongServer, type StartedServer } from './createServer.ts';
+export { handleMessage } from './messageHandler.ts';
 export {
   RoomManager,
   Room,

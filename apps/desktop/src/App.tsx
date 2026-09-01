@@ -124,8 +124,8 @@ export function App() {
 
   const targetUrl = soloIntent
     ? (localUrl || DEFAULT_WS_URL)
-    : (overrideUrl.trim() || localUrl || DEFAULT_WS_URL);
-  const urlReady = soloIntent ? localUrlReady : Boolean(overrideUrl.trim()) || localUrlReady;
+    : (overrideUrl.trim() || DEFAULT_WS_URL);
+  const urlReady = soloIntent ? localUrlReady : true;
 
   useEffect(() => {
     if (!urlReady || !targetUrl) return undefined;
