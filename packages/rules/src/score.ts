@@ -105,8 +105,8 @@ export function unitValue(key: string, kind: UnitKind): { hu: number; yao: numbe
   const table: Record<`${UnitKind}:${'yao' | 'plain'}`, { hu: number; yao: number }> = {
     'pair:yao': { hu: 2, yao: 0 },
     'pair:plain': { hu: 1, yao: 0 },
-    'peng:yao': { hu: 2, yao: 0 },
-    'peng:plain': { hu: 1, yao: 0 },
+    'peng:yao': { hu: 4, yao: 1 },
+    'peng:plain': { hu: 2, yao: 0 },
     'pung:yao': { hu: 4, yao: 1 },
     'pung:plain': { hu: 2, yao: 0 },
     'song_kong:yao': { hu: 8, yao: 2 },

@@ -486,18 +486,18 @@
   transform: translateX(-50%);
 }
 
-/* Left avatar: mid-upper left area */
+/* Left avatar: upper left area */
 .board-player-left {
-  top: 28%;
+  top: 18%;
   left: 20px;
   right: auto;
   transform: translateY(-50%);
   flex-direction: row;
 }
 
-/* Right avatar: mid-upper right area */
+/* Right avatar: upper right area */
 .board-player-right {
-  top: 28%;
+  top: 18%;
   right: 20px;
   left: auto;
   transform: translateY(-50%);
@@ -729,7 +729,7 @@
 
 /* Left concealed: 3D standing rack in lower left area */
 .board-concealed-left {
-  top: 64%;
+  top: 60%;
   left: 44px;
   transform: translateY(-50%) rotate(90deg);
   transform-origin: center center;
@@ -743,9 +743,9 @@
   margin-top: 0;
 }
 
-/* Right concealed: 3D standing rack in lower right area */
+/* Right concealed: 3D standing rack in upper right area (Rotational symmetry) */
 .board-concealed-right {
-  top: 64%;
+  top: 38%;
   right: 44px;
   transform: translateY(-50%) rotate(-90deg);
   transform-origin: center center;
@@ -793,9 +793,9 @@
   transform: none;
 }
 
-/* Left melds: beside upper left avatar */
+/* Left melds: upper left area */
 .board-melds-left {
-  top: 18%;
+  top: 26%;
   left: 160px;
   right: auto;
   transform: translateY(-50%);
@@ -803,9 +803,9 @@
   gap: 6px;
 }
 
-/* Right melds: beside upper right avatar */
+/* Right melds: lower right area (Rotational symmetry) */
 .board-melds-right {
-  top: 18%;
+  top: 68%;
   right: 160px;
   left: auto;
   transform: translateY(-50%);
