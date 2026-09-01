@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { SEAT_NAMES, type BaoZhuangReason, type ClientView, type Settlement } from '@pizhou/shared';
+import { TileView } from './TileView';
 
 const BAO_LABEL: Record<BaoZhuangReason, string> = {
   four_wait_seq: '四组听顺包庄',
@@ -28,6 +29,7 @@ export function HuCelebration({ view, settlement, onFinish }: HuCelebrationProps
 
   const winnerPlayer = winnerSeat !== null && winnerSeat !== undefined ? view.players[winnerSeat] : null;
   const winnerName = winnerPlayer?.nickname || (winnerSeat !== null && winnerSeat !== undefined ? `${SEAT_NAMES[winnerSeat]}位` : '玩家');
+  const winningHand = winnerPlayer && 'hand' in winnerPlayer ? (winnerPlayer as any).hand : [];
 
   const winTypeLabel = settlement.winType === 'qidong-gang-hu'
     ? '起手杠胡'
@@ -55,6 +57,7 @@ export function HuCelebration({ view, settlement, onFinish }: HuCelebrationProps
       <div className="hu-celebration-backdrop" onClick={onFinish} />
 
       <div className="hu-sunburst" />
+      <div className="hu-shockwave-ring" />
 
       <div className="hu-celebration-card">
         {/* Top Calligraphy Badge */}
@@ -67,13 +70,31 @@ export function HuCelebration({ view, settlement, onFinish }: HuCelebrationProps
           {isDraw ? (
             <h1 className="hu-title-text draw">牌墙摸尽 · 本局流局</h1>
           ) : isMeWinner ? (
-            <h1 className="hu-title-text win">恭 喜 您 胡 牌</h1>
+            <h1 className="hu-title-text win">恭 喜 您 胡 牌 ！</h1>
           ) : (
             <h1 className="hu-title-text announce">
               【{SEAT_NAMES[winnerSeat!]}位 · {winnerName}】 {winTypeLabel}！
             </h1>
           )}
         </div>
+
+        {/* Winning Hand Domino Reveal */}
+        {!isDraw && winningHand && winningHand.length > 0 ? (
+          <div className="hu-winning-tiles-tray">
+            <span className="hu-tiles-tray-label">🀄 赢家胡牌面</span>
+            <div className="hu-tiles-row">
+              {winningHand.map((tile: any, idx: number) => (
+                <div
+                  key={tile.id || idx}
+                  className="hu-domino-cell"
+                  style={{ animationDelay: `${idx * 40}ms` }}
+                >
+                  <TileView tile={tile} small pose="hand" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         {/* Informative notification capsule for all players */}
         {!isDraw && (
