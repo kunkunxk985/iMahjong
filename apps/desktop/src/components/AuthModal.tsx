@@ -13,7 +13,6 @@ export function AuthModal({ serverUrl, currentUser, onClose, onSuccess }: AuthMo
   const [tab, setTab] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [nickname, setNickname] = useState(currentUser?.nickname || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -21,7 +20,7 @@ export function AuthModal({ serverUrl, currentUser, onClose, onSuccess }: AuthMo
     setLoading(true);
     setError('');
     try {
-      const res = await apiGuestLogin(serverUrl, nickname || undefined);
+      const res = await apiGuestLogin(serverUrl, currentUser?.nickname);
       onSuccess(res.user);
       onClose();
     } catch (err: any) {
@@ -52,12 +51,13 @@ export function AuthModal({ serverUrl, currentUser, onClose, onSuccess }: AuthMo
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !password) {
+    const cleanUser = username.trim();
+    if (!cleanUser || !password) {
       setError('请填写账号和密码');
       return;
     }
-    if (username.trim().length < 3) {
-      setError('账号至少需 3 个字符');
+    if (cleanUser.length < 2) {
+      setError('账号至少需 2 个字符');
       return;
     }
     if (password.length < 4) {
@@ -67,7 +67,8 @@ export function AuthModal({ serverUrl, currentUser, onClose, onSuccess }: AuthMo
     setLoading(true);
     setError('');
     try {
-      const res = await apiRegister(serverUrl, username, password, nickname || undefined);
+      // Nickname directly uses username
+      const res = await apiRegister(serverUrl, cleanUser, password, cleanUser);
       onSuccess(res.user);
       onClose();
     } catch (err: any) {
@@ -83,8 +84,8 @@ export function AuthModal({ serverUrl, currentUser, onClose, onSuccess }: AuthMo
         <div className="gold-line" />
 
         <div className="auth-header">
-          <h2>🀄 雀士账号中心</h2>
-          <p className="sub">登录云端账号，多设备同步对战战绩与专属荣誉</p>
+          <h2>🀄 雀士登录 / 注册</h2>
+          <p className="sub">登录后换任何电脑都能自动同步战绩与称号</p>
         </div>
 
         {error && <div className="auth-error-banner">{error}</div>}
@@ -112,80 +113,37 @@ export function AuthModal({ serverUrl, currentUser, onClose, onSuccess }: AuthMo
           </button>
         </div>
 
-        {tab === 'login' ? (
-          <form className="auth-form" onSubmit={handleLogin}>
-            <div className="form-group">
-              <label>雀士账号</label>
-              <input
-                type="text"
-                className="input-field"
-                placeholder="请输入用户名/账号"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoFocus
-              />
-            </div>
+        <form className="auth-form" onSubmit={tab === 'login' ? handleLogin : handleRegister}>
+          <div className="form-group">
+            <label>雀士账号</label>
+            <input
+              type="text"
+              className="input-field"
+              placeholder={tab === 'login' ? '请输入您的账号' : '设置账号名（自动作为昵称）'}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoFocus
+            />
+          </div>
 
-            <div className="form-group">
-              <label>登录密码</label>
-              <input
-                type="password"
-                className="input-field"
-                placeholder="请输入密码"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+          <div className="form-group">
+            <label>登录密码</label>
+            <input
+              type="password"
+              className="input-field"
+              placeholder="请输入密码"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
-            <button type="submit" className="btn-action primary auth-submit-btn" disabled={loading}>
-              {loading ? '正在登录...' : '立即登录'}
-            </button>
-          </form>
-        ) : (
-          <form className="auth-form" onSubmit={handleRegister}>
-            <div className="form-group">
-              <label>雀士账号 (至少3位)</label>
-              <input
-                type="text"
-                className="input-field"
-                placeholder="设置登录账号名"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoFocus
-              />
-            </div>
-
-            <div className="form-group">
-              <label>登录密码 (至少4位)</label>
-              <input
-                type="password"
-                className="input-field"
-                placeholder="设置登录密码"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>游戏内昵称 (选填)</label>
-              <input
-                type="text"
-                className="input-field"
-                placeholder="起一个响亮的麻将昵称"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                maxLength={12}
-              />
-            </div>
-
-            <button type="submit" className="btn-action primary auth-submit-btn" disabled={loading}>
-              {loading ? '正在注册...' : '注册并登录'}
-            </button>
-          </form>
-        )}
+          <button type="submit" className="btn-action primary auth-submit-btn" disabled={loading}>
+            {loading ? '处理中...' : tab === 'login' ? '立即登录' : '立即注册并登录'}
+          </button>
+        </form>
 
         <div className="auth-divider">
-          <span>或</span>
+          <span>或者</span>
         </div>
 
         <div className="auth-guest-section">
@@ -195,13 +153,13 @@ export function AuthModal({ serverUrl, currentUser, onClose, onSuccess }: AuthMo
             disabled={loading}
             onClick={handleGuest}
           >
-            ⚡ 一键免密游客体验 (本机保存)
+            ⚡ 免密游客快速进入
           </button>
         </div>
 
-        <div className="row" style={{ marginTop: '16px', justifyContent: 'center' }}>
+        <div className="row" style={{ marginTop: '14px', justifyContent: 'center' }}>
           <button type="button" className="btn-action text" onClick={onClose}>
-            暂不登录，直接返回
+            关闭
           </button>
         </div>
       </div>
