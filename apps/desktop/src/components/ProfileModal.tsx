@@ -24,17 +24,8 @@ export function ProfileModal({
   const [avatar, setAvatar] = useState(user.avatar || '🀄');
   const [nickname, setNickname] = useState(user.nickname);
   const [title, setTitle] = useState(user.title || '初学雀友');
-  const [bio, setBio] = useState(user.bio || '');
   const [saving, setSaving] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-
-  const handleCopyId = () => {
-    navigator.clipboard.writeText(user.userId).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
 
   const handleSave = async () => {
     const cleanNick = nickname.trim() || user.username || '雀友';
@@ -46,7 +37,6 @@ export function ProfileModal({
       avatar,
       nickname: cleanNick,
       title,
-      bio,
       updatedAt: Date.now(),
     };
 
@@ -56,22 +46,20 @@ export function ProfileModal({
           avatar,
           nickname: cleanNick,
           title,
-          bio,
         });
         onUpdate(saved);
-        setNotice('资料已同步至云端！');
-        setTimeout(() => onClose(), 800);
+        setNotice('资料已保存！');
+        setTimeout(() => onClose(), 600);
         return;
       } catch (err: any) {
-        console.warn('Sync profile to cloud failed, updating locally:', err);
+        console.warn('Sync profile failed, updating locally:', err);
       }
     }
 
-    // Local update fallback
     saveStoredAuth(token, updatedUser);
     onUpdate(updatedUser);
-    setNotice('资料已在本地保存！');
-    setTimeout(() => onClose(), 800);
+    setNotice('资料已保存！');
+    setTimeout(() => onClose(), 600);
     setSaving(false);
   };
 
@@ -81,11 +69,8 @@ export function ProfileModal({
         <div className="gold-line" />
 
         <div className="profile-header">
-          <h2>🪪 雀士个人档案</h2>
-          <div className="user-id-badge" onClick={handleCopyId} title="点击复制雀友卡号">
-            <span>ID: {user.userId}</span>
-            <small>{copied ? '已复制✓' : '📋'}</small>
-          </div>
+          <h2>🪪 雀士档案设置</h2>
+          <span className="profile-user-tag">{user.isGuest ? '⚡ 游客模式' : `👑 ${user.username}`}</span>
         </div>
 
         {notice && <div className="profile-toast">{notice}</div>}
@@ -93,7 +78,7 @@ export function ProfileModal({
         <div className="profile-content">
           {/* Avatar Selector */}
           <div className="avatar-section">
-            <label className="section-label">雀士形象</label>
+            <label className="section-label">头像形象</label>
             <div className="avatar-preview-row">
               <div className="current-avatar-circle">{avatar}</div>
               <div className="avatar-picker-grid">
@@ -113,14 +98,14 @@ export function ProfileModal({
 
           {/* Nickname & Title */}
           <div className="form-group" style={{ marginTop: '12px' }}>
-            <label>玩家昵称</label>
+            <label>雀士昵称</label>
             <input
               type="text"
               className="input-field"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               maxLength={12}
-              placeholder="请输入您的昵称"
+              placeholder="请输入昵称"
             />
           </div>
 
@@ -140,35 +125,12 @@ export function ProfileModal({
             </div>
           </div>
 
-          {/* Bio */}
-          <div className="form-group">
-            <label>个性签名</label>
-            <input
-              type="text"
-              className="input-field"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              maxLength={40}
-              placeholder="写一句打牌宣言（如：单钓不换张，胡牌按飘荤）"
-            />
-          </div>
-
-          {/* Account Status Info */}
+          {/* Account Actions */}
           <div className="account-info-box">
-            <div className="info-row">
-              <span>账号类型:</span>
-              <b>{user.isGuest ? '⚡ 游客体验模式' : `👑 注册雀士 (${user.username})`}</b>
-            </div>
-            <div className="info-actions">
-              {user.isGuest ? (
-                <button type="button" className="btn-action ghost sm" onClick={onOpenAuth}>
-                  绑定正式账号
-                </button>
-              ) : (
-                <button type="button" className="btn-action ghost sm" onClick={onOpenAuth}>
-                  切换账号
-                </button>
-              )}
+            <div className="info-actions" style={{ justifyContent: 'space-between', width: '100%' }}>
+              <button type="button" className="btn-action ghost sm" onClick={onOpenAuth}>
+                {user.isGuest ? '🔑 注册/绑定正式账号' : '🔄 切换其他账号'}
+              </button>
               <button type="button" className="btn-action ghost sm danger" onClick={onLogout}>
                 退出登录
               </button>
@@ -176,7 +138,7 @@ export function ProfileModal({
           </div>
         </div>
 
-        <div className="split" style={{ marginTop: '20px' }}>
+        <div className="split" style={{ marginTop: '18px' }}>
           <button type="button" className="btn-action primary" disabled={saving} onClick={handleSave}>
             {saving ? '保存中...' : '保存修改'}
           </button>

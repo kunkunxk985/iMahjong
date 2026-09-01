@@ -176,17 +176,6 @@ export function App() {
     clientRef.current?.createRoom(nickname.trim() || '玩家', true);
   }, [networkStatus, nickname]);
 
-  const setNickname = (value: string) => {
-    setNicknameState(value);
-    try {
-      localStorage.setItem('pizhou.nickname', value);
-    } catch {}
-    if (auth.user) {
-      const updatedUser: UserProfile = { ...auth.user, nickname: value };
-      setAuth({ token: auth.token, user: updatedUser });
-      saveStoredAuth(auth.token, updatedUser);
-    }
-  };
 
   const handleAuthSuccess = (user: UserProfile) => {
     const current = getStoredAuth();
@@ -308,7 +297,6 @@ export function App() {
         ) : (
           <Lobby
             nickname={nickname}
-            setNickname={setNickname}
             error={error}
             networkStatus={networkStatus}
             serverUrl={displayUrl}

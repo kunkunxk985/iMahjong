@@ -6,7 +6,6 @@ export type NetworkStatus = 'connecting' | 'open' | 'closed';
 
 interface LobbyProps {
   nickname: string;
-  setNickname: (value: string) => void;
   error: string;
   networkStatus: NetworkStatus;
   serverUrl: string;
@@ -24,7 +23,6 @@ interface LobbyProps {
 
 export function Lobby({
   nickname,
-  setNickname,
   error,
   networkStatus,
   serverUrl,
@@ -52,49 +50,25 @@ export function Lobby({
 
   return (
     <div className="hall">
-      <div className="hall-card">
-        {/* User Card Header */}
+      {/* Top Bar with Minimal User Pill */}
+      <header className="hall-top-bar">
         <div
-          className="hall-user-header"
+          className="hall-user-pill"
           onClick={user ? onOpenProfile : onOpenAuth}
-          title="点击查看/修改雀士个人档案"
+          title="点击查看个人资料或登录切换账号"
         >
-          <div className="hall-user-left">
-            <div className="hall-user-avatar">{user?.avatar || '🀄'}</div>
-            <div className="hall-user-meta">
-              <div className="hall-user-name-row">
-                <span className="hall-user-name">{user?.nickname || nickname}</span>
-                <span className="hall-user-title">{user?.title || '初学雀友'}</span>
-              </div>
-              <span className="hall-user-sub">
-                {user ? (user.isGuest ? '⚡ 游客模式 · 点击绑定' : `ID: ${user.userId}`) : '未登录 · 点击登录'}
-              </span>
-            </div>
-          </div>
-          <div className="hall-user-right">
-            <span>{user ? '个人档案 ›' : '登录/注册 ›'}</span>
-          </div>
+          <span className="pill-avatar">{user?.avatar || '🀄'}</span>
+          <span className="pill-name">{user?.nickname || user?.username || nickname}</span>
+          <span className="pill-title">{user?.title || '初学雀友'}</span>
+          <span className="pill-arrow">›</span>
         </div>
+      </header>
 
+      <div className="hall-card">
         {/* Title Header */}
         <div className="hall-header">
           <h1 className="hall-title">邳 州 麻 将</h1>
           <span className="hall-badge">经典查胡 · 地道苏北规则</span>
-        </div>
-
-        {/* Player Profile Input */}
-        <div className="hall-profile">
-          <span className="profile-label">玩家昵称</span>
-          <input
-            className="profile-input"
-            value={nickname}
-            onChange={(event) => setNickname(event.target.value)}
-            maxLength={12}
-            placeholder="请输入您的昵称"
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && tab === 'online' && onlineReady) onCreateRoom();
-            }}
-          />
         </div>
 
         {/* Mode Tabs */}
@@ -153,7 +127,7 @@ export function Lobby({
             <button
               type="button"
               className="btn-action hall-primary-btn"
-              disabled={!nickname.trim() || soloBusy}
+              disabled={soloBusy}
               onClick={onStartLocal}
             >
               {soloBusy ? '正在启动…' : '开始单机对局'}
