@@ -18,7 +18,7 @@ interface LobbyProps {
   onRules: () => void;
   onSettings: () => void;
   onOpenProfile: () => void;
-  onOpenAuth: () => void;
+  onLogout: () => void;
 }
 
 export function Lobby({
@@ -35,12 +35,12 @@ export function Lobby({
   onRules,
   onSettings,
   onOpenProfile,
-  onOpenAuth,
+  onLogout,
 }: LobbyProps) {
-  const [tab, setTab] = useState<'online' | 'local'>('online');
+  const [selectedMode, setSelectedMode] = useState<'menu' | 'online'>('menu');
   const [roomCode, setRoomCode] = useState('');
   const [showHistory, setShowHistory] = useState(false);
-  const onlineReady = networkStatus === 'open' && nickname.trim().length > 0;
+  const onlineReady = networkStatus === 'open';
 
   const join = () => {
     const normalized = roomCode.trim();
@@ -50,88 +50,128 @@ export function Lobby({
 
   return (
     <div className="hall">
-      {/* Top Bar with Minimal User Pill */}
-      <header className="hall-top-bar">
-        <div
-          className="hall-user-pill"
-          onClick={user ? onOpenProfile : onOpenAuth}
-          title="点击查看个人资料或登录切换账号"
-        >
-          <span className="pill-avatar">{user?.avatar || '🀄'}</span>
-          <span className="pill-name">{user?.nickname || user?.username || nickname}</span>
-          <span className="pill-title">{user?.title || '初学雀友'}</span>
-          <span className="pill-arrow">›</span>
+      {/* Top Header Bar */}
+      <header className="hall-nav-bar">
+        <div className="hall-logo-title">
+          <span className="logo-icon">🀄</span>
+          <span className="logo-text">邳州麻将</span>
+        </div>
+
+        <div className="hall-user-pill-wrap">
+          <div
+            className="hall-user-pill"
+            onClick={onOpenProfile}
+            title="点击修改头像与头衔"
+          >
+            <span className="pill-avatar">{user?.avatar || '🀄'}</span>
+            <span className="pill-name">{user?.nickname || user?.username || nickname}</span>
+            <span className="pill-title">{user?.title || '初学雀友'}</span>
+            <span className="pill-arrow">›</span>
+          </div>
+
+          <button
+            type="button"
+            className="hall-logout-btn"
+            onClick={onLogout}
+            title="退出当前账号，返回登录页"
+          >
+            退出
+          </button>
         </div>
       </header>
 
-      <div className="hall-card">
-        {/* Title Header */}
-        <div className="hall-header">
-          <h1 className="hall-title">邳 州 麻 将</h1>
-          <span className="hall-badge">经典查胡 · 地道苏北规则</span>
-        </div>
+      {/* Main Mode Selection Card */}
+      <div className="hall-card tier-card">
+        {selectedMode === 'menu' ? (
+          /* Step 1: Mode Selection Menu */
+          <div className="mode-select-panel">
+            <div className="mode-select-intro">
+              <h2>请选择游戏玩法</h2>
+              <p>经典邳州查胡两两结 · 正宗地道玩法</p>
+            </div>
 
-        {/* Mode Tabs */}
-        <div className="hall-tabs" role="tablist">
-          <button
-            type="button"
-            className={`hall-tab ${tab === 'online' ? 'active' : ''}`}
-            onClick={() => setTab('online')}
-          >
-            👥 好友联机
-          </button>
-          <button
-            type="button"
-            className={`hall-tab ${tab === 'local' ? 'active' : ''}`}
-            onClick={() => setTab('local')}
-          >
-            🤖 单机陪练
-          </button>
-        </div>
-
-        {/* Mode Content */}
-        {tab === 'online' ? (
-          <div className="hall-mode-panel" role="tabpanel">
-            <button
-              type="button"
-              className="btn-action hall-primary-btn"
-              disabled={!onlineReady}
-              onClick={onCreateRoom}
-            >
-              创建房间
-            </button>
-
-            <div className="hall-join-row">
-              <input
-                className="join-input"
-                value={roomCode}
-                onChange={(event) => setRoomCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' && onlineReady) join();
+            <div className="mode-cards-grid">
+              {/* Online Mode Card */}
+              <div
+                className={`mode-big-card online-tile ${!onlineReady ? 'disabled' : ''}`}
+                onClick={() => {
+                  if (onlineReady) setSelectedMode('online');
                 }}
-                placeholder="输入 6 位房间号"
-                maxLength={6}
-              />
-              <button
-                type="button"
-                className="btn-action hall-join-btn"
-                disabled={!onlineReady || roomCode.length !== 6}
-                onClick={join}
               >
-                加入房间
-              </button>
+                <div className="mode-card-icon">👥</div>
+                <div className="mode-card-info">
+                  <h3>好友四人联机</h3>
+                  <p>房主开房 · 输入6位房号即可对局 · 真实两两对账</p>
+                </div>
+                <span className="mode-card-enter">进入联机 ›</span>
+              </div>
+
+              {/* Single-Player Mode Card */}
+              <div
+                className="mode-big-card local-tile"
+                onClick={onStartLocal}
+              >
+                <div className="mode-card-icon">🤖</div>
+                <div className="mode-card-info">
+                  <h3>单机人机陪练</h3>
+                  <p>无需等待 · 3名智能AI陪练 · 演练坎上与关门</p>
+                </div>
+                <span className="mode-card-enter">
+                  {soloBusy ? '正在启动…' : '开始对局 ›'}
+                </span>
+              </div>
             </div>
           </div>
         ) : (
-          <div className="hall-mode-panel" role="tabpanel">
-            <button
-              type="button"
-              className="btn-action hall-primary-btn"
-              disabled={soloBusy}
-              onClick={onStartLocal}
-            >
-              {soloBusy ? '正在启动…' : '开始单机对局'}
-            </button>
+          /* Step 2: Online Room Operations */
+          <div className="online-room-panel">
+            <div className="online-panel-header">
+              <button
+                type="button"
+                className="btn-action ghost sm back-btn"
+                onClick={() => setSelectedMode('menu')}
+              >
+                ‹ 返回模式选择
+              </button>
+              <h2>👥 好友四人联机</h2>
+            </div>
+
+            <div className="online-actions-wrap">
+              <button
+                type="button"
+                className="btn-action primary online-create-btn"
+                disabled={!onlineReady}
+                onClick={onCreateRoom}
+              >
+                🀄 创建新房间 (获取6位房号)
+              </button>
+
+              <div className="online-or-divider">
+                <span>或者加入好友房间</span>
+              </div>
+
+              <div className="hall-join-row">
+                <input
+                  className="join-input"
+                  value={roomCode}
+                  onChange={(event) => setRoomCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && onlineReady && roomCode.length === 6) join();
+                  }}
+                  placeholder="输入好友的 6 位房间号"
+                  maxLength={6}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  className="btn-action hall-join-btn"
+                  disabled={!onlineReady || roomCode.length !== 6}
+                  onClick={join}
+                >
+                  加入对局
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -140,7 +180,7 @@ export function Lobby({
           <div className="hall-net-status">
             <span className={`net-dot ${networkStatus}`} />
             <span className="net-text">
-              {networkStatus === 'open' ? '已连接' : networkStatus === 'connecting' ? '连接中…' : '未连接'}
+              {networkStatus === 'open' ? '云端服务已连接' : networkStatus === 'connecting' ? '连接中…' : '离线中'}
             </span>
             <button type="button" className="btn-link" onClick={onSettings} title={serverUrl}>
               设置
@@ -149,10 +189,10 @@ export function Lobby({
 
           <div className="hall-footer-actions">
             <button type="button" className="hall-rules-btn" onClick={() => setShowHistory(true)}>
-              📜 战绩
+              📜 战绩中心
             </button>
             <button type="button" className="hall-rules-btn" onClick={onRules}>
-              📖 规则
+              📖 玩法规则
             </button>
           </div>
         </div>

@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEFAULT_WS_URL, type ClientView, type GameAction, type Settlement, type UserProfile } from '@pizhou/shared';
-import { apiGetProfile, apiGuestLogin, getStoredAuth, saveStoredAuth } from './api/auth';
+import { apiGetProfile, getStoredAuth, saveStoredAuth } from './api/auth';
 import { AuthModal } from './components/AuthModal';
 import { HuCelebration } from './components/HuCelebration';
 import { ProfileModal } from './components/ProfileModal';
 import { RulesModal } from './components/RulesModal';
 import { SettingsModal } from './components/SettingsModal';
 import { GameClient, isLoopbackWs } from './ws/client';
+import { AuthView } from './views/AuthView';
 import { Lobby, type NetworkStatus } from './views/Lobby';
 import { SettlementModal } from './views/Settlement';
 import { Table } from './views/Table';
@@ -139,18 +140,11 @@ export function App() {
     : (overrideUrl.trim() || DEFAULT_WS_URL);
   const urlReady = soloIntent ? localUrlReady : true;
 
-  // Background auto-guest login or profile refresh
+  // Background refresh profile if token exists
   useEffect(() => {
     if (!targetUrl) return;
     const currentAuth = getStoredAuth();
-    if (!currentAuth.token || !currentAuth.user) {
-      apiGuestLogin(targetUrl, nickname)
-        .then((res) => {
-          setAuth(res);
-          if (res.user?.nickname) setNicknameState(res.user.nickname);
-        })
-        .catch(() => {});
-    } else if (currentAuth.token) {
+    if (currentAuth.token) {
       apiGetProfile(targetUrl, currentAuth.token)
         .then((user) => {
           setAuth({ token: currentAuth.token, user });
@@ -176,7 +170,6 @@ export function App() {
     clientRef.current?.createRoom(nickname.trim() || '玩家', true);
   }, [networkStatus, nickname]);
 
-
   const handleAuthSuccess = (user: UserProfile) => {
     const current = getStoredAuth();
     setAuth({ token: current.token, user });
@@ -189,10 +182,7 @@ export function App() {
     saveStoredAuth(null, null);
     setAuth({ token: null, user: null });
     setProfileOpen(false);
-    // Auto re-generate guest
-    apiGuestLogin(targetUrl, nickname)
-      .then((res) => setAuth(res))
-      .catch(() => {});
+    setAuthOpen(false);
   };
 
   const requireOnline = (): boolean => {
@@ -276,7 +266,16 @@ export function App() {
   return (
     <div className="viewport">
       <div className="stage">
-        {inGame && view ? (
+        {!auth.user ? (
+          /* Step 1: Clean First-Screen Authentication / Guest Login */
+          <AuthView
+            serverUrl={displayUrl}
+            onSuccess={handleAuthSuccess}
+            onRules={() => setRulesOpen(true)}
+            onSettings={() => setSettingsOpen(true)}
+          />
+        ) : inGame && view ? (
+          /* Playing Table */
           <Table
             view={view}
             onAction={sendAction}
@@ -286,6 +285,7 @@ export function App() {
             practice={mode === 'local'}
           />
         ) : inWaitingRoom && view ? (
+          /* Online Waiting Room */
           <WaitingRoom
             view={view}
             onReady={(ready) => clientRef.current?.ready(ready)}
@@ -295,6 +295,7 @@ export function App() {
             onSetRate={(rate) => clientRef.current?.setConfig({ pointRate: rate })}
           />
         ) : (
+          /* Step 2: Progressive Tiered Lobby */
           <Lobby
             nickname={nickname}
             error={error}
@@ -309,7 +310,7 @@ export function App() {
             onRules={() => setRulesOpen(true)}
             onSettings={() => setSettingsOpen(true)}
             onOpenProfile={() => setProfileOpen(true)}
-            onOpenAuth={() => setAuthOpen(true)}
+            onLogout={handleLogout}
           />
         )}
 
