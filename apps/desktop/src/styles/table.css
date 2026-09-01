@@ -480,8 +480,10 @@
 
 /* Top avatar: to the right of top tiles (opponent's left from their perspective) */
 .board-player-top {
-  top: 14px;
-  right: 20px;
+  /* Keep the plaque below the top toolbar; the previous 14px position left it
+     underneath the z-index 12 toolbar and only a thin edge was visible. */
+  top: clamp(54px, 7.2vh, 70px);
+  right: clamp(25px, 2vw, 30px);
   left: auto;
   transform: none;
 }
@@ -489,7 +491,9 @@
 /* Left avatar: vertical bar, long edge hugging left screen edge, above left concealed tiles */
 .board-player-left {
   top: 28%;
-  left: 20px;
+  /* A 90deg rotation around the left-center origin extends half the plaque's
+     50px height outside its layout box. Keep that bleed inside the board. */
+  left: clamp(25px, 2vw, 30px);
   right: auto;
   transform-origin: left center;
   transform: rotate(90deg);
@@ -499,7 +503,7 @@
 /* Right avatar: vertical bar, long edge hugging right screen edge, below right concealed tiles */
 .board-player-right {
   top: 48%;
-  right: 20px;
+  right: clamp(25px, 2vw, 30px);
   left: auto;
   transform-origin: right center;
   transform: rotate(-90deg);
