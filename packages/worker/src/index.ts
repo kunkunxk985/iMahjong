@@ -9,6 +9,7 @@ import {
   send,
   type UniversalWebSocket,
 } from '@pizhou/server-core/core';
+import type { FriendPresenceStatus } from '@pizhou/shared';
 import { HubDatabase } from './db.js';
 
 export interface Env {
@@ -62,6 +63,10 @@ export class PizhouHubDO {
   private manager = new RoomManager();
   private timer: any = null;
 
+  // Realtime Presence tracking
+  private userSockets = new Map<string, Set<UniversalWebSocket>>();
+  private socketUser = new Map<UniversalWebSocket, { userId: string; token: string }>();
+
   constructor(state: DurableObjectState) {
     this.db = new HubDatabase((state as any).storage);
     this.startTick();
@@ -98,6 +103,35 @@ export class PizhouHubDO {
     }
     const url = new URL(request.url);
     return url.searchParams.get('token');
+  }
+
+  private getUserPresence(userId: string): { status: FriendPresenceStatus; playingRoomCode?: string } {
+    const sockets = this.userSockets.get(userId);
+    if (!sockets || sockets.size === 0) {
+      return { status: 'offline' };
+    }
+
+    // Check if player is currently in a room
+    for (const room of this.manager.all()) {
+      for (const p of room.occupied) {
+        if (p.ws && sockets.has(p.ws as any)) {
+          return { status: 'playing', playingRoomCode: room.code };
+        }
+      }
+    }
+    return { status: 'online' };
+  }
+
+  private broadcastPresence(userId: string, status: FriendPresenceStatus, playingRoomCode?: string) {
+    const msg = {
+      type: 'friend:presence' as const,
+      userId,
+      status,
+      playingRoomCode,
+    };
+    for (const ws of this.socketUser.keys()) {
+      send(ws, msg);
+    }
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -202,6 +236,124 @@ export class PizhouHubDO {
           return jsonResponse({ success: true, id: body.id });
         }
       }
+
+      // 6. Friends: Search Users
+      if (path === '/api/friends/search' && request.method === 'GET') {
+        const token = this.getBearerToken(request);
+        if (!token) return jsonResponse({ error: '未登录' }, 401);
+        const userRow = await this.db.getUserByToken(token);
+        if (!userRow) return jsonResponse({ error: '登录已失效' }, 401);
+
+        const q = url.searchParams.get('q') || '';
+        const results = await this.db.searchUsers(q, userRow.id);
+        return jsonResponse({ results });
+      }
+
+      // 7. Friends: List Friends with Live Presence
+      if (path === '/api/friends/list' && request.method === 'GET') {
+        const token = this.getBearerToken(request);
+        if (!token) return jsonResponse({ error: '未登录' }, 401);
+        const userRow = await this.db.getUserByToken(token);
+        if (!userRow) return jsonResponse({ error: '登录已失效' }, 401);
+
+        const rawFriends = await this.db.getFriends(userRow.id);
+        const friends = rawFriends.map((f) => {
+          const presence = this.getUserPresence(f.userId);
+          return {
+            ...f,
+            status: presence.status,
+            playingRoomCode: presence.playingRoomCode,
+          };
+        });
+        return jsonResponse({ friends });
+      }
+
+      // 8. Friends: Request List
+      if (path === '/api/friends/requests' && request.method === 'GET') {
+        const token = this.getBearerToken(request);
+        if (!token) return jsonResponse({ error: '未登录' }, 401);
+        const userRow = await this.db.getUserByToken(token);
+        if (!userRow) return jsonResponse({ error: '登录已失效' }, 401);
+
+        const requests = await this.db.getFriendRequests(userRow.id);
+        return jsonResponse({ requests });
+      }
+
+      // 9. Friends: Send Friend Request
+      if (path === '/api/friends/request' && request.method === 'POST') {
+        const token = this.getBearerToken(request);
+        if (!token) return jsonResponse({ error: '未登录' }, 401);
+        const userRow = await this.db.getUserByToken(token);
+        if (!userRow) return jsonResponse({ error: '登录已失效' }, 401);
+
+        const body = (await request.json()) as any;
+        if (!body || !body.toUserId) {
+          return jsonResponse({ error: '请指定添加的雀友' }, 400);
+        }
+        const result = await this.db.sendFriendRequest(userRow.id, body.toUserId);
+        if (typeof result === 'string') {
+          return jsonResponse({ error: result }, 400);
+        }
+        return jsonResponse(result);
+      }
+
+      // 10. Friends: Respond to Friend Request (Accept / Reject)
+      if (path === '/api/friends/respond' && request.method === 'POST') {
+        const token = this.getBearerToken(request);
+        if (!token) return jsonResponse({ error: '未登录' }, 401);
+        const userRow = await this.db.getUserByToken(token);
+        if (!userRow) return jsonResponse({ error: '登录已失效' }, 401);
+
+        const body = (await request.json()) as any;
+        if (!body || !body.requestId || typeof body.accept !== 'boolean') {
+          return jsonResponse({ error: '参数不正确' }, 400);
+        }
+        const result = await this.db.respondFriendRequest(body.requestId, userRow.id, body.accept);
+        if (typeof result === 'string') {
+          return jsonResponse({ error: result }, 400);
+        }
+        return jsonResponse(result);
+      }
+
+      // 11. Friends: Delete Friend
+      if (path === '/api/friends/delete' && request.method === 'POST') {
+        const token = this.getBearerToken(request);
+        if (!token) return jsonResponse({ error: '未登录' }, 401);
+        const userRow = await this.db.getUserByToken(token);
+        if (!userRow) return jsonResponse({ error: '登录已失效' }, 401);
+
+        const body = (await request.json()) as any;
+        if (!body || !body.friendId) {
+          return jsonResponse({ error: '请指定删除的雀友' }, 400);
+        }
+        await this.db.deleteFriend(userRow.id, body.friendId);
+        return jsonResponse({ success: true });
+      }
+
+      // 12. Friends: Get Friend Profile & Online Match History
+      if (path === '/api/friends/stats' && request.method === 'GET') {
+        const token = this.getBearerToken(request);
+        if (!token) return jsonResponse({ error: '未登录' }, 401);
+        const userRow = await this.db.getUserByToken(token);
+        if (!userRow) return jsonResponse({ error: '登录已失效' }, 401);
+
+        const friendId = url.searchParams.get('friendId');
+        if (!friendId) return jsonResponse({ error: '缺少 friendId 参数' }, 400);
+
+        const profile = await this.db.getProfile(friendId);
+        if (!profile) return jsonResponse({ error: '雀友不存在' }, 404);
+
+        const data = await this.db.getMatches(friendId, 'online', 20);
+        const presence = this.getUserPresence(friendId);
+
+        return jsonResponse({
+          user: profile,
+          stats: data.stats,
+          recentMatches: data.matches,
+          status: presence.status,
+          playingRoomCode: presence.playingRoomCode,
+        });
+      }
     } catch (err: any) {
       return jsonResponse({ error: err.message || '内部服务器错误' }, 500);
     }
@@ -233,15 +385,60 @@ export class PizhouHubDO {
       },
     };
 
-    server.addEventListener('message', (event: MessageEvent) => {
+    server.addEventListener('message', async (event: MessageEvent) => {
       const raw = typeof event.data === 'string' ? event.data : '';
       const message = parseClientMessage(raw);
       if (!message) {
         send(uws, { type: 'error', message: '消息格式不正确' });
         return;
       }
+
+      // Handle Friend WS messages
+      if (message.type === 'friend:bindUser') {
+        const u = await this.db.getUserByToken(message.token);
+        if (u && u.id === message.userId) {
+          this.socketUser.set(uws, { userId: u.id, token: message.token });
+          let set = this.userSockets.get(u.id);
+          if (!set) {
+            set = new Set();
+            this.userSockets.set(u.id, set);
+          }
+          set.add(uws);
+          this.broadcastPresence(u.id, 'online');
+        }
+        return;
+      }
+
+      if (message.type === 'friend:invite') {
+        const info = this.socketUser.get(uws);
+        if (!info) return;
+        const senderProfile = await this.db.getProfile(info.userId);
+        if (!senderProfile) return;
+
+        const targetSockets = this.userSockets.get(message.toUserId);
+        if (targetSockets && targetSockets.size > 0) {
+          for (const targetWs of targetSockets) {
+            send(targetWs, {
+              type: 'friend:invited',
+              fromUserId: senderProfile.userId,
+              fromNickname: senderProfile.nickname,
+              fromAvatar: senderProfile.avatar,
+              roomCode: message.roomCode,
+            });
+          }
+        }
+        return;
+      }
+
       try {
         handleMessage(this.manager, uws as any, message);
+
+        // Update presence status if room state changed
+        const info = this.socketUser.get(uws);
+        if (info) {
+          const presence = this.getUserPresence(info.userId);
+          this.broadcastPresence(info.userId, presence.status, presence.playingRoomCode);
+        }
       } catch (error) {
         const text = error instanceof Error ? error.message : '服务器错误';
         send(uws, { type: 'error', message: text });
@@ -249,6 +446,20 @@ export class PizhouHubDO {
     });
 
     server.addEventListener('close', () => {
+      // Clean up socket user & presence
+      const info = this.socketUser.get(uws);
+      if (info) {
+        this.socketUser.delete(uws);
+        const set = this.userSockets.get(info.userId);
+        if (set) {
+          set.delete(uws);
+          if (set.size === 0) {
+            this.userSockets.delete(info.userId);
+            this.broadcastPresence(info.userId, 'offline');
+          }
+        }
+      }
+
       const found = this.manager.dropSocket(uws as any);
       if (!found) return;
       for (const item of found.room.occupied) {

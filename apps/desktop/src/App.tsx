@@ -1,8 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { DEFAULT_WS_URL, type ClientView, type GameAction, type Settlement, type UserProfile } from '@pizhou/shared';
+import {
+  DEFAULT_WS_URL,
+  type ClientView,
+  type FriendInvite,
+  type GameAction,
+  type Settlement,
+  type UserProfile,
+} from '@pizhou/shared';
 import { apiGetProfile, getStoredAuth, saveStoredAuth } from './api/auth';
 import { AuthModal } from './components/AuthModal';
+import { FriendsModal } from './components/FriendsModal';
 import { HuCelebration } from './components/HuCelebration';
+import { InviteToast } from './components/InviteToast';
 import { ProfileModal } from './components/ProfileModal';
 import { RulesModal } from './components/RulesModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -48,6 +57,8 @@ export function App() {
   const [auth, setAuth] = useState<{ token: string | null; user: UserProfile | null }>(() => getStoredAuth());
   const [authOpen, setAuthOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [friendsOpen, setFriendsOpen] = useState(false);
+  const [incomingInvite, setIncomingInvite] = useState<FriendInvite | null>(null);
 
   const [localUrl, setLocalUrl] = useState('');
   const [localUrlReady, setLocalUrlReady] = useState(false);
@@ -96,6 +107,9 @@ export function App() {
       },
       onError: (message) => setError(message),
       onStatus: (status) => setNetworkStatus(status),
+      onFriendInvited: (invite) => {
+        setIncomingInvite(invite);
+      },
       onLeft: () => {
         pendingSoloRef.current = false;
         requestedModeRef.current = 'home';
@@ -160,6 +174,13 @@ export function App() {
     return () => clientRef.current?.disconnect(false);
   }, [targetUrl, urlReady]);
 
+  // Bind authenticated user to WebSocket
+  useEffect(() => {
+    if (networkStatus === 'open' && auth.user && auth.token) {
+      clientRef.current?.bindUser(auth.user.userId, auth.token);
+    }
+  }, [networkStatus, auth.user, auth.token]);
+
   useEffect(() => () => clientRef.current?.disconnect(), []);
 
   useEffect(() => {
@@ -176,6 +197,9 @@ export function App() {
     if (user.nickname) {
       setNicknameState(user.nickname);
     }
+    if (current.token) {
+      clientRef.current?.bindUser(user.userId, current.token);
+    }
   };
 
   const handleLogout = () => {
@@ -183,6 +207,7 @@ export function App() {
     setAuth({ token: null, user: null });
     setProfileOpen(false);
     setAuthOpen(false);
+    setFriendsOpen(false);
   };
 
   const requireOnline = (): boolean => {
@@ -246,6 +271,11 @@ export function App() {
   const again = () => clientRef.current?.again();
   const finishCelebration = useCallback(() => setCelebrating(false), []);
 
+  const handleInviteFriend = (toUserId: string) => {
+    if (!view?.roomCode) return;
+    clientRef.current?.inviteFriend(toUserId, view.roomCode);
+  };
+
   const saveServerUrl = (value: string) => {
     const next = value.trim();
     setOverrideUrl(next);
@@ -266,6 +296,18 @@ export function App() {
   return (
     <div className="viewport">
       <div className="stage">
+        {/* Real-time Friend Invite Toast */}
+        {incomingInvite && (
+          <InviteToast
+            invite={incomingInvite}
+            onAccept={(code) => {
+              setIncomingInvite(null);
+              joinRoom(code);
+            }}
+            onDecline={() => setIncomingInvite(null)}
+          />
+        )}
+
         {!auth.user ? (
           /* Step 1: Clean First-Screen Authentication / Guest Login */
           <AuthView
@@ -293,6 +335,7 @@ export function App() {
             onLeave={leave}
             onRules={() => setRulesOpen(true)}
             onSetRate={(rate) => clientRef.current?.setConfig({ pointRate: rate })}
+            onInviteFriends={() => setFriendsOpen(true)}
           />
         ) : (
           /* Step 2: Progressive Tiered Lobby */
@@ -310,6 +353,7 @@ export function App() {
             onRules={() => setRulesOpen(true)}
             onSettings={() => setSettingsOpen(true)}
             onOpenProfile={() => setProfileOpen(true)}
+            onOpenFriends={() => setFriendsOpen(true)}
             onLogout={handleLogout}
           />
         )}
@@ -331,6 +375,16 @@ export function App() {
             gameMode={mode === 'local' ? 'local' : 'online'}
             serverUrl={displayUrl}
             token={auth.token}
+          />
+        ) : null}
+
+        {friendsOpen && auth.user ? (
+          <FriendsModal
+            serverUrl={displayUrl}
+            token={auth.token}
+            currentRoomCode={view?.phase === 'lobby' ? view.roomCode : null}
+            onClose={() => setFriendsOpen(false)}
+            onInviteFriend={handleInviteFriend}
           />
         ) : null}
 

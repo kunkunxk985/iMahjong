@@ -2757,3 +2757,578 @@ input:focus-visible {
 .online-or-divider span {
   padding: 0 10px;
 }
+
+/* ==========================================================================
+   Friends Modal, Online Presence & Real-Time Invite Toast
+   ========================================================================== */
+
+.hall-friends-btn {
+  background: rgba(30, 58, 138, 0.4);
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  color: #93c5fd;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.hall-friends-btn:hover {
+  background: rgba(59, 130, 246, 0.3);
+  border-color: #60a5fa;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.invite-friends-btn {
+  border-color: rgba(96, 165, 250, 0.5) !important;
+  color: #93c5fd !important;
+}
+
+.invite-friends-btn:hover {
+  background: rgba(59, 130, 246, 0.2) !important;
+  border-color: #60a5fa !important;
+}
+
+/* Invite Toast Banner */
+.invite-toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1000;
+  animation: slide-in-top 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.invite-toast-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 2px solid #fde047;
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(250, 204, 21, 0.3);
+  backdrop-filter: blur(8px);
+}
+
+.invite-toast-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(245, 214, 120, 0.2);
+  border: 1.5px solid #fde047;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.invite-toast-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.invite-toast-title {
+  font-size: 14px;
+  color: #fef08a;
+}
+
+.invite-toast-desc {
+  font-size: 12px;
+  color: #cbd5e1;
+  margin-top: 2px;
+}
+
+.room-badge {
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 1px;
+}
+
+.invite-toast-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.invite-accept-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.invite-decline-btn {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+/* Friends Modal */
+.friends-modal {
+  width: 580px;
+  max-width: 94vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 24, 18, 0.96);
+  border: 1.5px solid rgba(245, 214, 120, 0.4);
+  border-radius: 16px;
+  padding: 24px 20px 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+
+.friends-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.friends-modal-header h2 {
+  font-size: 20px;
+  color: #fef08a;
+  margin: 0;
+}
+
+.online-summary-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.friends-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.req-count-tag {
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-left: 4px;
+}
+
+.friends-body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 280px;
+  max-height: 420px;
+}
+
+.friends-scroll-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.friend-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(245, 214, 120, 0.2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  transition: all 0.15s ease;
+}
+
+.friend-card-row:hover {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: rgba(250, 204, 21, 0.4);
+}
+
+.friend-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.friend-card-avatar-wrap {
+  position: relative;
+}
+
+.friend-card-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(245, 214, 120, 0.15);
+  border: 1px solid rgba(245, 214, 120, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.friend-status-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid #0f172a;
+}
+
+.friend-status-dot.online {
+  background: #22c55e;
+  box-shadow: 0 0 6px #22c55e;
+}
+
+.friend-status-dot.playing {
+  background: #eab308;
+  box-shadow: 0 0 6px #eab308;
+}
+
+.friend-status-dot.offline {
+  background: #64748b;
+}
+
+.friend-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.friend-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.friend-nickname {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fef08a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friend-title-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #d97706, #b45309);
+  color: #fff;
+}
+
+.friend-status-text {
+  font-size: 11px;
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-online {
+  color: #86efac;
+}
+
+.status-playing {
+  color: #fde047;
+  font-weight: 600;
+}
+
+.status-offline {
+  color: #64748b;
+}
+
+.friend-bio {
+  color: #cbd5e1;
+  font-style: italic;
+}
+
+.friend-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+}
+
+.friend-card-actions .del-btn {
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+  padding: 4px 8px;
+}
+
+.friend-card-actions .del-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+}
+
+.empty-friends-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.empty-friends-hint .empty-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+/* Friend Search & Requests */
+.friend-requests-section {
+  background: rgba(30, 58, 138, 0.25);
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 13px;
+  color: #93c5fd;
+  margin: 0 0 8px;
+}
+
+.request-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+
+.friend-id-sub {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.search-box-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.search-input {
+  flex: 1;
+}
+
+.search-result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(245, 214, 120, 0.2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+}
+
+.status-tag {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.status-tag.is-friend {
+  background: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-tag.pending {
+  background: rgba(234, 179, 8, 0.15);
+  color: #fef08a;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+/* Friend Stats Overlay */
+.friend-stats-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 20;
+  animation: modal-in 0.2s ease both;
+}
+
+.friend-stats-card {
+  width: 100%;
+  max-height: 94%;
+  background: #0f172a;
+  border: 1.5px solid #fde047;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.stats-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+}
+
+.stats-user-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stats-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(245, 214, 120, 0.2);
+  border: 1px solid #fde047;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.stats-user-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #fef08a;
+}
+
+.stats-user-sub {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.friend-stats-banner {
+  background: rgba(10, 24, 18, 0.8);
+  border: 1px solid rgba(245, 214, 120, 0.3);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 12px;
+}
+
+.recent-matches-title {
+  font-size: 12px;
+  color: #93c5fd;
+  margin: 0 0 6px;
+}
+
+.recent-matches-scroll {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.friend-match-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(30, 41, 59, 0.6);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+.match-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.match-result-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.match-result-tag.win {
+  background: #16a34a;
+  color: #fff;
+}
+
+.match-result-tag.lose {
+  background: #dc2626;
+  color: #fff;
+}
+
+.match-result-tag.draw {
+  background: #64748b;
+  color: #fff;
+}
+
+.match-date {
+  color: #94a3b8;
+}
+
+.match-room {
+  color: #38bdf8;
+}
+
+.match-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.match-hu {
+  color: #fde047;
+}
+
+.match-delta {
+  font-weight: 700;
+}
+
+.match-delta.pos {
+  color: #86efac;
+}
+
+.match-delta.neg {
+  color: #fca5a5;
+}
+
+.friend-stats-footer,
+.friends-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}

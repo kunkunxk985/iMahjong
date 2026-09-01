@@ -1,5 +1,7 @@
 export type GameMode = 'online' | 'local';
 
+export type FriendPresenceStatus = 'online' | 'playing' | 'offline';
+
 export interface UserProfile {
   userId: string;
   username: string;
@@ -58,6 +60,46 @@ export interface ModeStats {
 export interface AuthResponse {
   token: string;
   user: UserProfile;
+}
+
+export interface FriendItem {
+  userId: string;
+  username: string;
+  nickname: string;
+  avatar: string;
+  title: string;
+  bio: string;
+  status: FriendPresenceStatus;
+  playingRoomCode?: string;
+  addedAt: number;
+}
+
+export interface FriendRequestItem {
+  id: string;
+  fromUserId: string;
+  fromUsername: string;
+  fromNickname: string;
+  fromAvatar: string;
+  fromTitle: string;
+  createdAt: number;
+}
+
+export interface FriendInvite {
+  fromUserId: string;
+  fromNickname: string;
+  fromAvatar: string;
+  roomCode: string;
+  timestamp: number;
+}
+
+export interface UserSearchResult {
+  userId: string;
+  username: string;
+  nickname: string;
+  avatar: string;
+  title: string;
+  isFriend: boolean;
+  hasPendingRequest: boolean;
 }
 
 export const PRESET_AVATARS = [

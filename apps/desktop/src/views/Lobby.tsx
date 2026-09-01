@@ -18,6 +18,7 @@ interface LobbyProps {
   onRules: () => void;
   onSettings: () => void;
   onOpenProfile: () => void;
+  onOpenFriends?: () => void;
   onLogout: () => void;
 }
 
@@ -35,6 +36,7 @@ export function Lobby({
   onRules,
   onSettings,
   onOpenProfile,
+  onOpenFriends,
   onLogout,
 }: LobbyProps) {
   const [selectedMode, setSelectedMode] = useState<'menu' | 'online'>('menu');
@@ -58,6 +60,17 @@ export function Lobby({
         </div>
 
         <div className="hall-user-pill-wrap">
+          {onOpenFriends && (
+            <button
+              type="button"
+              className="hall-friends-btn"
+              onClick={onOpenFriends}
+              title="查看好友列表与在线状态"
+            >
+              👥 好友
+            </button>
+          )}
+
           <div
             className="hall-user-pill"
             onClick={onOpenProfile}

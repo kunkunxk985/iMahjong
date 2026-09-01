@@ -12,6 +12,8 @@ export const C2S = {
   GAME_NEXT_ROUND: 'game:nextRound',
   PLAYER_RECONNECT: 'player:reconnect',
   PLAYER_HEARTBEAT: 'player:heartbeat',
+  FRIEND_BIND_USER: 'friend:bindUser',
+  FRIEND_INVITE: 'friend:invite',
   PING: 'ping',
 } as const;
 
@@ -24,6 +26,8 @@ export const S2C = {
   PLAYER_RECONNECTED: 'player:reconnected',
   PLAYER_DISCONNECTED: 'player:disconnected',
   PLAYER_HEARTBEAT: 'player:heartbeat',
+  FRIEND_INVITED: 'friend:invited',
+  FRIEND_PRESENCE: 'friend:presence',
   PONG: 'pong',
   ERROR: 'error',
 } as const;
@@ -40,6 +44,8 @@ export type C2SMessage =
   | { type: 'game:action'; sequence: number; actionId: string; action: GameAction }
   | { type: 'player:reconnect'; roomCode: string; token: string }
   | { type: 'player:heartbeat' }
+  | { type: 'friend:bindUser'; userId: string; token: string }
+  | { type: 'friend:invite'; toUserId: string; roomCode: string }
   | { type: 'ping' };
 
 export type S2CMessage =
@@ -51,6 +57,8 @@ export type S2CMessage =
   | { type: 'player:reconnected'; roomCode: string; token: string; seat: number }
   | { type: 'player:disconnected'; seat: number; nickname: string }
   | { type: 'player:heartbeat' }
+  | { type: 'friend:invited'; fromUserId: string; fromNickname: string; fromAvatar: string; roomCode: string }
+  | { type: 'friend:presence'; userId: string; status: 'online' | 'playing' | 'offline'; playingRoomCode?: string }
   | { type: 'pong' }
   | { type: 'error'; message: string; code?: string };
 
