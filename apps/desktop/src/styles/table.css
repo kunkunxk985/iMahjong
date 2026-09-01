@@ -444,22 +444,24 @@
     0 5px 0 #0369a1,
     0 12px 22px rgba(56, 189, 248, 0.65),
     0 0 16px rgba(56, 189, 248, 0.8) !important;
-  transform: translateY(-8px) scale(1.06) translateZ(0);
+  transform: translate3d(0, -8px, 0) scale(1.05);
   animation: highlight-same-breathe 1.2s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
 .board-discard-tile.highlight-same {
-  transform: translateY(-4px) scale(1.15) translateZ(0) !important;
+  transform: translate3d(0, -4px, 0) scale(1.14) !important;
   box-shadow:
     inset 0 0 0 2px rgba(125, 211, 252, 0.98),
     0 0 18px rgba(56, 189, 248, 0.9) !important;
   z-index: 8;
   animation: highlight-same-breathe 1.2s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
 @keyframes highlight-same-breathe {
-  from { filter: brightness(1) drop-shadow(0 0 4px rgba(56, 189, 248, 0.6)); }
-  to { filter: brightness(1.2) drop-shadow(0 0 12px rgba(56, 189, 248, 0.95)); }
+  0% { transform: translate3d(0, -8px, 0) scale(1.04); }
+  100% { transform: translate3d(0, -9px, 0) scale(1.06); }
 }
 
 /* ─── Player Avatars ────────────────────────────────────────── */
@@ -1076,28 +1078,28 @@
 }
 
 @keyframes wind-spotlight-pulse {
-  0% { opacity: 0.5; filter: blur(1px); }
-  100% { opacity: 1; filter: blur(3px); }
+  0% { opacity: 0.45; transform: scale(0.95); }
+  100% { opacity: 0.95; transform: scale(1.15); }
 }
 
 @keyframes wind-glow-top {
   from { transform: translateX(-50%) scale(1.1); }
-  to { transform: translateX(-50%) scale(1.25); }
+  to { transform: translateX(-50%) scale(1.22); }
 }
 
 @keyframes wind-glow-bottom {
   from { transform: translateX(-50%) scale(1.1); }
-  to { transform: translateX(-50%) scale(1.25); }
+  to { transform: translateX(-50%) scale(1.22); }
 }
 
 @keyframes wind-glow-left {
   from { transform: translateY(-50%) scale(1.1); }
-  to { transform: translateY(-50%) scale(1.25); }
+  to { transform: translateY(-50%) scale(1.22); }
 }
 
 @keyframes wind-glow-right {
   from { transform: translateY(-50%) scale(1.1); }
-  to { transform: translateY(-50%) scale(1.25); }
+  to { transform: translateY(-50%) scale(1.22); }
 }
 
 /* Central Countdown Timer */
@@ -1136,12 +1138,12 @@
 }
 
 .board-controller.is-active .board-compass-disc {
-  animation: board-compass-pulse 1.8s ease-in-out infinite;
+  animation: board-compass-pulse 2s ease-in-out infinite alternate;
 }
 
 @keyframes board-compass-pulse {
-  0%, 100% { box-shadow: 0 0 0 2px rgba(4, 18, 12, 0.9), 0 0 0 5px rgba(245, 214, 120, 0.25), 0 10px 28px rgba(0, 0, 0, 0.65); }
-  50% { box-shadow: 0 0 0 2px rgba(4, 18, 12, 0.9), 0 0 0 8px rgba(245, 214, 120, 0.65), 0 0 32px rgba(250, 204, 21, 0.5); }
+  0% { opacity: 0.92; }
+  100% { opacity: 1; }
 }
 
 .board-controller.is-urgent .board-compass-disc {
@@ -1160,8 +1162,8 @@
 }
 
 @keyframes compass-urgent {
-  from { box-shadow: 0 0 0 2px rgba(36, 10, 10, 0.94), 0 0 0 5px rgba(248, 113, 113, 0.28), 0 12px 28px rgba(0, 0, 0, 0.65); }
-  to { box-shadow: 0 0 0 2px rgba(36, 10, 10, 0.94), 0 0 0 9px rgba(248, 113, 113, 0.55), 0 0 34px rgba(239, 68, 68, 0.45); }
+  from { opacity: 0.85; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1.02); }
 }
 
 /* ─── Hand Area (Bottom) ────────────────────────────────────── */
@@ -1379,12 +1381,12 @@
 
 @keyframes hu-flame-pulse {
   from {
-    filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.7));
     transform: scale(1);
+    opacity: 0.94;
   }
   to {
-    filter: drop-shadow(0 0 22px rgba(250, 204, 21, 0.95)) brightness(1.15);
     transform: scale(1.05);
+    opacity: 1;
   }
 }
 
@@ -1402,8 +1404,14 @@
 }
 
 @keyframes close-gate-btn-pulse {
-  from { filter: drop-shadow(0 0 6px rgba(234, 88, 12, 0.5)); }
-  to { filter: drop-shadow(0 0 18px rgba(253, 224, 71, 0.85)) brightness(1.1); }
+  from {
+    transform: scale(1);
+    opacity: 0.94;
+  }
+  to {
+    transform: scale(1.04);
+    opacity: 1;
+  }
 }
 
 .board-action-area .btn-action.ghost {
@@ -1425,8 +1433,14 @@
 }
 
 @keyframes discard-ready-glint {
-  from { filter: brightness(1) drop-shadow(0 0 4px rgba(250, 204, 21, 0.4)); }
-  to { filter: brightness(1.18) drop-shadow(0 0 14px rgba(250, 204, 21, 0.85)); }
+  from {
+    transform: scale(1);
+    opacity: 0.94;
+  }
+  to {
+    transform: scale(1.03);
+    opacity: 1;
+  }
 }
 
 .board-action-area .btn-action.action-chi {

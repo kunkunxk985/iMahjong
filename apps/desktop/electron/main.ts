@@ -8,6 +8,9 @@ if (process.platform === 'win32') {
 }
 
 app.commandLine.appendSwitch('high-dpi-support', '1');
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-zero-copy');
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
 
 let localServer: LocalServer | null = null;
 let localServerPromise: Promise<LocalServer | null> | null = null;
