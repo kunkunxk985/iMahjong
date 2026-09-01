@@ -705,7 +705,7 @@ export class PizhouGame {
   }
 
   private refreshWaitFlags(seat: SeatRuntime): void {
-    if (seat.hand.length === 1) {
+    if (seat.melds.length === 4 && seat.hand.length === 1) {
       const key = seat.hand[0]!.key;
       if (!seat.waitKey) {
         seat.waitKey = key;
@@ -718,9 +718,12 @@ export class PizhouGame {
       }
       return;
     }
-    const counts: Record<string, number> = {};
-    for (const tile of seat.hand) counts[tile.key] = (counts[tile.key] ?? 0) + 1;
-    if (seat.hand.length === 4 && Object.values(counts).filter((n) => n === 2).length === 2) return;
+    if (seat.closedTwoPair) {
+      seat.closed = true;
+      return;
+    }
+    // 既不是4组单钓也不是两对关门，重置关门状态
+    seat.closed = false;
     if (seat.waitKey) seat.changed = true;
   }
 
