@@ -98,17 +98,12 @@ export function DiscardRiver({
   return (
     <div className={`board-discard board-discard-${position}`} aria-label={`${SEAT_NAMES[player.seat]}弃牌区`}>
       <div className="board-discard-grid">
-        {player.discards.map((tile, idx) => {
-          // Deterministic natural physical tile scatter angle (-1.8deg ~ +1.8deg)
-          const charCode = tile.id.charCodeAt(tile.id.length - 1) || idx;
-          const rot = ((charCode % 7) - 3) * 0.6;
-
+        {player.discards.map((tile) => {
           return (
             <div
               key={tile.id}
               className={`board-discard-cell ${tile.id === flyingDiscardId ? 'is-flight-target' : ''}`}
               data-discard-tile-id={tile.id}
-              style={{ transform: `rotate(${rot}deg)` }}
             >
               <TileView
                 tile={tile}
