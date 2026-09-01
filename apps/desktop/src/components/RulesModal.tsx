@@ -44,22 +44,21 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td>对</td><td>1 胡</td><td>2 胡</td></tr>
-                  <tr><td>碰</td><td>1 胡</td><td>2 胡</td></tr>
-                  <tr><td>坎</td><td>2 胡</td><td>4 胡 + 1 幺</td></tr>
-                  <tr><td>送杠</td><td>4 胡</td><td>8 胡 + 2 幺</td></tr>
-                  <tr><td>自杠</td><td>6 胡</td><td>12 胡 + 3 幺</td></tr>
+                  <tr><td>对（对子/将牌）</td><td>1 胡</td><td>2 胡</td></tr>
+                  <tr><td>坎（碰/暗坎/刻子）</td><td>2 胡</td><td>4 胡 + 1 幺</td></tr>
+                  <tr><td>送杠（明杠）</td><td>4 胡</td><td>8 胡 + 2 幺</td></tr>
+                  <tr><td>自杠（暗杠）</td><td>6 胡</td><td>12 胡 + 3 幺</td></tr>
                 </tbody>
               </table>
             </div>
-            <p className="rule-footnote">幺头牌：一、九万筒条和中、发、白。幺头对子与碰只加胡，不加幺。</p>
+            <p className="rule-footnote">幺头牌：一、九万筒条和中、发、白。幺头对子只加胡，幺头坎/杠同时加胡加幺。</p>
 
             <div className="rule-callout">
-              <b>最容易算漏：</b>没胡的人也要查手里的对子和暗坎。普通对 1 胡、幺头对 2 胡；普通暗坎 2 胡、幺头暗坎 4 胡 1 幺。胡牌结构中的将牌同样按“对”计胡。
+              <b>最容易算漏：</b>没胡的人也要查手里的对子和暗坎。普通对 1 胡、幺头对 2 胡；普通坎 2 胡、幺头坎 4 胡 1 幺。胡牌结构中的将牌同样按“对”计胡。
             </div>
             <ul className="rules-list compact">
+              <li>“不分放炮和自摸”：三张相同的牌（无论是落地碰还是暗坎）一律按“坎”计分。</li>
               <li>“坎上”是把三张相同牌锁成一组，方便进入飘荤、关门、包庄并继续自杠；<b>不是</b>暗坎取得基础胡数的前提。</li>
-              <li>点炮补成三张时，该组按碰；自摸补成三张时，该组按坎。放炮与自摸本身不再附加倍率。</li>
               <li>赢家按合法的“四组一对”拆牌，每张牌只用一次；有多种合法拆法时，本房按当前积分配置取分值较高的一种。</li>
             </ul>
           </section>
