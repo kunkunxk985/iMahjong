@@ -648,10 +648,12 @@ package.json至少提供：
     "dev:desktop": "...",
     "build": "...",
     "package:win": "electron-builder --win",
-    "package:mac": "electron-builder --mac --universal"
+    "package:mac": "electron-builder --mac --arm64 --dir"
   }
 }
 ```
+
+当前 macOS 私用交付只生成 Apple Silicon `.app` 应用目录并复制到桌面，不生成 DMG 安装镜像。
 
 ## 14. 最终验收标准
 

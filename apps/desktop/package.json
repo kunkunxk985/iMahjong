@@ -12,7 +12,7 @@
     "build": "node scripts/build.mjs",
     "package:win": "npm run build && electron-builder --win --x64 --dir && node scripts/copy-to-desktop.mjs",
     "package:win:portable": "npm run build && electron-builder --win portable --x64",
-    "package:mac": "npm run build && electron-builder --mac --arm64 && node scripts/copy-to-desktop.mjs"
+    "package:mac": "npm run build && electron-builder --mac --arm64 --dir && node scripts/copy-to-desktop.mjs"
   },
   "dependencies": {
     "@pizhou/rules": "*",
@@ -68,12 +68,6 @@
     "mac": {
       "icon": "build/icon.icns",
       "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "arm64"
-          ]
-        },
         {
           "target": "dir",
           "arch": [
