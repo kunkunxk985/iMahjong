@@ -44,21 +44,19 @@
       "dist-electron/**/*",
       "package.json"
     ],
-    "electronVersion": "33.4.5",
-    "electronDist": "../../node_modules/electron/dist",
     "asar": true,
     "win": {
       "signAndEditExecutable": false,
       "icon": "build/icon.ico",
       "target": [
         {
-          "target": "nsis",
+          "target": "portable",
           "arch": [
             "x64"
           ]
         },
         {
-          "target": "portable",
+          "target": "zip",
           "arch": [
             "x64"
           ]

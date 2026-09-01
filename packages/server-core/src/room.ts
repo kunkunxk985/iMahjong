@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import type { WebSocket } from 'ws';
 import {
   EMPTY_ROOM_TTL_MS,
   HEARTBEAT_TIMEOUT_MS,
@@ -18,12 +17,18 @@ import {
 } from '@pizhou/shared';
 import { nextDealer, PizhouGame, type PlayerMeta } from '@pizhou/rules';
 
+export type UniversalWebSocket = {
+  readyState: number;
+  send(data: string): void;
+  close?(code?: number, reason?: string): void;
+};
+
 export interface RoomPlayer {
   seat: number;
   nickname: string;
   token: string;
   ready: boolean;
-  ws: WebSocket | null;
+  ws: UniversalWebSocket | null;
   lastSeen: number;
   offlineAt: number | null;
   score: number;
@@ -53,7 +58,7 @@ export class Room {
     return this.occupied.filter((player) => player.isBot || (player.ws && player.offlineAt === null)).length;
   }
 
-  addPlayer(nickname: string, ws: WebSocket): RoomPlayer | string {
+  addPlayer(nickname: string, ws: UniversalWebSocket): RoomPlayer | string {
     const seat = this.players.findIndex((player) => player === null);
     if (seat < 0) return '房间已满';
     const name = sanitizeNickname(nickname, `玩家${seat + 1}`);
@@ -111,7 +116,7 @@ export class Room {
     return this.occupied.find((player) => player.token === token) ?? null;
   }
 
-  findBySocket(ws: WebSocket): RoomPlayer | null {
+  findBySocket(ws: UniversalWebSocket): RoomPlayer | null {
     return this.occupied.find((player) => player.ws === ws) ?? null;
   }
 
@@ -120,7 +125,7 @@ export class Room {
     player.offlineAt = now;
   }
 
-  reconnect(player: RoomPlayer, ws: WebSocket, now = Date.now()): string | null {
+  reconnect(player: RoomPlayer, ws: UniversalWebSocket, now = Date.now()): string | null {
     if (player.offlineAt && now - player.offlineAt > RECONNECT_WINDOW_MS) {
       return '重连已超过30分钟';
     }
@@ -260,7 +265,7 @@ export class Room {
 export class RoomManager {
   private readonly rooms = new Map<string, Room>();
 
-  create(nickname: string, ws: WebSocket, solo = false): { room: Room; player: RoomPlayer } {
+  create(nickname: string, ws: UniversalWebSocket, solo = false): { room: Room; player: RoomPlayer } {
     const room = new Room(generateRoomCode((code) => this.rooms.has(code)));
     const player = room.addPlayer(nickname, ws);
     if (typeof player === 'string') throw new Error(player);
@@ -273,7 +278,7 @@ export class RoomManager {
     return { room, player };
   }
 
-  join(roomCode: string, nickname: string, ws: WebSocket): { room: Room; player: RoomPlayer } | string {
+  join(roomCode: string, nickname: string, ws: UniversalWebSocket): { room: Room; player: RoomPlayer } | string {
     const code = normalizeRoomCode(roomCode);
     if (!isValidRoomCode(code)) return '房间号应为6位数字';
     const room = this.rooms.get(code);
@@ -285,7 +290,7 @@ export class RoomManager {
     return { room, player };
   }
 
-  leave(ws: WebSocket): { room: Room; player: RoomPlayer; removed: boolean } | null {
+  leave(ws: UniversalWebSocket): { room: Room; player: RoomPlayer; removed: boolean } | null {
     const found = this.bySocket(ws);
     if (!found) return null;
     if (found.room.phase === 'lobby') {
@@ -300,7 +305,7 @@ export class RoomManager {
     return { ...found, removed: false };
   }
 
-  reconnect(roomCode: string, token: string, ws: WebSocket): { room: Room; player: RoomPlayer } | string {
+  reconnect(roomCode: string, token: string, ws: UniversalWebSocket): { room: Room; player: RoomPlayer } | string {
     const code = normalizeRoomCode(roomCode);
     if (!isValidRoomCode(code)) return '房间号应为6位数字';
     const room = this.rooms.get(code);
@@ -312,7 +317,7 @@ export class RoomManager {
     return { room, player };
   }
 
-  bySocket(ws: WebSocket): { room: Room; player: RoomPlayer } | null {
+  bySocket(ws: UniversalWebSocket): { room: Room; player: RoomPlayer } | null {
     for (const room of this.rooms.values()) {
       const player = room.findBySocket(ws);
       if (player) return { room, player };
@@ -320,7 +325,7 @@ export class RoomManager {
     return null;
   }
 
-  dropSocket(ws: WebSocket): { room: Room; player: RoomPlayer } | null {
+  dropSocket(ws: UniversalWebSocket): { room: Room; player: RoomPlayer } | null {
     const found = this.bySocket(ws);
     if (!found) return null;
     found.room.markOffline(found.player);
@@ -349,8 +354,8 @@ export class RoomManager {
 
 }
 
-export function send(ws: WebSocket | null, message: S2CMessage): void {
-  if (!ws || ws.readyState !== ws.OPEN) return;
+export function send(ws: UniversalWebSocket | null, message: S2CMessage): void {
+  if (!ws || ws.readyState !== 1) return;
   ws.send(JSON.stringify(message));
 }
 
