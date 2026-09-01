@@ -397,13 +397,13 @@ export function detectBaoZhuang(input: BaoZhuangCheckInput): BaoZhuangReason | n
   const pairs = Object.values(countKeys(waitHand)).filter((n) => n === 2).length;
   const waitKey = waitHand[0]?.key;
 
-  if (!input.singleWaitChanged && totalPk === 4 && waitHand.length === 1 && waitKey) {
+  if (!input.singleWaitChanged && totalPk === 4 && chow === 0 && waitHand.length === 1 && waitKey) {
     if (canFormSequence(waitKey, discardKey)) return 'four_wait_seq';
   }
-  if (!input.singleWaitChanged && totalPk >= 1 && chow >= 1 && waitHand.length === 1 && waitKey) {
+  if (!input.singleWaitChanged && (totalPk + chow === 4) && chow >= 1 && waitHand.length === 1 && waitKey) {
     if (canFormSequence(waitKey, discardKey)) return 'chow_wait_seq';
   }
-  if (totalPk === 3 && pairs === 2 && waitHand.length === 4) {
+  if (totalPk === 3 && chow === 0 && pairs === 2 && waitHand.length === 4) {
     if (!input.closedTwoPair) return null;
     if (!(input.discardedBeforeClose ?? []).includes(discardKey)) return 'xiang';
   }
@@ -631,15 +631,7 @@ export function settleChaHu(input: {
   }
 
   if (hunDi && input.winnerSeat !== null) {
-    if (baoZhuang) {
-      for (let seat = 0; seat < 4; seat += 1) {
-        if (seat === input.winnerSeat) continue;
-        deltas[input.winnerSeat] += HUN_DI;
-        deltas[baoZhuang.payerSeat] -= HUN_DI;
-        receivables[input.winnerSeat] += HUN_DI;
-        payables[baoZhuang.payerSeat] += HUN_DI;
-      }
-    } else {
+    if (!baoZhuang) {
       for (let seat = 0; seat < 4; seat += 1) {
         if (seat === input.winnerSeat) continue;
         deltas[input.winnerSeat] += HUN_DI;
@@ -653,21 +645,44 @@ export function settleChaHu(input: {
   if (baoZhuang && input.winnerSeat !== null) {
     const winnerSeat = input.winnerSeat;
     const pack = baoZhuang.payerSeat;
+    const winnerSeatObj = seats[winnerSeat]!;
+    const huMultiplierWinner = huMultiplierForSeat(winnerSeatObj);
+    const effectiveHuWinner = winnerSeatObj.hu * huMultiplierWinner;
+    let totalWin = 0;
+
+    // Reset all deltas & transactions for clean 100% bao-zhuang transfer
+    for (let s = 0; s < 4; s += 1) {
+      deltas[s] = 0;
+      receivables[s] = 0;
+      payables[s] = 0;
+    }
+
     for (let seat = 0; seat < 4; seat += 1) {
-      if (seat === winnerSeat || seat === pack) continue;
-      // 直接复用已经生成的两两流水，避免包庄转移再维护一套倍率公式。
-      const transaction = transactions.find((item) => (
-        (item.seatA === winnerSeat && item.seatB === seat)
-        || (item.seatA === seat && item.seatB === winnerSeat)
-      ));
-      const owe = transaction
-        ? (transaction.seatA === winnerSeat ? transaction.points : -transaction.points)
-        : 0;
-      if (owe > 0) {
-        deltas[seat] += owe;
-        deltas[pack] -= owe;
-        payables[seat] -= owe;
-        payables[pack] += owe;
+      if (seat === winnerSeat) continue;
+      const opponent = seats[seat]!;
+      const huMultiplierOpp = huMultiplierForSeat(opponent);
+      const effectiveHuOpp = opponent.hu * huMultiplierOpp;
+      const diffHu = effectiveHuWinner - effectiveHuOpp;
+      const diffYao = winnerSeatObj.yao - opponent.yao;
+      const pairPoints = diffHu * HU_RATE + diffYao * YAO_RATE;
+
+      const seatGain = Math.max(0, pairPoints) + (hunDi ? HUN_DI : 0);
+      totalWin += seatGain;
+    }
+
+    deltas[winnerSeat] = totalWin;
+    receivables[winnerSeat] = totalWin;
+    payables[winnerSeat] = 0;
+
+    deltas[pack] = -totalWin;
+    payables[pack] = totalWin;
+    receivables[pack] = 0;
+
+    for (let seat = 0; seat < 4; seat += 1) {
+      if (seat !== winnerSeat && seat !== pack) {
+        deltas[seat] = 0;
+        receivables[seat] = 0;
+        payables[seat] = 0;
       }
     }
   }
