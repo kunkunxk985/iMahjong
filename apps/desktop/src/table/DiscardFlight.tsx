@@ -7,7 +7,7 @@ export interface DiscardFlight {
   face: string;
 }
 
-const FLIGHT_MS = 340;
+const FLIGHT_MS = 220;
 
 export function DiscardFlightLayer({ flight, onDone }: { flight: DiscardFlight; onDone: () => void }) {
   const elementRef = useRef<HTMLDivElement | null>(null);
@@ -26,22 +26,22 @@ export function DiscardFlightLayer({ flight, onDone }: { flight: DiscardFlight; 
     const anim = element.animate(
       [
         {
-          transform: 'translate3d(0, 0, 0) scale(1) rotateX(0deg) rotateZ(0deg)',
+          transform: 'translate3d(0, 0, 0) scale(1.05) rotateZ(0deg)',
           opacity: 1,
         },
         {
-          offset: 0.58,
-          transform: `translate3d(${dx * 0.55}px, ${dy * 0.5 - 26}px, 0) scale(${(1 + scale) / 2}) rotateX(10deg) rotateZ(-2deg)`,
+          offset: 0.52,
+          transform: `translate3d(${dx * 0.52}px, ${dy * 0.48 - 36}px, 0) scale(${(1 + scale) * 0.56}) rotateZ(-2.5deg)`,
           opacity: 1,
         },
         {
-          transform: `translate3d(${dx}px, ${dy}px, 0) scale(${scale}) rotateX(30deg) rotateZ(0deg)`,
-          opacity: 0.98,
+          transform: `translate3d(${dx}px, ${dy}px, 0) scale(${scale}) rotateZ(0deg)`,
+          opacity: 1,
         },
       ],
       {
         duration: FLIGHT_MS,
-        easing: 'cubic-bezier(0.2, 0.88, 0.25, 1)',
+        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
         fill: 'forwards',
       },
     );

@@ -848,13 +848,13 @@
 }
 
 @keyframes shockwave-expand-1 {
-  0% { transform: scale(0.2); opacity: 1; }
-  100% { transform: scale(2.8); opacity: 0; }
+  0% { transform: translate3d(0, 0, 0) scale(0.2); opacity: 1; }
+  100% { transform: translate3d(0, 0, 0) scale(2.8); opacity: 0; }
 }
 
 @keyframes shockwave-expand-2 {
-  0% { transform: scale(0.2); opacity: 0.9; }
-  100% { transform: scale(3.5); opacity: 0; }
+  0% { transform: translate3d(0, 0, 0) scale(0.2); opacity: 0.9; }
+  100% { transform: translate3d(0, 0, 0) scale(3.5); opacity: 0; }
 }
 
 /* Radiating Burst Light Rays */
