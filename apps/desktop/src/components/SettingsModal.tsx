@@ -14,16 +14,18 @@ export function SettingsModal({
   onNewWindow?: () => void;
 }) {
   const [url, setUrl] = useState(serverUrl);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [voice, setVoice] = useState<VoiceMode>(getVoiceMode());
 
   const handleSave = () => {
     setVoiceMode(voice);
     onSave(url);
+    onClose();
   };
 
   return (
     <div className="overlay" onClick={onClose}>
-      <div className="modal" onClick={(event) => event.stopPropagation()}>
+      <div className="modal" onClick={(event) => event.stopPropagation()} style={{ maxWidth: '440px' }}>
         <div className="gold-line" />
         <h2>游戏设置</h2>
 
@@ -54,15 +56,58 @@ export function SettingsModal({
           </div>
         </div>
 
-        <label className="settings-field-label" style={{ marginTop: '14px' }}>
-          服务器连接地址
-          <input value={url} onChange={(event) => setUrl(event.target.value)} placeholder="留空则用本机内置服务" />
-        </label>
-        <p className="hint">
-          单机和本机开房留空即可。去朋友电脑或云服务器打时，填云服务器公网 IP 或域名，例如 {DEFAULT_WS_URL.replace('localhost', '192.168.1.8')}。
-        </p>
+        <div className="settings-section" style={{ marginTop: '16px' }}>
+          <label className="settings-field-label">联机服务器</label>
+          <div
+            style={{
+              padding: '10px 14px',
+              borderRadius: '8px',
+              background: 'rgba(6, 78, 59, 0.4)',
+              border: '1px solid rgba(52, 211, 153, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '13px',
+              color: '#d1fae5',
+            }}
+          >
+            <span>☁️ Cloudflare 云端官方服务</span>
+            <span style={{ color: '#34d399', fontWeight: 600 }}>🟢 24h 在线</span>
+          </div>
 
-        <div className="row">
+          <div style={{ marginTop: '10px', textAlign: 'right' }}>
+            <button
+              type="button"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'rgba(255, 255, 255, 0.4)',
+                fontSize: '11px',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+              }}
+              onClick={() => setShowAdvanced(!showAdvanced)}
+            >
+              {showAdvanced ? '收起高级设置' : '⚙️ 自定义私服地址（开发者）'}
+            </button>
+          </div>
+
+          {showAdvanced ? (
+            <div style={{ marginTop: '10px' }}>
+              <input
+                value={url}
+                onChange={(event) => setUrl(event.target.value)}
+                placeholder={DEFAULT_WS_URL}
+                style={{ fontSize: '12px', width: '100%' }}
+              />
+              <p className="hint" style={{ fontSize: '11px', marginTop: '4px' }}>
+                默认已直连官方云端，留空即自动恢复官方云端。
+              </p>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="row" style={{ marginTop: '20px' }}>
           <button type="button" className="btn-action primary" onClick={handleSave}>
             保存设置
           </button>
