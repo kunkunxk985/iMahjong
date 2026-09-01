@@ -112,8 +112,12 @@ export function ActionSplash({ view }: ActionSplashProps) {
           key={splash.id}
           className={`action-seat-splash pos-${splash.position} is-${splash.type}`}
         >
+          <div className="action-shockwave-ring ring-1" />
+          <div className="action-shockwave-ring ring-2" />
+          <div className="action-burst-rays" />
           <div className="action-seat-aura" />
           <div className="action-seat-pill">
+            <div className="action-shimmer-sweep" />
             <span className="action-seat-text">{splash.text}</span>
           </div>
         </div>
