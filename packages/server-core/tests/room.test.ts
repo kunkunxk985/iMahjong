@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import type { WebSocket } from 'ws';
 import { EMPTY_ROOM_TTL_MS, type Settlement } from '@pizhou/shared';
 import { cancelBots, hasScheduledBots, scheduleBots } from '../src/bots.ts';
+import { handleMessage } from '../src/messageHandler.ts';
 import { RoomManager } from '../src/room.ts';
 
 function socket(): WebSocket {
@@ -132,4 +133,35 @@ test('机器人定时器可以按房间取消', () => {
   assert.equal(hasScheduledBots(created.room.code), true);
   cancelBots(created.room.code);
   assert.equal(hasScheduledBots(created.room.code), false);
+});
+
+test('房主设置底分单价后同步到 ClientView', () => {
+  const manager = new RoomManager();
+  const created = manager.create('房主', socket(), false, 0.2);
+  assert.equal(created.room.pointRate, 0.2);
+  const view = created.room.viewFor(created.player);
+  assert.equal(view.pointRate, 0.2);
+});
+
+test('游戏开始后底分单价固定，不可中途修改', () => {
+  const manager = new RoomManager();
+  const ws = socket();
+  const created = manager.create('房主', ws, true, 0.2);
+  assert.equal(created.room.startGame(), null);
+  assert.equal(created.room.phase, 'playing');
+
+  // Attempt to modify config mid-game should be rejected
+  let lastMessage: any = null;
+  const mockWs = {
+    OPEN: 1,
+    readyState: 1,
+    send(data: string) {
+      lastMessage = JSON.parse(data);
+    },
+  };
+  (manager as any).bySocket = () => ({ room: created.room, player: created.player });
+  handleMessage(manager, mockWs as any, { type: 'room:config', pointRate: 0.5 });
+  assert.equal(created.room.pointRate, 0.2); // Still 0.2, unchanged!
+  assert.equal(lastMessage?.type, 'error');
+  assert.match(lastMessage?.message, /已固定/);
 });

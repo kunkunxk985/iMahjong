@@ -144,6 +144,10 @@ export class GameClient {
     this.send({ type: 'room:start' });
   }
 
+  setConfig(config: { pointRate: number }): void {
+    this.send({ type: 'room:config', pointRate: config.pointRate });
+  }
+
   again(): void {
     this.send({ type: 'game:nextRound' });
   }

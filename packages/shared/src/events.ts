@@ -7,6 +7,7 @@ export const C2S = {
   ROOM_READY: 'room:ready',
   ROOM_START: 'room:start',
   ROOM_AGAIN: 'room:again',
+  ROOM_CONFIG: 'room:config',
   GAME_ACTION: 'game:action',
   GAME_NEXT_ROUND: 'game:nextRound',
   PLAYER_RECONNECT: 'player:reconnect',
@@ -28,12 +29,13 @@ export const S2C = {
 } as const;
 
 export type C2SMessage =
-  | { type: 'room:create'; nickname: string; solo?: boolean }
+  | { type: 'room:create'; nickname: string; solo?: boolean; pointRate?: number }
   | { type: 'room:join'; roomCode: string; nickname: string }
   | { type: 'room:leave' }
   | { type: 'room:ready'; ready?: boolean }
   | { type: 'room:start' }
   | { type: 'room:again' }
+  | { type: 'room:config'; pointRate: number }
   | { type: 'game:nextRound' }
   | { type: 'game:action'; sequence: number; actionId: string; action: GameAction }
   | { type: 'player:reconnect'; roomCode: string; token: string }

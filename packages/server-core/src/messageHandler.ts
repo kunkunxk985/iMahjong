@@ -24,7 +24,7 @@ export function handleMessage(
   }
 
   if (message.type === 'room:create') {
-    const { room, player } = manager.create(message.nickname, ws, Boolean(message.solo));
+    const { room, player } = manager.create(message.nickname, ws, Boolean(message.solo), message.pointRate);
     send(ws, { type: 'room:created', roomCode: room.code, token: player.token, seat: player.seat });
     if (room.solo) {
       const error = room.startGame();
@@ -89,6 +89,22 @@ export function handleMessage(
     }
     player.ready = message.ready ?? !player.ready;
     broadcastState(room);
+    return;
+  }
+
+  if (message.type === 'room:config') {
+    if (player.seat !== room.hostSeat) {
+      send(ws, { type: 'error', message: '只有房主可以调整底分单价' });
+      return;
+    }
+    if (room.phase !== 'lobby' || room.round > 0) {
+      send(ws, { type: 'error', message: '游戏开始后底分单价已固定，不可中途修改' });
+      return;
+    }
+    if (typeof message.pointRate === 'number' && message.pointRate >= 0) {
+      room.pointRate = message.pointRate;
+      broadcastState(room);
+    }
     return;
   }
 

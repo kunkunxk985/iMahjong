@@ -152,6 +152,7 @@ export interface ClientView {
   settlement: Settlement | null;
   hostSeat: number;
   round: number;
+  pointRate?: number;
   notice?: string;
 }
 

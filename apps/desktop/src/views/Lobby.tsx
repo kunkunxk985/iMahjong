@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { UserProfile } from '@pizhou/shared';
 import { MatchHistoryModal } from '../components/MatchHistoryModal';
 
 export type NetworkStatus = 'connecting' | 'open' | 'closed';
@@ -9,12 +10,16 @@ interface LobbyProps {
   error: string;
   networkStatus: NetworkStatus;
   serverUrl: string;
+  token: string | null;
+  user: UserProfile | null;
   soloBusy?: boolean;
   onCreateRoom: () => void;
   onJoinRoom: (roomCode: string) => void;
   onStartLocal: () => void;
   onRules: () => void;
   onSettings: () => void;
+  onOpenProfile: () => void;
+  onOpenAuth: () => void;
 }
 
 export function Lobby({
@@ -23,12 +28,16 @@ export function Lobby({
   error,
   networkStatus,
   serverUrl,
+  token,
+  user,
   soloBusy = false,
   onCreateRoom,
   onJoinRoom,
   onStartLocal,
   onRules,
   onSettings,
+  onOpenProfile,
+  onOpenAuth,
 }: LobbyProps) {
   const [tab, setTab] = useState<'online' | 'local'>('online');
   const [roomCode, setRoomCode] = useState('');
@@ -44,6 +53,29 @@ export function Lobby({
   return (
     <div className="hall">
       <div className="hall-card">
+        {/* User Card Header */}
+        <div
+          className="hall-user-header"
+          onClick={user ? onOpenProfile : onOpenAuth}
+          title="点击查看/修改雀士个人档案"
+        >
+          <div className="hall-user-left">
+            <div className="hall-user-avatar">{user?.avatar || '🀄'}</div>
+            <div className="hall-user-meta">
+              <div className="hall-user-name-row">
+                <span className="hall-user-name">{user?.nickname || nickname}</span>
+                <span className="hall-user-title">{user?.title || '初学雀友'}</span>
+              </div>
+              <span className="hall-user-sub">
+                {user ? (user.isGuest ? '⚡ 游客模式 · 点击绑定' : `ID: ${user.userId}`) : '未登录 · 点击登录'}
+              </span>
+            </div>
+          </div>
+          <div className="hall-user-right">
+            <span>{user ? '个人档案 ›' : '登录/注册 ›'}</span>
+          </div>
+        </div>
+
         {/* Title Header */}
         <div className="hall-header">
           <h1 className="hall-title">邳 州 麻 将</h1>
@@ -154,7 +186,14 @@ export function Lobby({
         {error ? <p className="error">{error}</p> : null}
       </div>
 
-      {showHistory ? <MatchHistoryModal onClose={() => setShowHistory(false)} /> : null}
+      {showHistory ? (
+        <MatchHistoryModal
+          serverUrl={serverUrl}
+          token={token}
+          currentUser={user}
+          onClose={() => setShowHistory(false)}
+        />
+      ) : null}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { isPrivatePlayerView, type BaoZhuangReason, type ClientView, type Settle
 import { Melds } from '../components/Melds';
 import { TileView } from '../components/TileView';
 import { saveMatchToHistory } from '../storage/history';
+import { apiSaveMatch } from '../api/auth';
 
 const SEAT_NAMES = ['东', '南', '西', '北'] as const;
 
@@ -115,6 +116,9 @@ export function SettlementModal({
   onLeave,
   readyCount,
   alreadyReady = false,
+  gameMode = 'online',
+  serverUrl,
+  token,
 }: {
   view: ClientView;
   settlement: Settlement;
@@ -122,10 +126,14 @@ export function SettlementModal({
   onLeave?: () => void;
   readyCount: number;
   alreadyReady?: boolean;
+  gameMode?: 'online' | 'local';
+  serverUrl?: string;
+  token?: string | null;
 }) {
+  const roomRate = view.pointRate ?? 0.1;
   const [activeTab, setActiveTab] = useState<'summary' | 'ledger' | 'breakdown' | 'replay'>('summary');
-  const [ratePerPoint, setRatePerPoint] = useState<number>(0.1);
-  const [showMoney, setShowMoney] = useState<boolean>(false);
+  const ratePerPoint = roomRate > 0 ? roomRate : 0.1;
+  const [showMoney, setShowMoney] = useState<boolean>(roomRate > 0);
 
   const bao = settlement.baoZhuang
     ? BAO_LABEL[settlement.baoZhuang.reason]
@@ -133,14 +141,30 @@ export function SettlementModal({
   const drawText = settlement.drawReason ? DRAW_LABEL[settlement.drawReason] ?? settlement.drawReason : null;
   const [minimized, setMinimized] = useState(false);
 
+  const baoZhuangPayerScore = settlement.baoZhuang
+    ? settlement.scores.find((s) => s.seat === settlement.baoZhuang!.payerSeat)
+    : null;
+  const baoZhuangTotalPoints = baoZhuangPayerScore ? Math.abs(baoZhuangPayerScore.delta) : 0;
+  const baoZhuangTotalMoney = (baoZhuangTotalPoints * ratePerPoint).toFixed(1);
+  const hunDiTotalPoints = settlement.hunDi ? 90 : 0;
+  const hunDiTotalMoney = (hunDiTotalPoints * ratePerPoint).toFixed(1);
+  const hunDiPerPlayerMoney = ((30) * ratePerPoint).toFixed(1);
+  const chaHuPoints = Math.max(0, baoZhuangTotalPoints - hunDiTotalPoints);
+  const chaHuMoney = (chaHuPoints * ratePerPoint).toFixed(1);
+
   useEffect(() => {
     const now = new Date();
     const dateStr = `${now.getMonth() + 1}月${now.getDate()}日 ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    saveMatchToHistory({
+    const myScoreObj = settlement.scores.find((s) => s.seat === view.mySeat);
+    const myDeltaScore = myScoreObj?.delta ?? 0;
+    const myIsWinner = view.mySeat === settlement.winnerSeat;
+
+    const record = {
       id: `${view.roomCode || '888888'}-${settlement.winnerSeat ?? 'draw'}-${Date.now()}`,
+      mode: gameMode,
       timestamp: Date.now(),
       dateStr,
-      roomCode: view.roomCode || '单机练习',
+      roomCode: gameMode === 'online' ? (view.roomCode || '888888') : '单机练习',
       winType: WIN_LABEL[settlement.winType] ?? settlement.winType,
       winnerNickname: settlement.winnerNickname ?? undefined,
       winnerSeat: settlement.winnerSeat,
@@ -151,6 +175,8 @@ export function SettlementModal({
       liuju: Boolean(settlement.liuju),
       drawReason: settlement.drawReason ?? undefined,
       baoZhuang: settlement.baoZhuang,
+      myDeltaScore,
+      myIsWinner,
       scores: settlement.scores.map((s) => ({
         seat: s.seat,
         nickname: s.nickname,
@@ -159,8 +185,16 @@ export function SettlementModal({
         isDealer: Boolean(s.isDealer),
         notes: s.notes,
       })),
-    });
-  }, [settlement, view.roomCode]);
+    };
+
+    saveMatchToHistory(record);
+
+    if (token && serverUrl) {
+      apiSaveMatch(serverUrl, token, record).catch((err) => {
+        console.warn('Auto upload match record to Cloudflare failed:', err);
+      });
+    }
+  }, [settlement, view.roomCode, view.mySeat, gameMode, token, serverUrl]);
 
   const getNickname = (seat: number) => {
     const found = settlement.scores.find((s) => s.seat === seat);
@@ -209,6 +243,24 @@ export function SettlementModal({
             {bao ? ` · ${bao}` : ''}
           </p>
           {drawText ? <p className="sub">{drawText}</p> : null}
+
+          {/* Hun Di & Bao Zhuang Fund Highlight Badges */}
+          {(settlement.hunDi || settlement.baoZhuang) && !settlement.liuju ? (
+            <div className="settlement-fund-pills">
+              {settlement.hunDi ? (
+                <div className="settlement-fund-pill hun-di">
+                  🍲 <b>飘荤底分：</b>
+                  <span>全桌共计 <b>90分</b> {showMoney ? `(¥${hunDiTotalMoney})` : ''} · 每家 30分 {showMoney ? `(¥${hunDiPerPlayerMoney})` : ''}</span>
+                </div>
+              ) : null}
+              {settlement.baoZhuang ? (
+                <div className="settlement-fund-pill bao-zhuang">
+                  💥 <b>包庄清算：</b>
+                  <span>由【{getNickname(settlement.baoZhuang.payerSeat)}】一人全包 <b>{baoZhuangTotalPoints}分</b> {showMoney ? `(¥${baoZhuangTotalMoney})` : ''}</span>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </header>
 
         {/* Tab Switcher */}
@@ -254,41 +306,51 @@ export function SettlementModal({
           <div className="settlement-baozhuang-card">
             <div className="baozhuang-icon">⚠️</div>
             <div className="baozhuang-content">
-              <b className="baozhuang-title">
-                判定包庄 · 【{getNickname(settlement.baoZhuang.payerSeat)}】{BAO_LABEL[settlement.baoZhuang.reason]}
-              </b>
+              <div className="baozhuang-header-row">
+                <b className="baozhuang-title">
+                  判定包庄 · 【{getNickname(settlement.baoZhuang.payerSeat)}】{BAO_LABEL[settlement.baoZhuang.reason]}
+                </b>
+                <span className="baozhuang-total-badge">
+                  一人包赔全桌: <b>{baoZhuangTotalPoints}分</b> {showMoney ? <b className="baozhuang-money-val">¥{baoZhuangTotalMoney}</b> : null}
+                </span>
+              </div>
               <p className="baozhuang-desc">
-                {BAO_EXPLANATION[settlement.baoZhuang.reason]} 另外两家原本应向胡家支付的份额，由【{getNickname(settlement.baoZhuang.payerSeat)}】代付；若本局有荤底，三家的荤底也由包庄者承担。
+                {BAO_EXPLANATION[settlement.baoZhuang.reason]} 另外两家原本应向胡家支付的份额由【{getNickname(settlement.baoZhuang.payerSeat)}】全额代付{settlement.hunDi ? '；本局飘荤荤底（3份共90分）也全部由包庄者一人承担。' : '。'}
               </p>
+              <div className="baozhuang-breakdown-row">
+                <span className="baozhuang-sub-pill">
+                  查胡分差包赔: <b>{chaHuPoints}分</b> {showMoney ? `(¥${chaHuMoney})` : ''}
+                </span>
+                {settlement.hunDi ? (
+                  <span className="baozhuang-sub-pill hun">
+                    荤底全包(3家): <b>90分</b> {showMoney ? `(¥${hunDiTotalMoney})` : ''}
+                  </span>
+                ) : null}
+                <span className="baozhuang-sub-pill safe">
+                  其余2位闲家: <b>0分免责 {showMoney ? '(¥0.0)' : ''}</b>
+                </span>
+              </div>
             </div>
           </div>
         ) : null}
 
-        {/* Rate Converter Toolbar */}
+        {/* Rate Converter Toolbar - Fixed Room Rate */}
         {!settlement.liuju ? (
           <div className="rate-toolbar">
             <div className="rate-presets">
-              <span className="rate-label">折算单价:</span>
-              {[0.1, 0.2, 0.5, 1].map((rate) => (
+              <span className="rate-label">🔒 底分单价:</span>
+              <span className="rate-chip active locked">
+                {roomRate > 0 ? `¥${roomRate} / 分 (开局已固定)` : '纯积分模式 (无单价)'}
+              </span>
+              {roomRate > 0 ? (
                 <button
-                  key={rate}
                   type="button"
-                  className={`rate-chip ${ratePerPoint === rate && showMoney ? 'active' : ''}`}
-                  onClick={() => {
-                    setRatePerPoint(rate);
-                    setShowMoney(true);
-                  }}
+                  className={`rate-chip ${!showMoney ? 'active' : ''}`}
+                  onClick={() => setShowMoney((prev) => !prev)}
                 >
-                  ¥{rate}/分
+                  {showMoney ? '切换为仅看计分' : '切换为展示金额'}
                 </button>
-              ))}
-              <button
-                type="button"
-                className={`rate-chip ${!showMoney ? 'active' : ''}`}
-                onClick={() => setShowMoney(false)}
-              >
-                仅看计分
-              </button>
+              ) : null}
             </div>
           </div>
         ) : null}
@@ -326,6 +388,24 @@ export function SettlementModal({
                           {item.isDealer ? <span className="tag-dealer">庄</span> : null}
                           {item.isWinner ? <span className="tag-winner">胡</span> : null}
                           {item.piaoHun ? <span className="tag-piao">飘</span> : null}
+                          {item.isWinner && settlement.hunDi ? (
+                            <span className="player-note-badge winner-hun">
+                              🍲 收荤底 +90分 {showMoney ? `(+¥${hunDiTotalMoney})` : ''}
+                            </span>
+                          ) : null}
+                          {settlement.baoZhuang && item.seat === settlement.baoZhuang.payerSeat ? (
+                            <span className="player-note-badge baozhuang-payer">
+                              💥 包赔全桌 -{baoZhuangTotalPoints}分 {showMoney ? `(-¥${baoZhuangTotalMoney})` : ''}
+                            </span>
+                          ) : settlement.baoZhuang && !item.isWinner ? (
+                            <span className="player-note-badge baozhuang-exempt">
+                              🛡️ 包庄免责 0分 {showMoney ? '(¥0.0)' : ''}
+                            </span>
+                          ) : !settlement.baoZhuang && settlement.hunDi && !item.isWinner ? (
+                            <span className="player-note-badge loser-hun">
+                              🍲 付荤底 -30分 {showMoney ? `(-¥${hunDiPerPlayerMoney})` : ''}
+                            </span>
+                          ) : null}
                         </td>
                         <td>
                           <b>{item.hu ?? 0}</b> 胡 / <b>{item.yao ?? 0}</b> 幺
@@ -357,6 +437,11 @@ export function SettlementModal({
             </div>
           ) : activeTab === 'ledger' ? (
             <div className="ledger-view">
+              {settlement.baoZhuang ? (
+                <div className="ledger-baozhuang-notice">
+                  💡 <b>包庄对账说明：</b>本局触发【{BAO_LABEL[settlement.baoZhuang.reason]}】，以下流水展示四家牌面的原始两两对账过程。实际结余已由包庄清算引擎接管（点炮者一人全赔，无辜闲家彻底免责为0分），最终净得分以“查胡收付账单”为准。
+                </div>
+              ) : null}
               <div className="tx-grid">
                 {(settlement.transactions ?? []).map((tx, idx) => {
                   const nameA = getNickname(tx.seatA);
@@ -488,6 +573,18 @@ export function SettlementModal({
                   <span>本房牌面折算（倍率前）</span>
                   <strong>{settlement.hu + settlement.yao * 10} 分</strong>
                 </div>
+                {settlement.hunDi ? (
+                  <div>
+                    <span>飘荤荤底（3家共计）</span>
+                    <strong style={{ color: '#fef08a' }}>+90 分 {showMoney ? `(¥${hunDiTotalMoney})` : ''}</strong>
+                  </div>
+                ) : null}
+                {settlement.baoZhuang ? (
+                  <div>
+                    <span>包庄由点炮者全赔</span>
+                    <strong style={{ color: '#fca5a5' }}>共 {baoZhuangTotalPoints} 分 {showMoney ? `(¥${baoZhuangTotalMoney})` : ''}</strong>
+                  </div>
+                ) : null}
               </div>
               <ul className="breakdown-list">
                 {settlement.breakdown.map((item, index) => (

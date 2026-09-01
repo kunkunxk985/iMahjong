@@ -42,6 +42,7 @@ export class Room {
   hostSeat = 0;
   dealer = 0;
   round = 0;
+  pointRate = 0.1;
   solo = false;
   game: PizhouGame | null = null;
   phase: RoomPhase = 'lobby';
@@ -224,6 +225,7 @@ export class Room {
         hostSeat: this.hostSeat,
         metas,
         round: this.round,
+        pointRate: this.pointRate,
       });
     }
 
@@ -258,6 +260,7 @@ export class Room {
       settlement: null,
       hostSeat: this.hostSeat,
       round: this.round,
+      pointRate: this.pointRate,
     };
   }
 }
@@ -265,8 +268,9 @@ export class Room {
 export class RoomManager {
   private readonly rooms = new Map<string, Room>();
 
-  create(nickname: string, ws: UniversalWebSocket, solo = false): { room: Room; player: RoomPlayer } {
+  create(nickname: string, ws: UniversalWebSocket, solo = false, pointRate = 0.1): { room: Room; player: RoomPlayer } {
     const room = new Room(generateRoomCode((code) => this.rooms.has(code)));
+    room.pointRate = typeof pointRate === 'number' && pointRate >= 0 ? pointRate : 0.1;
     const player = room.addPlayer(nickname, ws);
     if (typeof player === 'string') throw new Error(player);
     if (solo) {

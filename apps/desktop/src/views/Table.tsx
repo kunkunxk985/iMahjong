@@ -518,6 +518,11 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
           ) : null}
           <span className="board-room-label">牌局</span>
           <strong>{practice ? '单机练习' : view.roomCode}</strong>
+          {(view.pointRate ?? 0) > 0 ? (
+            <span className="board-rate-pill" title={`本局底分单价：¥${view.pointRate}/分`}>
+              💰 ¥{view.pointRate}/分
+            </span>
+          ) : null}
         </div>
         <div className="board-top-tools">
           <GameClock />
