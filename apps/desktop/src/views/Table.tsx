@@ -226,6 +226,7 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
     return () => clearTimeout(timer);
   }, [lastDrawnId]);
 
+  const myHandIds = myHand.map((t) => t.id).join(',');
   // ── Smooth hand re-sorting: FLIP-slide tiles whose position changed ──
   const handRectsRef = useRef<Map<string, DOMRect>>(new Map());
   useLayoutEffect(() => {
@@ -262,7 +263,7 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
         { duration: 200, easing: 'cubic-bezier(0.2, 0.85, 0.25, 1)' },
       );
     }
-  }, [myHand]);
+  }, [myHandIds]);
 
   // Sound effects hook
   useSoundEffects(view);
