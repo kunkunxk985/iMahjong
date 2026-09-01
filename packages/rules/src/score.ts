@@ -459,8 +459,8 @@ export function scoreSeat(input: {
     }
   }
 
-  const notes = breakdown.map((item) => `${item.label}+${item.hu}胡${item.yao ? `+${item.yao}幺` : ''}`);
-  const piao = Boolean(input.forcePiaoHun || (input.isWinner && isPiaoHun(input.hand, input.exposed)));
+  const waitingHand = handBeforeWinningTile(input);
+  const piao = Boolean(input.forcePiaoHun || (input.isWinner && isPiaoHun(waitingHand, input.exposed)));
 
   if (input.isWinner) {
     hu += BASE_HU;

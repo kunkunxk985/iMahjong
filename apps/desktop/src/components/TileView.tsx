@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { type Tile } from '@pizhou/shared';
 
 interface TileViewProps {
@@ -30,7 +31,7 @@ function faceSrc(tile: Tile): string {
 }
 export { faceSrc };
 
-export function TileView({
+export const TileView = memo(function TileView({
   tile,
   back,
   small,
@@ -98,18 +99,19 @@ export function TileView({
       ) : tenpaiHint ? (
         <span className="tenpai-badge">听</span>
       ) : xiangHint ? (
-        <span className="xiang-badge" title="香牌（生张·点炮包庄）">香</span>
+        <span className="xiang-badge">香</span>
       ) : chouHint ? (
-        <span className="chou-badge" title="臭牌（熟张·点炮免包）">臭</span>
+        <span className="chou-badge">臭</span>
       ) : null}
     </>
   );
 
-  if (!onClick) {
+  if (pose === 'lie' || pose === 'rack') {
     return (
       <div
         className={className}
         data-tile-id={dataTileId}
+        onClick={onClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
@@ -131,7 +133,7 @@ export function TileView({
       {body}
     </button>
   );
-}
+});
 
 export function TileShowcase() {
   const samples: Tile[] = [

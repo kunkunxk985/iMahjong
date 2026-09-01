@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   isPrivatePlayerView,
   SEAT_NAMES,
@@ -13,7 +14,7 @@ export function relativeSeat(seat: number, mySeat: number): number {
   return (seat - mySeat + 4) % 4;
 }
 
-export function BoardPlayer({
+export const BoardPlayer = memo(function BoardPlayer({
   player,
   position,
   you,
@@ -47,9 +48,9 @@ export function BoardPlayer({
       <em aria-label={`积分 ${player.score}`}><small>分</small>{player.score > 0 ? `+${player.score}` : player.score}</em>
     </div>
   );
-}
+});
 
-export function ConcealedHand({
+export const ConcealedHand = memo(function ConcealedHand({
   player,
   position,
   reveal = false,
@@ -76,9 +77,9 @@ export function ConcealedHand({
           ))}
     </div>
   );
-}
+});
 
-export function DiscardRiver({
+export const DiscardRiver = memo(function DiscardRiver({
   player,
   position,
   lastDiscardId,
@@ -120,4 +121,4 @@ export function DiscardRiver({
       </div>
     </div>
   );
-}
+});
