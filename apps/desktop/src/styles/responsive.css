@@ -12,6 +12,34 @@
     grid-template-columns: 1fr;
   }
 
+  .rules-modal {
+    width: calc(100% - 20px);
+    max-height: calc(100vh - 20px);
+    padding: 20px 14px 14px;
+  }
+
+  .rules-legend {
+    align-items: flex-start;
+  }
+
+  .rules-section {
+    padding: 14px 13px;
+  }
+
+  .rules-score-table th,
+  .rules-score-table td {
+    padding: 7px 8px;
+    font-size: 12px;
+  }
+
+  .rules-advanced summary {
+    padding: 14px 13px;
+  }
+
+  .rules-advanced-body {
+    padding: 0 13px 14px;
+  }
+
   .replay-player {
     grid-template-columns: 1fr;
     row-gap: 8px;
@@ -41,6 +69,25 @@
     right: 8px;
   }
 
+  .board-corner {
+    width: 56px;
+    opacity: 0.22;
+  }
+
+  .board-table-geometry {
+    width: min(280px, 42vw);
+    opacity: 0.42;
+  }
+
+  .board-room-label {
+    display: none;
+  }
+
+  .board-tool-icon {
+    width: 15px;
+    height: 15px;
+  }
+
   .board-title,
   .board-player-copy span,
   .board-player > em {
@@ -57,6 +104,15 @@
     top: 10px;
     left: 50%;
     transform: translateX(-50%);
+  }
+
+  .board-player {
+    min-width: 0;
+    padding: 4px 6px;
+  }
+
+  .board-turn-pill {
+    display: none;
   }
 
   .board-player-left {
@@ -184,6 +240,48 @@
     left: 50%;
     transform: translateX(-50%);
     bottom: calc(100% + 4px);
+  }
+
+
+  .board-action-area .action-bar {
+    gap: 4px;
+    padding: 4px 5px 6px;
+  }
+
+  .board-action-area .btn-action {
+    min-width: 62px;
+    height: 36px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-height: 620px) and (min-width: 761px) {
+  .board-player-bottom {
+    bottom: 14px;
+  }
+
+  .board-hand-area {
+    bottom: 20px;
+  }
+
+  .board-own-hand .tile {
+    width: clamp(38px, 3.25vw, 54px);
+    height: clamp(54px, 4.65vw, 78px);
+  }
+
+  .board-controller {
+    top: 44.5%;
+    gap: 6px;
+  }
+
+  .board-compass-disc {
+    width: clamp(112px, 9.5vw, 136px);
+    height: clamp(112px, 9.5vw, 136px);
+  }
+
+  .board-action-area {
+    bottom: calc(100% + 5px);
   }
 }
 

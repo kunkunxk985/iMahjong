@@ -13,12 +13,13 @@ import { getDiscardTenpaiOptions, type DiscardTenpaiOption } from '@pizhou/rules
 import { ActionBar } from '../components/ActionBar';
 import { ActionSplash } from '../components/ActionSplash';
 import { Melds } from '../components/Melds';
-import { TileView } from '../components/TileView';
+import { faceSrc, TileView } from '../components/TileView';
 import { QuickChat } from '../components/QuickChat';
 import { ChatBubbleOverlay, type ActiveChatBubble } from '../components/ChatBubble';
 import { useSoundEffects } from '../audio/useSoundEffects';
 import { isMuted, toggleMute } from '../audio/sfx';
 import { BoardPlayer, ConcealedHand, DiscardRiver, relativeSeat } from '../table/BoardSeats';
+import { DiscardFlightLayer, type DiscardFlight } from '../table/DiscardFlight';
 import { countVisibleTiles, TenpaiBar } from '../table/TenpaiBar';
 import { GameClock, useCountdown } from '../table/clock';
 
@@ -31,10 +32,68 @@ interface TableProps {
   practice?: boolean;
 }
 
+type BoardIconName = 'rules' | 'chat' | 'sound' | 'muted' | 'leave';
+
+function BoardIcon({ name }: { name: BoardIconName }) {
+  const common = {
+    className: 'board-tool-icon',
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.8,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    'aria-hidden': true,
+  };
+
+  if (name === 'rules') {
+    return (
+      <svg {...common}>
+        <circle cx="12" cy="12" r="3.2" />
+        <path d="M19.2 13.4v-2.8l-2-.7a7 7 0 0 0-.7-1.6l.9-1.9-2-2-1.9.9a7 7 0 0 0-1.6-.7l-.7-2H8.4l-.7 2a7 7 0 0 0-1.6.7l-1.9-.9-2 2 .9 1.9a7 7 0 0 0-.7 1.6l-2 .7v2.8l2 .7a7 7 0 0 0 .7 1.6l-.9 1.9 2 2 1.9-.9a7 7 0 0 0 1.6.7l.7 2h2.8l.7-2a7 7 0 0 0 1.6-.7l1.9.9 2-2-.9-1.9a7 7 0 0 0 .7-1.6z" />
+      </svg>
+    );
+  }
+  if (name === 'chat') {
+    return (
+      <svg {...common}>
+        <path d="M5.2 17.7 3 21l.6-4.8A8.2 8.2 0 1 1 7 19" />
+        <path d="M8 10h8M8 14h5" />
+      </svg>
+    );
+  }
+  if (name === 'sound') {
+    return (
+      <svg {...common}>
+        <path d="M5 10v4h3l4 3V7l-4 3H5z" />
+        <path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11" />
+      </svg>
+    );
+  }
+  if (name === 'muted') {
+    return (
+      <svg {...common}>
+        <path d="M5 10v4h3l4 3V7l-4 3H5zM16 10l5 5M21 10l-5 5" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...common}>
+      <path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10" />
+    </svg>
+  );
+}
+
 /* ─── Main Table Component ─────────────────────────────────── */
 
 export function Table({ view, onAction, onRules, onLeave, networkStatus, practice = false }: TableProps) {
   const boardRef = useRef<HTMLDivElement | null>(null);
+  const pendingDiscardRef = useRef<{
+    tileId: string;
+    from: DOMRect;
+    face: string;
+    submittedSequence: number;
+  } | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredTileKey, setHoveredTileKey] = useState<string | null>(null);
   const [hoveredTileId, setHoveredTileId] = useState<string | null>(null);
@@ -42,6 +101,8 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
   const [muted, setMuted] = useState(isMuted());
   const [showQuickChat, setShowQuickChat] = useState(false);
   const [chatBubbles, setChatBubbles] = useState<ActiveChatBubble[]>([]);
+  const [discardFlight, setDiscardFlight] = useState<DiscardFlight | null>(null);
+  const [flyingDiscardId, setFlyingDiscardId] = useState<string | null>(null);
 
   const handleSendChat = (message: string, isEmote = false) => {
     const bubbleId = Date.now() + Math.random();
@@ -88,10 +149,6 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
     }
   };
 
-  const noteDiscardSource = useCallback((_tileId: string) => {
-    // No-op
-  }, []);
-
   const left = useCountdown(view.turnDeadline);
   const me = view.players.find((player) => player.seat === view.mySeat);
   const myHand = me && isPrivatePlayerView(me) ? me.hand : [];
@@ -101,6 +158,60 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
   const currentPlayer = view.players.find((player) => player.seat === view.currentSeat);
   const myTurn = view.gamePhase === 'self-turn' && view.currentSeat === view.mySeat;
   const claiming = view.gamePhase === 'claim-window' && view.availableActions.some((item) => item.kind !== 'discard');
+
+  const noteDiscardSource = useCallback((tileId: string) => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const tile = myHand.find((item) => item.id === tileId);
+    const sourceElement = Array.from(
+      boardRef.current?.querySelectorAll<HTMLElement>('.board-own-hand .tile[data-tile-id]') ?? [],
+    ).find((element) => element.dataset.tileId === tileId);
+    const source = sourceElement?.getBoundingClientRect();
+    if (!tile || !source) return;
+    pendingDiscardRef.current = {
+      tileId,
+      from: source,
+      face: faceSrc(tile),
+      submittedSequence: view.sequence,
+    };
+  }, [myHand, view.sequence]);
+
+  useLayoutEffect(() => {
+    const pending = pendingDiscardRef.current;
+    if (!pending || view.sequence <= pending.submittedSequence) return;
+    const currentMe = view.players.find((player) => player.seat === view.mySeat);
+    const myDiscardWasAccepted = Boolean(
+      currentMe && isPrivatePlayerView(currentMe) && !currentMe.hand.some((tile) => tile.id === pending.tileId),
+    );
+    if (!myDiscardWasAccepted) {
+      pendingDiscardRef.current = null;
+      return;
+    }
+    const target = Array.from(
+      boardRef.current?.querySelectorAll<HTMLElement>('[data-discard-tile-id]') ?? [],
+    ).find((element) => element.dataset.discardTileId === pending.tileId);
+    const boardRect = boardRef.current?.getBoundingClientRect();
+    if (!boardRect) return;
+    const fallbackTarget = new DOMRect(
+      boardRect.left + boardRect.width / 2 - 18,
+      boardRect.top + boardRect.height * 0.65 - 26,
+      36,
+      52,
+    );
+
+    setFlyingDiscardId(target ? pending.tileId : null);
+    setDiscardFlight({
+      flightId: view.sequence,
+      from: pending.from,
+      to: target?.getBoundingClientRect() ?? fallbackTarget,
+      face: pending.face,
+    });
+    pendingDiscardRef.current = null;
+  }, [view.players, view.mySeat, view.sequence]);
+
+  const finishDiscardFlight = useCallback(() => {
+    setDiscardFlight(null);
+    setFlyingDiscardId(null);
+  }, []);
 
   // Track previous lastDrawnId to detect new draws for entering animation
   const prevDrawnRef = useRef<string | undefined>(undefined);
@@ -234,6 +345,9 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
       discard();
       return;
     }
+    if (action.kind === 'close-gate' && action.tileId) {
+      noteDiscardSource(action.tileId);
+    }
     onAction({
       kind: action.kind,
       tileId: action.tileId,
@@ -358,19 +472,52 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
         : myTurn
           ? '轮到你出牌'
           : `${currentPlayer?.nickname ?? '下家'} 出牌`;
+  const currentRel = view.currentSeat !== null && view.currentSeat !== undefined
+    ? relativeSeat(view.currentSeat, view.mySeat)
+    : null;
+  const currentPosition = currentRel === 0
+    ? 'bottom'
+    : currentRel === 1
+      ? 'right'
+      : currentRel === 2
+        ? 'top'
+        : currentRel === 3
+          ? 'left'
+          : 'none';
+  const urgent = left > 0 && left <= 5 && (myTurn || claiming);
 
   return (
-    <div className="mahjong-board" ref={boardRef}>
-      <div className="board-felt" />
+    <div
+      className={`mahjong-board turn-${currentPosition} ${myTurn ? 'is-my-turn' : ''}`}
+      ref={boardRef}
+    >
+      <img className="board-wood-texture" src="./assets/wood.jpg" alt="" draggable={false} />
+      <div className="board-felt">
+        <img className="board-felt-texture" src="./assets/felt.jpg" alt="" draggable={false} />
+      </div>
+      <div className="board-atmosphere" aria-hidden="true" />
+      <div className="board-table-geometry" aria-hidden="true"><span /></div>
+      {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const).map((corner) => (
+        <img
+          key={corner}
+          className={`board-corner board-corner-${corner}`}
+          src="./assets/corner.png"
+          alt=""
+          draggable={false}
+        />
+      ))}
+      {currentPosition !== 'none' ? (
+        <div key={view.currentSeat} className={`board-turn-glow is-${currentPosition}`} aria-hidden="true" />
+      ) : null}
 
       <header className="board-topbar">
         <div className="board-room-info">
           {onRules ? (
             <button type="button" className="board-icon-button" onClick={onRules} aria-label="打开规则">
-              ⚙
+              <BoardIcon name="rules" />
             </button>
           ) : null}
-          <span>房间号</span>
+          <span className="board-room-label">牌局</span>
           <strong>{practice ? '单机练习' : view.roomCode}</strong>
         </div>
         <div className="board-top-tools">
@@ -382,7 +529,7 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
             title="快捷互动与表情"
             aria-label="快捷互动与表情"
           >
-            💬
+            <BoardIcon name="chat" />
           </button>
           <button
             type="button"
@@ -394,11 +541,11 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
             title={muted ? '取消静音' : '静音'}
             aria-label={muted ? '取消静音' : '静音'}
           >
-            {muted ? '🔇' : '🔊'}
+            <BoardIcon name={muted ? 'muted' : 'sound'} />
           </button>
           {onLeave ? (
             <button type="button" className="board-exit-button" onClick={onLeave} aria-label="回大厅">
-              ↪
+              <BoardIcon name="leave" />
             </button>
           ) : null}
         </div>
@@ -438,12 +585,7 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
       ) : null}
 
       {/* ── Central Grand Mahjong Compass Disc ── */}
-      {(() => {
-        const currentRel = view.currentSeat !== null && view.currentSeat !== undefined
-          ? relativeSeat(view.currentSeat, view.mySeat)
-          : null;
-        return (
-          <div className={`board-controller ${myTurn || claiming ? 'is-active' : ''}`}>
+      <div className={`board-controller ${myTurn || claiming ? 'is-active' : ''} ${urgent ? 'is-urgent' : ''}`}>
             <div className="compass-meta-bar">
               <span className="meta-wall">剩余 <b>{view.wallCount}</b> 张</span>
               <span className="meta-dot">·</span>
@@ -475,10 +617,8 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
               </div>
             </div>
 
-            <div className="compass-phase-badge">{phaseText}</div>
-          </div>
-        );
-      })()}
+            <div className="compass-phase-badge" aria-live="polite">{phaseText}</div>
+      </div>
 
       <div className="board-discard-layer" aria-label="四方弃牌">
         {([0, 1, 2, 3] as const).map((rel) => {
@@ -491,6 +631,7 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
               player={player}
               position={position}
               lastDiscardId={view.lastDiscard?.tile.id}
+              flyingDiscardId={flyingDiscardId}
               highlightKey={focusKey}
               onTileHover={setHoveredTileKey}
             />
@@ -549,7 +690,7 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
               actions={view.availableActions}
               onAction={handleAction}
               onDiscard={discard}
-              canDiscard={canDiscard && Boolean(selectedId)}
+              canDiscard={canDiscard}
               selectedTileId={selectedId}
             />
           </div>
@@ -561,6 +702,9 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
       <ChatBubbleOverlay bubbles={chatBubbles} />
       {showQuickChat ? (
         <QuickChat onSend={handleSendChat} onClose={() => setShowQuickChat(false)} />
+      ) : null}
+      {discardFlight ? (
+        <DiscardFlightLayer key={discardFlight.flightId} flight={discardFlight} onDone={finishDiscardFlight} />
       ) : null}
     </div>
   );

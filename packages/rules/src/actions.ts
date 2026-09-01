@@ -76,7 +76,7 @@ export function concealedAnGangActions(hand: Tile[]): AvailableAction[] {
   return actions;
 }
 
-/** 三张相同可主动坎上并锁定；未坎上的三张不能按坎计胡。 */
+/** 三张相同可主动坎上并锁定，以进入飘荤/关门/包庄组数；查胡时未锁定暗坎仍计基础胡。 */
 export function concealedKanActions(hand: Tile[]): AvailableAction[] {
   const groups = new Map<string, Tile[]>();
   for (const tile of hand) {

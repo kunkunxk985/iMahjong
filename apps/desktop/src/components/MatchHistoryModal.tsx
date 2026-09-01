@@ -30,7 +30,7 @@ export function MatchHistoryModal({ onClose }: MatchHistoryModalProps) {
         (s) => `• ${SEAT_NAMES[s.seat]}家 [${s.nickname}]: ${s.score > 0 ? `+${s.score}` : s.score} 分`
       ),
       `-----------------------`,
-      `邳州正统查胡两两结 · 欢迎下局再战！`,
+      `邳州查胡两两结 · 欢迎下局再战！`,
     ].filter(Boolean);
 
     navigator.clipboard.writeText(lines.join('\n')).then(() => {

@@ -186,12 +186,12 @@ shared ← rules ← server-core ← desktop/server
 | `src/win.ts` | 判断是否能胡，并枚举“四组面子加一对”的合法拆法。 |
 | `src/tenpai.ts` | 计算听哪些牌，以及打哪张后进入听牌。 |
 | `src/actions.ts` | 生成吃、碰、杠、坎、胡、关门等合法操作并定义优先级。 |
-| `src/score.ts` | 查胡核心：胡/幺计分、点炮/自摸拆法、庄家差胡、关门、飘荤、包庄和两两结账。 |
+| `src/score.ts` | 查胡核心：胡/幺计分、点炮/自摸拆法、庄家与飘荤本人倍率、关门、包庄和两两结账。 |
 | `src/engine.ts` | 纯内存牌局状态机；发牌、轮转、声明、超时、流局与结算。 |
 | `src/companion.ts` | 单机陪练的出牌和操作决策。 |
 | `tests/win.test.ts` | 胡牌合法性和120张牌型测试。 |
 | `tests/tenpai.test.ts` | 听牌与打牌后听口测试。 |
-| `tests/score.test.ts` | 查胡、对子不计、坎碰杠、关门、飘荤和包庄边界测试。 |
+| `tests/score.test.ts` | 查胡、对子与暗坎、本人倍率、关门、飘荤和包庄边界测试。 |
 | `tests/engine.test.ts` | 完整状态机、操作优先级、关门锁牌和流局测试。 |
 | `tests/companion.test.ts` | 陪练决策和思考时间测试。 |
 | `package.json` | 规则包入口与测试脚本。 |
@@ -221,6 +221,7 @@ shared ← rules ← server-core ← desktop/server
 | `assets/README.md` | 说明源素材与运行时素材的区别。 |
 | `docs/PROJECT-STRUCTURE.md` | 本文档。 |
 | `docs/产品与规则说明.txt` | 产品目标和当前邳州麻将玩法约定。 |
+| `docs/邳州麻将规则考据.md` | 公开来源分级、采用口径、实现解释、本房房规和待牌友确认项。 |
 
 不要直接从 `assets/source/` 加载运行时图片。确认牌面后，将成品放入 `apps/desktop/public/assets/tiles/`。
 

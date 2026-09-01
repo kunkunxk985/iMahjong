@@ -17,7 +17,7 @@ import {
 } from '@pizhou/shared';
 import { findWinDecompositions, type WinDecomp } from './win.ts';
 
-export type UnitKind = 'peng' | 'pung' | 'song_kong' | 'zi_kong';
+export type UnitKind = 'pair' | 'peng' | 'pung' | 'song_kong' | 'zi_kong';
 
 export interface ScoreResult {
   hu: number;
@@ -34,7 +34,7 @@ export interface SeatScoreInput {
   exposed: Meld[];
   /** 点炮胡进来的牌只用于组成胡牌，不得把手里的对子升级为坎。 */
   winningDiscardId?: string;
-  /** 自摸胡时，只有这张摸进来的牌形成的坎才按自摸坎计分。 */
+  /** 自摸胡时用于识别摸进来的牌补成的坎；其它合法暗坎也照常查胡。 */
   winningTileId?: string;
   changed?: boolean;
   /** 四组单钓后是否换过等牌；只用于“不换张”包庄条件，不改变关门状态。 */
@@ -60,8 +60,8 @@ export interface SeatScore {
   decomp: WinDecomp;
 }
 
-function piaoMultiplierForPair(a: SeatScore, b: SeatScore): number {
-  return a.piaoHun || b.piaoHun ? 2 : 1;
+function huMultiplierForSeat(score: SeatScore): number {
+  return (score.isDealer ? 2 : 1) * (score.piaoHun ? 2 : 1);
 }
 
 export interface ChaHuResult {
@@ -77,6 +77,7 @@ export interface ChaHuResult {
 }
 
 const KIND_CN: Record<UnitKind, string> = {
+  pair: '对',
   peng: '碰',
   pung: '坎',
   song_kong: '送杠',
@@ -91,16 +92,19 @@ export function nextDealer(
   currentDealer: number,
   winnerSeat: number | null,
   liuju: boolean,
-  drawReason?: string | null,
+  _drawReason?: string | null,
 ): number {
-  if (drawReason === 'four_same') return (currentDealer + 1) % 4;
-  if (liuju || winnerSeat === null || winnerSeat === currentDealer) return currentDealer;
+  // 公开规则写明“从第二局起，如果不是庄家胡牌，则轮庄”。
+  // 项目据此采用：只有庄家实际胡牌才连庄，闲家胡或流局都换到下一家。
+  if (!liuju && winnerSeat === currentDealer) return currentDealer;
   return (currentDealer + 1) % 4;
 }
 
 export function unitValue(key: string, kind: UnitKind): { hu: number; yao: number } {
   const yaoTou = isYaoJiu(key);
   const table: Record<`${UnitKind}:${'yao' | 'plain'}`, { hu: number; yao: number }> = {
+    'pair:yao': { hu: 2, yao: 0 },
+    'pair:plain': { hu: 1, yao: 0 },
     'peng:yao': { hu: 2, yao: 0 },
     'peng:plain': { hu: 1, yao: 0 },
     'pung:yao': { hu: 4, yao: 1 },
@@ -169,15 +173,18 @@ function exposedUnits(exposed: Meld[]): Array<{ key: string; kind: UnitKind }> {
   return units;
 }
 
-/** 按张数拆：4=自杠，3=坎。两张将牌、顺子和单张不计。 */
+/**
+ * 按相同张数查胡。起手杠胡时四张按自杠；普通局未声明的四张只形成一坎，
+ * 不会在结算时追认成自杠。相同牌组之间互不复用。
+ */
 function countBasedUnits(
   hand: Array<{ key: string }>,
-  options: { pungs: boolean },
+  options: { pungs: boolean; pairs: boolean; selfKongs: boolean },
 ): Array<{ key: string; kind: UnitKind }> {
   const units: Array<{ key: string; kind: UnitKind }> = [];
   for (const [key, raw] of Object.entries(countKeys(hand))) {
     let n = raw ?? 0;
-    if (n >= 4) {
+    if (n >= 4 && options.selfKongs) {
       units.push({ key, kind: 'zi_kong' });
       n -= 4;
     }
@@ -185,17 +192,46 @@ function countBasedUnits(
       units.push({ key, kind: 'pung' });
       n -= 3;
     }
+    if (n >= 2 && options.pairs) {
+      units.push({ key, kind: 'pair' });
+    }
   }
   return units;
+}
+
+function decompPoints(
+  decomp: WinDecomp,
+  winningKey?: string,
+  winningCompletesPung = false,
+  winningFromDiscard = false,
+): number {
+  const pair = unitValue(decomp.pairKey, 'pair');
+  let hu = pair.hu;
+  let yao = pair.yao;
+  for (const meld of decomp.melds) {
+    if (meld.type !== 'pung') continue;
+    const kind: UnitKind = winningCompletesPung && meld.key === winningKey && winningFromDiscard
+      ? 'peng'
+      : 'pung';
+    const value = unitValue(meld.key, kind);
+    hu += value.hu;
+    yao += value.yao;
+  }
+  return finalPoints(hu, yao);
 }
 
 function pickWinDecomp(
   decomps: WinDecomp[],
   winningKey?: string,
   preferWinningPung = false,
+  winningFromDiscard = false,
 ): WinDecomp {
   return decomps.reduce((best, item) => {
-    // 双碰胡时，优先把最后一张拆进刻子，而不是误拆成将牌。
+    // 先选实际结算分更高的合法拆法；最后一张的落位只用于同分拆法的稳定裁决。
+    const itemPoints = decompPoints(item, winningKey, preferWinningPung, winningFromDiscard);
+    const bestPoints = decompPoints(best, winningKey, preferWinningPung, winningFromDiscard);
+    if (itemPoints !== bestPoints) return itemPoints > bestPoints ? item : best;
+
     if (winningKey) {
       const itemHasWinningPung = item.melds.some((meld) => meld.type === 'pung' && meld.key === winningKey);
       const bestHasWinningPung = best.melds.some((meld) => meld.type === 'pung' && meld.key === winningKey);
@@ -214,49 +250,22 @@ function pickWinDecomp(
   });
 }
 
-/**
- * 正统查胡拆牌：
- * - 吃/顺子不计胡
- * - 暗手里的两张将牌只用于组成胡牌，不计胡
- * - 别人打出来碰的（明碰）普通1胡，幺牌2胡
- * - 自己主动砍上的坎，或自摸最后一张形成的坎，普通2胡，幺牌4胡1幺
- * - 送杠（明杠）普通4胡，幺牌8胡2幺
- * - 自杠（暗杠）普通6胡，幺牌12胡3幺
- * - 没胡的人只计亮出来/主动砍上的（碰/坎/杠），手牌未锁定的散牌不计胡
- * - 双碰点炮时，点炮形成的三张算碰，另一对子不计分
- * - 双碰自摸时，自摸形成的三张算坎，另一对子不计分
- * - 单钓补成的最后对子不计胡，只加胡牌基础10胡
- * - 未主动坎上的手牌刻子不自动计为坎
- */
-export function extractUnits(
+interface ScoringDecomp {
+  decomp: WinDecomp;
+  winningKey?: string;
+  winningCompletesPung: boolean;
+}
+
+function selectScoringDecomp(
   hand: Array<{ key: string; id?: string }>,
-  exposed: Meld[],
-  isWinner = false,
+  exposedCount: number,
   winningDiscardId?: string,
   winningTileId?: string,
-  winType?: WinType,
-): Array<{ key: string; kind: UnitKind }> {
-  const units = exposedUnits(exposed);
-
-  if (!isWinner) {
-    // 没胡的人：只算亮出来的/主动砍上的（碰、坎、杠），未锁定的手牌散牌不算
-    return units;
-  }
-
-  if (winType === 'qidong-gang-hu') {
-    units.push(...countBasedUnits(hand, { pungs: true }));
-    return units;
-  }
-
-  const needMelds = 4 - exposed.length;
+): ScoringDecomp | null {
+  const needMelds = 4 - exposedCount;
   let decomps = findWinDecompositions(hand).filter((item) => item.melds.length === needMelds);
-  if (decomps.length === 0) {
-    decomps = findWinDecompositions(hand);
-  }
-  if (decomps.length === 0) {
-    units.push(...countBasedUnits(hand, { pungs: true }));
-    return units;
-  }
+  if (decomps.length === 0) decomps = findWinDecompositions(hand);
+  if (decomps.length === 0) return null;
 
   const winningId = winningDiscardId ?? winningTileId;
   const winningKey = winningId
@@ -269,19 +278,71 @@ export function extractUnits(
   const winningCompletesPung = Boolean(
     winningKey && (countsBefore[winningKey] ?? 0) === 2,
   );
+  return {
+    decomp: pickWinDecomp(
+      decomps,
+      winningKey,
+      winningCompletesPung,
+      Boolean(winningDiscardId),
+    ),
+    winningKey,
+    winningCompletesPung,
+  };
+}
 
-  const decomp = pickWinDecomp(decomps, winningKey, winningCompletesPung);
-  const winningPung = Boolean(
-    winningCompletesPung
-    && winningKey
-    && decomp.melds.some((meld) => meld.type === 'pung' && meld.key === winningKey),
+/**
+ * 当前项目采用的查胡拆牌：
+ * - 吃/顺子不计胡
+ * - 普通对子1胡，幺头对子2胡
+ * - 别人打出来碰的（明碰）普通1胡，幺牌2胡
+ * - 暗手里的坎（包括已“坎上”的牌）普通2胡，幺牌4胡1幺
+ * - 送杠（明杠）普通4胡，幺牌8胡2幺
+ * - 自杠（暗杠）普通6胡，幺牌12胡3幺
+ * - 没胡的人也查手里的对子与坎；吃、顺子和单张不计
+ * - 双碰点炮时，点炮形成的三张算碰，留下的对子照常计胡
+ * - 双碰自摸时，自摸形成的三张算坎，留下的对子照常计胡
+ * - 单钓补成的最后对子照常计对子胡，并另加胡牌基础10胡
+ */
+export function extractUnits(
+  hand: Array<{ key: string; id?: string }>,
+  exposed: Meld[],
+  isWinner = false,
+  winningDiscardId?: string,
+  winningTileId?: string,
+  winType?: WinType,
+): Array<{ key: string; kind: UnitKind }> {
+  const units = exposedUnits(exposed);
+
+  if (!isWinner) {
+    // 查胡是四家分别开算：没胡的人手里的对子、暗坎也要计入。
+    units.push(...countBasedUnits(hand, { pungs: true, pairs: true, selfKongs: false }));
+    return units;
+  }
+
+  if (winType === 'qidong-gang-hu') {
+    units.push(...countBasedUnits(hand, { pungs: true, pairs: true, selfKongs: true }));
+    return units;
+  }
+
+  const selected = selectScoringDecomp(
+    hand,
+    exposed.length,
+    winningDiscardId,
+    winningTileId,
   );
-  // 将牌无论是原有对子还是最后一张补成，都只负责完成牌型，不生成计分项。
+  if (!selected) {
+    units.push(...countBasedUnits(hand, { pungs: true, pairs: true, selfKongs: false }));
+    return units;
+  }
+  const { decomp, winningKey, winningCompletesPung } = selected;
+  units.push({ key: decomp.pairKey, kind: 'pair' });
   for (const meld of decomp.melds) {
     if (meld.type !== 'pung') continue;
-    // 只有最后一张形成的刻子才在这里计分；其它未主动坎上的暗刻不计分。
-    if (!winningPung || meld.key !== winningKey) continue;
-    units.push({ key: meld.key, kind: winningDiscardId ? 'peng' : 'pung' });
+    const completedByWinningTile = winningCompletesPung && meld.key === winningKey;
+    units.push({
+      key: meld.key,
+      kind: completedByWinningTile && winningDiscardId ? 'peng' : 'pung',
+    });
   }
   return units;
 }
@@ -406,11 +467,11 @@ export function scoreSeat(input: {
     breakdown.unshift({ label: input.winType === 'qidong-gang-hu' ? '起手杠胡' : '胡牌', hu: BASE_HU, yao: 0 });
     notes.push('胡牌+10胡');
     if (piao) {
-      notes.push('飘荤（结算胡差×2）');
+      notes.push('飘荤（本人胡数×2后结算）');
     }
   }
   if (input.isDealer) {
-    notes.push('庄家(差胡×2)');
+    notes.push('庄家（本人胡数×2后结算）');
   }
 
   if (notes.length === 0) {
@@ -420,7 +481,12 @@ export function scoreSeat(input: {
   const huBeforeDealer = hu;
 
   const decomp = input.isWinner
-    ? (findWinDecompositions(input.hand)[0] ?? { pairKey: 'wan-5', melds: [] })
+    ? (selectScoringDecomp(
+        input.hand,
+        input.exposed.length,
+        input.winningDiscardId,
+        input.winningTileId,
+      )?.decomp ?? { pairKey: 'wan-5', melds: [] })
     : { pairKey: 'wan-5', melds: [] };
 
   return {
@@ -520,10 +586,11 @@ export function settleChaHu(input: {
   for (let i = 0; i < 4; i += 1) {
     for (let j = i + 1; j < 4; j += 1) {
       const isDealerPair = i === input.dealer || j === input.dealer;
-      const dealerMultiplier = isDealerPair ? 2 : 1;
-      const piaoMultiplier = piaoMultiplierForPair(seats[i]!, seats[j]!);
-      const diffHu =
-        (seats[i]!.hu - seats[j]!.hu) * piaoMultiplier * dealerMultiplier;
+      const huMultiplierA = huMultiplierForSeat(seats[i]!);
+      const huMultiplierB = huMultiplierForSeat(seats[j]!);
+      const effectiveHuA = seats[i]!.hu * huMultiplierA;
+      const effectiveHuB = seats[j]!.hu * huMultiplierB;
+      const diffHu = effectiveHuA - effectiveHuB;
       const diffYao = seats[i]!.yao - seats[j]!.yao;
       const pairPoints = diffHu * HU_RATE + diffYao * YAO_RATE;
 
@@ -545,8 +612,11 @@ export function settleChaHu(input: {
         huB: seats[j]!.hu,
         yaoA: seats[i]!.yao,
         yaoB: seats[j]!.yao,
+        huMultiplierA,
+        huMultiplierB,
+        effectiveHuA,
+        effectiveHuB,
         isDealerPair,
-        piaoMultiplier,
         deltaHu: diffHu,
         deltaYao: diffYao,
         points: pairPoints,
@@ -585,15 +655,14 @@ export function settleChaHu(input: {
     const pack = baoZhuang.payerSeat;
     for (let seat = 0; seat < 4; seat += 1) {
       if (seat === winnerSeat || seat === pack) continue;
-      const isDealerPair = seat === input.dealer || winnerSeat === input.dealer;
-      const dealerMultiplier = isDealerPair ? 2 : 1;
-      const piaoMultiplier = piaoMultiplierForPair(seats[winnerSeat]!, seats[seat]!);
-      const diffHu =
-        (seats[winnerSeat]!.hu - seats[seat]!.hu) *
-        piaoMultiplier *
-        dealerMultiplier;
-      const diffYao = seats[winnerSeat]!.yao - seats[seat]!.yao;
-      const owe = diffHu * HU_RATE + diffYao * YAO_RATE;
+      // 直接复用已经生成的两两流水，避免包庄转移再维护一套倍率公式。
+      const transaction = transactions.find((item) => (
+        (item.seatA === winnerSeat && item.seatB === seat)
+        || (item.seatA === seat && item.seatB === winnerSeat)
+      ));
+      const owe = transaction
+        ? (transaction.seatA === winnerSeat ? transaction.points : -transaction.points)
+        : 0;
       if (owe > 0) {
         deltas[seat] += owe;
         deltas[pack] -= owe;

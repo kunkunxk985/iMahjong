@@ -92,6 +92,7 @@ export function TileView({
         alt=""
         draggable={false}
       />
+      {last ? <span className="last-discard-marker" aria-hidden="true">▼</span> : null}
       {closeGateHint ? (
         <span className="close-gate-badge">关门</span>
       ) : tenpaiHint ? (

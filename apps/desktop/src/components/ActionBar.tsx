@@ -48,7 +48,7 @@ export function ActionBar({ actions, onAction, onDiscard, canDiscard, selectedTi
           <button
             key={`${action.kind}-${action.key ?? ''}-${action.tileIds?.join('-') ?? index}`}
             type="button"
-            className={`btn-action ${action.kind === 'hu' ? 'primary' : ''} ${action.kind === 'pass' ? 'ghost' : ''} ${isCloseGate ? 'close-gate-btn' : ''}`}
+            className={`btn-action action-${action.kind} ${action.kind === 'hu' ? 'primary' : ''} ${action.kind === 'pass' ? 'ghost' : ''} ${isCloseGate ? 'close-gate-btn' : ''}`}
             title={needsGateDiscard ? (gateTileValid ? '打出此牌并关门' : '点击可直接打出候选牌并关门') : undefined}
             onClick={() => {
               let targetTileId = action.tileId;
@@ -60,14 +60,14 @@ export function ActionBar({ actions, onAction, onDiscard, canDiscard, selectedTi
               onAction({ ...action, tileId: targetTileId });
             }}
           >
-            {isCloseGate ? '🚪 关门' : actionLabel(action)}
+            {isCloseGate ? '关门' : actionLabel(action)}
           </button>
         );
       })}
       {canDiscard ? (
         <button
           type="button"
-          className="btn-action"
+          className={`btn-action action-discard ${selectedTileId ? 'is-ready' : ''}`}
           disabled={discardDisabled}
           title={discardDisabled ? '请先选牌' : undefined}
           onClick={onDiscard}

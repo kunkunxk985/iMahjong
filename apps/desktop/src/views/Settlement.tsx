@@ -172,6 +172,11 @@ export function SettlementModal({
     return Boolean(found?.isDealer);
   };
 
+  const isPiaoHun = (seat: number) => {
+    const found = settlement.scores.find((s) => s.seat === seat);
+    return Boolean(found?.piaoHun);
+  };
+
   if (minimized) {
     return (
       <div className="settlement-floating-bar">
@@ -302,7 +307,7 @@ export function SettlementModal({
                 <thead>
                   <tr>
                     <th>玩家</th>
-                    <th>基础胡/幺</th>
+                    <th>牌面胡/幺</th>
                     <th>总应收</th>
                     <th>总应付</th>
                     <th>本局净结余</th>
@@ -347,7 +352,7 @@ export function SettlementModal({
               </table>
 
               <div className="rule-note">
-                <small>💡 计分说明：放炮与自摸不附加结算倍率；四家牌面胡/幺固定，两两结算时飘荤胡差×2、庄闲胡差×2，幺差始终不翻倍。</small>
+                <small>💡 结算顺序：庄家本人的胡数×2，飘荤者本人的胡数×2（同一人兼具时×4）；各家先折算本人胡数，再两两相减。幺差与荤底始终不翻倍。</small>
               </div>
             </div>
           ) : activeTab === 'ledger' ? (
@@ -358,6 +363,8 @@ export function SettlementModal({
                   const nameB = getNickname(tx.seatB);
                   const isDealerA = isDealer(tx.seatA);
                   const isDealerB = isDealer(tx.seatB);
+                  const isPiaoA = isPiaoHun(tx.seatA);
+                  const isPiaoB = isPiaoHun(tx.seatB);
                   const seatNameA = SEAT_NAMES[tx.seatA];
                   const seatNameB = SEAT_NAMES[tx.seatB];
 
@@ -372,17 +379,22 @@ export function SettlementModal({
                   const winnerYao = tx.points > 0 ? tx.yaoA : tx.yaoB;
                   const loserHu = tx.points > 0 ? tx.huB : tx.huA;
                   const loserYao = tx.points > 0 ? tx.yaoB : tx.yaoA;
+                  const winnerHuMultiplier = tx.points > 0 ? tx.huMultiplierA : tx.huMultiplierB;
+                  const loserHuMultiplier = tx.points > 0 ? tx.huMultiplierB : tx.huMultiplierA;
+                  const winnerEffectiveHu = tx.points > 0 ? tx.effectiveHuA : tx.effectiveHuB;
+                  const loserEffectiveHu = tx.points > 0 ? tx.effectiveHuB : tx.effectiveHuA;
 
                   const absPoints = Math.abs(tx.points);
                   const absMoney = (absPoints * ratePerPoint).toFixed(1);
 
-                  const huMultiplierLabel = tx.piaoMultiplier > 1 && tx.isDealerPair
-                    ? '庄×飘荤×4'
-                    : tx.piaoMultiplier > 1
-                      ? `飘荤×${tx.piaoMultiplier}`
-                      : tx.isDealerPair
-                        ? '庄家×2'
-                        : null;
+                  const multiplierLabels = [
+                    tx.huMultiplierA > 1
+                      ? `${seatNameA}${isDealerA ? '庄' : ''}${isPiaoA ? '飘' : ''}×${tx.huMultiplierA}`
+                      : null,
+                    tx.huMultiplierB > 1
+                      ? `${seatNameB}${isDealerB ? '庄' : ''}${isPiaoB ? '飘' : ''}×${tx.huMultiplierB}`
+                      : null,
+                  ].filter((label): label is string => Boolean(label));
 
                   return (
                     <div key={idx} className={`tx-flow-card ${tx.isDealerPair ? 'is-dealer-pair' : ''} ${isTie ? 'is-tie' : ''}`}>
@@ -394,14 +406,18 @@ export function SettlementModal({
                               <span className="seat-badge">{seatNameA}</span>
                               <b className="party-name">{nameA}</b>
                               {isDealerA ? <span className="tag-dealer">庄</span> : null}
-                              <span className="party-score">({tx.huA}胡{tx.yaoA ? ` ${tx.yaoA}幺` : ''})</span>
+                              <span className="party-score">
+                                ({tx.huA}胡{tx.huMultiplierA > 1 ? `×${tx.huMultiplierA}=${tx.effectiveHuA}` : ''}{tx.yaoA ? ` ${tx.yaoA}幺` : ''})
+                              </span>
                             </div>
                             <span className="tx-tie-badge">双方平手 (0分)</span>
                             <div className="tx-party">
                               <span className="seat-badge">{seatNameB}</span>
                               <b className="party-name">{nameB}</b>
                               {isDealerB ? <span className="tag-dealer">庄</span> : null}
-                              <span className="party-score">({tx.huB}胡{tx.yaoB ? ` ${tx.yaoB}幺` : ''})</span>
+                              <span className="party-score">
+                                ({tx.huB}胡{tx.huMultiplierB > 1 ? `×${tx.huMultiplierB}=${tx.effectiveHuB}` : ''}{tx.yaoB ? ` ${tx.yaoB}幺` : ''})
+                              </span>
                             </div>
                           </div>
                         ) : (
@@ -411,7 +427,9 @@ export function SettlementModal({
                               <span className="seat-badge">{winnerSeat}</span>
                               <b className="party-name">{winnerName}</b>
                               {isWinnerDealer ? <span className="tag-dealer">庄</span> : null}
-                              <span className="party-score">({winnerHu}胡{winnerYao ? ` ${winnerYao}幺` : ''})</span>
+                              <span className="party-score">
+                                ({winnerHu}胡{winnerHuMultiplier > 1 ? `×${winnerHuMultiplier}=${winnerEffectiveHu}` : ''}{winnerYao ? ` ${winnerYao}幺` : ''})
+                              </span>
                             </div>
 
                             {/* Arrow & Amount */}
@@ -426,7 +444,9 @@ export function SettlementModal({
                               <span className="seat-badge">{loserSeat}</span>
                               <b className="party-name">{loserName}</b>
                               {isLoserDealer ? <span className="tag-dealer">庄</span> : null}
-                              <span className="party-score">({loserHu}胡{loserYao ? ` ${loserYao}幺` : ''})</span>
+                              <span className="party-score">
+                                ({loserHu}胡{loserHuMultiplier > 1 ? `×${loserHuMultiplier}=${loserEffectiveHu}` : ''}{loserYao ? ` ${loserYao}幺` : ''})
+                              </span>
                             </div>
                           </div>
                         )}
@@ -434,12 +454,14 @@ export function SettlementModal({
 
                       {/* Formula & Rule Footer */}
                       <div className="tx-formula-bar">
-                        {huMultiplierLabel ? (
-                          <span className="tx-mult-tag">{huMultiplierLabel}</span>
+                        {multiplierLabels.length > 0 ? (
+                          <span className="tx-mult-tag">{multiplierLabels.join(' · ')}</span>
                         ) : null}
                         <span className="tx-formula-text">
-                          胡差 {Math.abs(tx.huA - tx.huB)}{huMultiplierLabel ? ` (${huMultiplierLabel}) = ${Math.abs(tx.deltaHu)}胡` : ''}
-                          {tx.deltaYao !== 0 ? ` · 差幺 ${Math.abs(tx.deltaYao)}×10 = ${Math.abs(tx.deltaYao) * 10}分` : ''}
+                          {nameA} {tx.huA}胡{tx.huMultiplierA > 1 ? `×${tx.huMultiplierA}=${tx.effectiveHuA}` : ''}
+                          {' − '}{nameB} {tx.huB}胡{tx.huMultiplierB > 1 ? `×${tx.huMultiplierB}=${tx.effectiveHuB}` : ''}
+                          {` = ${tx.deltaHu > 0 ? '+' : ''}${tx.deltaHu}胡`}
+                          {tx.deltaYao !== 0 ? ` · 幺差 ${tx.yaoA}−${tx.yaoB}=${tx.deltaYao > 0 ? '+' : ''}${tx.deltaYao}幺` : ''}
                         </span>
                       </div>
                     </div>
@@ -451,7 +473,7 @@ export function SettlementModal({
             <div className="breakdown-view">
               <div className="score-grid">
                 <div>
-                  <span>胡牌基础</span>
+                  <span>牌面胡数（倍率前）</span>
                   <strong>{settlement.hu} 胡</strong>
                 </div>
                 <div>
@@ -460,10 +482,10 @@ export function SettlementModal({
                 </div>
                 <div>
                   <span>庄家身份</span>
-                  <strong>{settlement.dealerMultiplier === 2 ? '庄家(两两结差胡×2)' : '闲家'}</strong>
+                  <strong>{settlement.dealerMultiplier === 2 ? '庄家（本人胡数×2）' : '闲家'}</strong>
                 </div>
                 <div>
-                  <span>牌面单体分</span>
+                  <span>本房牌面折算（倍率前）</span>
                   <strong>{settlement.hu + settlement.yao * 10} 分</strong>
                 </div>
               </div>
@@ -482,7 +504,7 @@ export function SettlementModal({
                     <div key={item.seat} className="player-note-row">
                       <span className="seat-badge">{SEAT_NAMES[item.seat]}</span>
                       <b>{item.nickname}:</b>
-                      <span>{(item.notes ?? []).join('，') || '无坎对'}</span>
+                      <span>{(item.notes ?? []).join('，') || '无对子、碰、坎或杠'}</span>
                     </div>
                   ))}
                 </div>
