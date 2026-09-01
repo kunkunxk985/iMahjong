@@ -11,8 +11,10 @@ export const C2S = {
   GAME_ACTION: 'game:action',
   GAME_NEXT_ROUND: 'game:nextRound',
   PLAYER_RECONNECT: 'player:reconnect',
+  PLAYER_UPDATE_PROFILE: 'player:updateProfile',
   PLAYER_HEARTBEAT: 'player:heartbeat',
   FRIEND_BIND_USER: 'friend:bindUser',
+  FRIEND_UNBIND_USER: 'friend:unbindUser',
   FRIEND_INVITE: 'friend:invite',
   PING: 'ping',
 } as const;
@@ -33,8 +35,8 @@ export const S2C = {
 } as const;
 
 export type C2SMessage =
-  | { type: 'room:create'; nickname: string; solo?: boolean; pointRate?: number }
-  | { type: 'room:join'; roomCode: string; nickname: string }
+  | { type: 'room:create'; nickname: string; avatar?: string; solo?: boolean; pointRate?: number }
+  | { type: 'room:join'; roomCode: string; nickname: string; avatar?: string }
   | { type: 'room:leave' }
   | { type: 'room:ready'; ready?: boolean }
   | { type: 'room:start' }
@@ -42,9 +44,11 @@ export type C2SMessage =
   | { type: 'room:config'; pointRate: number }
   | { type: 'game:nextRound' }
   | { type: 'game:action'; sequence: number; actionId: string; action: GameAction }
-  | { type: 'player:reconnect'; roomCode: string; token: string }
+  | { type: 'player:reconnect'; roomCode: string; token: string; nickname?: string; avatar?: string }
+  | { type: 'player:updateProfile'; nickname: string; avatar?: string }
   | { type: 'player:heartbeat' }
   | { type: 'friend:bindUser'; userId: string; token: string }
+  | { type: 'friend:unbindUser' }
   | { type: 'friend:invite'; toUserId: string; roomCode: string }
   | { type: 'ping' };
 

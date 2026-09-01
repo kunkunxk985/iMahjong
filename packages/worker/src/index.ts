@@ -38,6 +38,17 @@ function textResponse(text: string, status = 200) {
   });
 }
 
+async function readJsonBody(request: Request): Promise<Record<string, any> | null> {
+  try {
+    const body = await request.json();
+    return body && typeof body === 'object' && !Array.isArray(body)
+      ? body as Record<string, any>
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     if (request.method === 'OPTIONS') {
@@ -134,6 +145,19 @@ export class PizhouHubDO {
     }
   }
 
+  private unbindSocketUser(ws: UniversalWebSocket): void {
+    const info = this.socketUser.get(ws);
+    if (!info) return;
+    this.socketUser.delete(ws);
+    const set = this.userSockets.get(info.userId);
+    if (!set) return;
+    set.delete(ws);
+    if (set.size === 0) {
+      this.userSockets.delete(info.userId);
+      this.broadcastPresence(info.userId, 'offline');
+    }
+  }
+
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
@@ -160,18 +184,15 @@ export class PizhouHubDO {
     try {
       // 1. Guest auto-login
       if (path === '/api/auth/guest' && request.method === 'POST') {
-        let body: any = {};
-        try {
-          body = await request.json();
-        } catch {}
+        const body = await readJsonBody(request) ?? {};
         const result = await this.db.createGuest(body?.nickname);
         return jsonResponse(result);
       }
 
       // 2. Register
       if (path === '/api/auth/register' && request.method === 'POST') {
-        const body = (await request.json()) as any;
-        if (!body || !body.username || !body.password) {
+        const body = await readJsonBody(request);
+        if (!body || typeof body.username !== 'string' || typeof body.password !== 'string') {
           return jsonResponse({ error: '请填写账号和密码' }, 400);
         }
         const result = await this.db.register(body.username, body.password, body.nickname);
@@ -183,8 +204,8 @@ export class PizhouHubDO {
 
       // 3. Login
       if (path === '/api/auth/login' && request.method === 'POST') {
-        const body = (await request.json()) as any;
-        if (!body || !body.username || !body.password) {
+        const body = await readJsonBody(request);
+        if (!body || typeof body.username !== 'string' || typeof body.password !== 'string') {
           return jsonResponse({ error: '请填写账号和密码' }, 400);
         }
         const result = await this.db.login(body.username, body.password);
@@ -194,7 +215,47 @@ export class PizhouHubDO {
         return jsonResponse(result);
       }
 
-      // 4. Profile API (GET & POST)
+      // 4. Upgrade a guest account without losing its profile, friends or matches
+      if (path === '/api/auth/upgrade' && request.method === 'POST') {
+        const token = this.getBearerToken(request);
+        if (!token) return jsonResponse({ error: '未登录' }, 401);
+        const userRow = await this.db.getUserByToken(token);
+        if (!userRow) return jsonResponse({ error: '登录已失效' }, 401);
+
+        const body = await readJsonBody(request);
+        if (!body || typeof body.username !== 'string' || typeof body.password !== 'string') {
+          return jsonResponse({ error: '请填写新账号和密码' }, 400);
+        }
+        const result = await this.db.upgradeGuest(userRow.id, body.username, body.password, body.nickname);
+        if (typeof result === 'string') return jsonResponse({ error: result }, 400);
+        return jsonResponse(result);
+      }
+
+      // 5. Change the password and rotate the active session token
+      if (path === '/api/auth/password' && request.method === 'POST') {
+        const token = this.getBearerToken(request);
+        if (!token) return jsonResponse({ error: '未登录' }, 401);
+        const userRow = await this.db.getUserByToken(token);
+        if (!userRow) return jsonResponse({ error: '登录已失效' }, 401);
+
+        const body = await readJsonBody(request);
+        if (!body || typeof body.currentPassword !== 'string' || typeof body.newPassword !== 'string') {
+          return jsonResponse({ error: '请填写当前密码和新密码' }, 400);
+        }
+        const result = await this.db.changePassword(userRow.id, body.currentPassword, body.newPassword);
+        if (typeof result === 'string') return jsonResponse({ error: result }, 400);
+        return jsonResponse(result);
+      }
+
+      // 6. Explicitly revoke the cloud session. Logout remains idempotent so a
+      // client can still clear local state when the network is unavailable.
+      if (path === '/api/auth/logout' && request.method === 'POST') {
+        const token = this.getBearerToken(request);
+        if (token) await this.db.revokeToken(token);
+        return jsonResponse({ success: true });
+      }
+
+      // 7. Profile API (GET & POST)
       if (path === '/api/profile') {
         const token = this.getBearerToken(request);
         if (!token) return jsonResponse({ error: '未登录' }, 401);
@@ -207,13 +268,14 @@ export class PizhouHubDO {
         }
 
         if (request.method === 'POST') {
-          const body = (await request.json()) as any;
-          const updated = await this.db.updateProfile(userRow.id, body || {});
+          const body = await readJsonBody(request);
+          if (!body) return jsonResponse({ error: '资料格式不正确' }, 400);
+          const updated = await this.db.updateProfile(userRow.id, body);
           return jsonResponse({ user: updated });
         }
       }
 
-      // 5. Matches & Stats API (GET & POST)
+      // 8. Matches & Stats API (GET & POST)
       if (path === '/api/matches') {
         const token = this.getBearerToken(request);
         if (!token) return jsonResponse({ error: '未登录' }, 401);
@@ -237,7 +299,7 @@ export class PizhouHubDO {
         }
       }
 
-      // 6. Friends: Search Users
+      // 9. Friends: Search Users
       if (path === '/api/friends/search' && request.method === 'GET') {
         const token = this.getBearerToken(request);
         if (!token) return jsonResponse({ error: '未登录' }, 401);
@@ -249,7 +311,7 @@ export class PizhouHubDO {
         return jsonResponse({ results });
       }
 
-      // 7. Friends: List Friends with Live Presence
+      // 10. Friends: List Friends with Live Presence
       if (path === '/api/friends/list' && request.method === 'GET') {
         const token = this.getBearerToken(request);
         if (!token) return jsonResponse({ error: '未登录' }, 401);
@@ -268,7 +330,7 @@ export class PizhouHubDO {
         return jsonResponse({ friends });
       }
 
-      // 8. Friends: Request List
+      // 11. Friends: Request List
       if (path === '/api/friends/requests' && request.method === 'GET') {
         const token = this.getBearerToken(request);
         if (!token) return jsonResponse({ error: '未登录' }, 401);
@@ -279,7 +341,7 @@ export class PizhouHubDO {
         return jsonResponse({ requests });
       }
 
-      // 9. Friends: Send Friend Request
+      // 12. Friends: Send Friend Request
       if (path === '/api/friends/request' && request.method === 'POST') {
         const token = this.getBearerToken(request);
         if (!token) return jsonResponse({ error: '未登录' }, 401);
@@ -297,7 +359,7 @@ export class PizhouHubDO {
         return jsonResponse(result);
       }
 
-      // 10. Friends: Respond to Friend Request (Accept / Reject)
+      // 13. Friends: Respond to Friend Request (Accept / Reject)
       if (path === '/api/friends/respond' && request.method === 'POST') {
         const token = this.getBearerToken(request);
         if (!token) return jsonResponse({ error: '未登录' }, 401);
@@ -315,7 +377,7 @@ export class PizhouHubDO {
         return jsonResponse(result);
       }
 
-      // 11. Friends: Delete Friend
+      // 14. Friends: Delete Friend
       if (path === '/api/friends/delete' && request.method === 'POST') {
         const token = this.getBearerToken(request);
         if (!token) return jsonResponse({ error: '未登录' }, 401);
@@ -330,7 +392,7 @@ export class PizhouHubDO {
         return jsonResponse({ success: true });
       }
 
-      // 12. Friends: Get Friend Profile & Online Match History
+      // 15. Friends: Get Friend Profile & Online Match History
       if (path === '/api/friends/stats' && request.method === 'GET') {
         const token = this.getBearerToken(request);
         if (!token) return jsonResponse({ error: '未登录' }, 401);
@@ -397,6 +459,8 @@ export class PizhouHubDO {
       if (message.type === 'friend:bindUser') {
         const u = await this.db.getUserByToken(message.token);
         if (u && u.id === message.userId) {
+          const previous = this.socketUser.get(uws);
+          if (previous && previous.userId !== u.id) this.unbindSocketUser(uws);
           this.socketUser.set(uws, { userId: u.id, token: message.token });
           let set = this.userSockets.get(u.id);
           if (!set) {
@@ -405,7 +469,14 @@ export class PizhouHubDO {
           }
           set.add(uws);
           this.broadcastPresence(u.id, 'online');
+        } else {
+          this.unbindSocketUser(uws);
         }
+        return;
+      }
+
+      if (message.type === 'friend:unbindUser') {
+        this.unbindSocketUser(uws);
         return;
       }
 
@@ -447,18 +518,7 @@ export class PizhouHubDO {
 
     server.addEventListener('close', () => {
       // Clean up socket user & presence
-      const info = this.socketUser.get(uws);
-      if (info) {
-        this.socketUser.delete(uws);
-        const set = this.userSockets.get(info.userId);
-        if (set) {
-          set.delete(uws);
-          if (set.size === 0) {
-            this.userSockets.delete(info.userId);
-            this.broadcastPresence(info.userId, 'offline');
-          }
-        }
-      }
+      this.unbindSocketUser(uws);
 
       const found = this.manager.dropSocket(uws as any);
       if (!found) return;

@@ -143,6 +143,19 @@ test('房主设置底分单价后同步到 ClientView', () => {
   assert.equal(view.pointRate, 0.2);
 });
 
+test('房间 ClientView 会同步玩家自定义头像与网名', () => {
+  const customAvatar = 'data:image/webp;base64,dGVzdC1hdmF0YXI=';
+  const manager = new RoomManager();
+  const created = manager.create('云端雀士', socket(), false, 0.1, customAvatar);
+  const joined = manager.join(created.room.code, '朋友', socket(), '🐱');
+
+  assert.notEqual(typeof joined, 'string');
+  const view = created.room.viewFor(created.player);
+  assert.equal(view.players[0]?.nickname, '云端雀士');
+  assert.equal(view.players[0]?.avatar, customAvatar);
+  assert.equal(view.players[1]?.avatar, '🐱');
+});
+
 test('游戏开始后底分单价固定，不可中途修改', () => {
   const manager = new RoomManager();
   const ws = socket();

@@ -103,6 +103,8 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
   const [chatBubbles, setChatBubbles] = useState<ActiveChatBubble[]>([]);
   const [discardFlight, setDiscardFlight] = useState<DiscardFlight | null>(null);
   const [flyingDiscardId, setFlyingDiscardId] = useState<string | null>(null);
+  const seenDiscardIdRef = useRef<string | null>(null);
+  const hasSeenDiscardRef = useRef(false);
 
   const handleSendChat = (message: string, isEmote = false) => {
     const bubbleId = Date.now() + Math.random();
@@ -206,6 +208,61 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
     });
     pendingDiscardRef.current = null;
   }, [view.players, view.mySeat, view.sequence]);
+
+  // Opponent discards do not have a local hand element we can measure before
+  // the server update.  Once the authoritative discard lands in the view,
+  // animate it from that seat's concealed rack into the matching river cell.
+  // The first snapshot is intentionally ignored so reconnecting mid-hand does
+  // not replay an old discard as if it were a new move.
+  useLayoutEffect(() => {
+    const discard = view.lastDiscard;
+    const discardId = discard?.tile.id ?? null;
+
+    if (!hasSeenDiscardRef.current) {
+      hasSeenDiscardRef.current = true;
+      seenDiscardIdRef.current = discardId;
+      return;
+    }
+
+    if (!discardId) {
+      seenDiscardIdRef.current = null;
+      return;
+    }
+    if (!discard) return;
+    if (discardId === seenDiscardIdRef.current) return;
+    seenDiscardIdRef.current = discardId;
+
+    // Manual discards already use the exact hand-tile origin captured by
+    // noteDiscardSource().  Skip them here to avoid rendering two flights.
+    if (discard.fromSeat === view.mySeat || view.settlement) return;
+
+    const board = boardRef.current;
+    if (!board) return;
+
+    const relative = relativeSeat(discard.fromSeat, view.mySeat);
+    const position = relative === 0
+      ? 'bottom'
+      : relative === 1
+        ? 'right'
+        : relative === 2
+          ? 'top'
+          : 'left';
+    const sourceGroup = board.querySelector<HTMLElement>(`.board-concealed-${position}`);
+    const sourceElement = sourceGroup?.querySelector<HTMLElement>('.board-concealed-tile') ?? sourceGroup;
+    const source = sourceElement?.getBoundingClientRect();
+    const target = Array.from(
+      board.querySelectorAll<HTMLElement>('[data-discard-tile-id]'),
+    ).find((element) => element.dataset.discardTileId === discardId);
+    if (!source || !target) return;
+
+    setFlyingDiscardId(discardId);
+    setDiscardFlight({
+      flightId: view.sequence,
+      from: source,
+      to: target.getBoundingClientRect(),
+      face: faceSrc(discard.tile),
+    });
+  }, [view.lastDiscard?.tile.id, view.lastDiscard?.fromSeat, view.mySeat, view.sequence, view.settlement]);
 
   const finishDiscardFlight = useCallback(() => {
     setDiscardFlight(null);

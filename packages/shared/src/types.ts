@@ -58,15 +58,16 @@ export interface PairwiseTransaction {
   huB: number;
   yaoA: number;
   yaoB: number;
-  /** A 家牌面胡数在庄家、飘荤规则下的本人倍率。 */
+  /** A 家牌面胡数的飘荤倍率；庄家倍率作用于涉及庄家的整笔胡差。 */
   huMultiplierA: number;
-  /** B 家牌面胡数在庄家、飘荤规则下的本人倍率。 */
+  /** B 家牌面胡数的飘荤倍率；庄家倍率作用于涉及庄家的整笔胡差。 */
   huMultiplierB: number;
-  /** A 家用于两两比较的折算胡数。 */
+  /** A 家先按飘荤折算、尚未应用庄家胡差倍率的胡数。 */
   effectiveHuA: number;
-  /** B 家用于两两比较的折算胡数。 */
+  /** B 家先按飘荤折算、尚未应用庄家胡差倍率的胡数。 */
   effectiveHuB: number;
   isDealerPair: boolean;
+  /** 两家先查折算胡差，再在涉及庄家时整体乘 2。 */
   deltaHu: number;
   deltaYao: number;
   points: number;
@@ -88,7 +89,7 @@ export interface Settlement {
   hu: number;
   huBeforeDealer: number;
   yao: number;
-  /** 赢家本人的庄家倍率，仅供展示；不是整组两两胡差倍率。 */
+  /** 赢家是否为庄家对应的展示标记；庄家倍率实际作用于涉及庄家的胡差。 */
   dealerMultiplier: number;
   selfDraw: boolean;
   breakdown: ScoreBreakdownItem[];
@@ -117,6 +118,7 @@ export interface AvailableAction {
 export interface PublicPlayerView {
   seat: number;
   nickname: string;
+  avatar: string;
   ready: boolean;
   online: boolean;
   isHost: boolean;

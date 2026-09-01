@@ -786,6 +786,7 @@ button, input { font: inherit; }
   flex-direction: column;
   align-items: center;
   gap: 2px;
+  animation: meld-group-arrive 0.34s cubic-bezier(0.22, 0.9, 0.28, 1.08) both;
 }
 
 .meld-tiles {
@@ -806,6 +807,17 @@ button, input { font: inherit; }
   letter-spacing: 0.04em;
   white-space: nowrap;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  animation: meld-badge-arrive 0.28s cubic-bezier(0.22, 0.9, 0.28, 1.08) 0.16s both;
+}
+
+@keyframes meld-group-arrive {
+  from { opacity: 0; transform: translateY(8px) scale(0.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes meld-badge-arrive {
+  from { opacity: 0; transform: translateY(-4px) scale(0.82); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .is-kan-meld {
@@ -1247,6 +1259,23 @@ input:focus-visible {
   align-items: center;
   gap: 8px;
   color: #f1e6c8;
+}
+
+.replay-player-avatar {
+  width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 24px;
+  overflow: hidden;
+  border: 1px solid rgba(245, 214, 120, 0.65);
+  border-radius: 50%;
+  background: rgba(245, 214, 120, 0.15);
+  font-size: 13px;
+}
+
+.replay-player-avatar.avatar-image {
+  object-fit: cover;
 }
 
 .replay-player-name {
@@ -2203,6 +2232,13 @@ input:focus-visible {
   font-size: 30px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.current-avatar-circle > .avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .avatar-picker-grid {
@@ -2237,11 +2273,74 @@ input:focus-visible {
   box-shadow: 0 0 6px rgba(250, 204, 21, 0.4);
 }
 
+.avatar-upload-btn {
+  width: 52px;
+  height: 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  border: 1px dashed rgba(245, 214, 120, 0.5);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fef08a;
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+
+.avatar-upload-btn input {
+  display: none;
+}
+
+.avatar-upload-btn > span {
+  font-size: 16px;
+  line-height: 14px;
+}
+
+.avatar-upload-btn small {
+  font-size: 9px;
+  line-height: 11px;
+}
+
+.avatar-upload-btn:hover,
+.avatar-upload-btn.active {
+  border-color: #fde047;
+  background: rgba(250, 204, 21, 0.2);
+  box-shadow: 0 0 6px rgba(250, 204, 21, 0.3);
+}
+
+.avatar-upload-btn.is-loading {
+  opacity: 0.62;
+  cursor: wait;
+}
+
+.avatar-help,
+.avatar-error {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.avatar-help {
+  color: #94a3b8;
+}
+
+.avatar-error {
+  color: #fca5a5;
+}
+
 .title-select-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 4px;
+}
+
+.profile-bio-input {
+  min-height: 52px;
+  resize: vertical;
+  line-height: 1.55;
 }
 
 .title-chip {
@@ -2287,12 +2386,131 @@ input:focus-visible {
 
 .info-row b {
   color: #fef08a;
+  max-width: 62%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .info-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.security-overlay {
+  z-index: 70;
+}
+
+.security-modal {
+  width: 430px;
+  max-width: 94vw;
+}
+
+.security-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.security-header h2 {
+  margin: 0 0 5px;
+  color: #fef08a;
+  font-size: 20px;
+}
+
+.security-header p {
+  margin: 0;
+  color: #a8b8b0;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.modal-close-btn {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(245, 214, 120, 0.25);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fef08a;
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-close-btn:hover:not(:disabled) {
+  background: rgba(250, 204, 21, 0.18);
+  border-color: #fde047;
+}
+
+.security-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.security-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.security-field > span {
+  color: #e2e8f0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.security-note,
+.security-error,
+.security-success {
+  padding: 9px 11px;
+  border-radius: 7px;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.security-note {
+  color: #d7c98f;
+  background: rgba(245, 214, 120, 0.09);
+  border: 1px solid rgba(245, 214, 120, 0.22);
+}
+
+.security-error {
+  color: #fca5a5;
+  background: rgba(220, 38, 38, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.46);
+}
+
+.security-success {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.18);
+  border: 1px solid rgba(74, 222, 128, 0.58);
+}
+
+.security-show-password {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 7px;
+  color: #a8b8b0;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.security-show-password input {
+  accent-color: #eab308;
+}
+
+.security-actions {
+  margin-top: 5px;
 }
 
 /* History Modal Tabs & Banners */
@@ -2309,6 +2527,20 @@ input:focus-visible {
   padding: 2px 8px;
   border-radius: 4px;
   border: 1px solid rgba(250, 204, 21, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.history-user-badge > .avatar-image,
+.history-user-badge > span {
+  width: 18px;
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  object-fit: cover;
+  font-size: 13px;
 }
 
 .syncing-indicator {
@@ -2540,6 +2772,13 @@ input:focus-visible {
   align-items: center;
   justify-content: center;
   font-size: 16px;
+  overflow: hidden;
+}
+
+.pill-avatar > .avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .pill-name {
@@ -2836,6 +3075,13 @@ input:focus-visible {
   align-items: center;
   justify-content: center;
   font-size: 16px;
+  overflow: hidden;
+}
+
+.pill-avatar > .avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .pill-name {
@@ -3182,6 +3428,13 @@ input:focus-visible {
   align-items: center;
   justify-content: center;
   font-size: 22px;
+  overflow: hidden;
+}
+
+.invite-toast-avatar > .avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .invite-toast-body {
@@ -3329,6 +3582,13 @@ input:focus-visible {
   align-items: center;
   justify-content: center;
   font-size: 20px;
+  overflow: hidden;
+}
+
+.friend-card-avatar > .avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .friend-status-dot {
@@ -3568,6 +3828,13 @@ input:focus-visible {
   align-items: center;
   justify-content: center;
   font-size: 18px;
+  overflow: hidden;
+}
+
+.stats-avatar > .avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .stats-user-name {

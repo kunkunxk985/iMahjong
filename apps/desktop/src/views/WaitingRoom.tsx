@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { SEAT_NAMES, type ClientView } from '@pizhou/shared';
+import { AvatarView } from '../components/AvatarView';
 
 interface WaitingRoomProps {
   view: ClientView;
@@ -56,21 +57,29 @@ export function WaitingRoom({ view, onReady, onStart, onLeave, onRules, onSetRat
               <li key={player.seat} className={`seat-card ${present ? '' : 'empty'} ${seat === view.mySeat ? 'me' : ''}`}>
                 <span className="seat-wind">{SEAT_NAMES[seat]}</span>
                 {present ? (
-                  <div className="seat-info">
-                    <div className="seat-name">
-                      <span>{player.nickname}</span>
-                      {seat === view.mySeat ? <span className="tag me-tag">你</span> : null}
-                      {player.isHost ? <span className="tag host-tag">房主</span> : null}
+                  <>
+                    <div className="waiting-seat-avatar">
+                      <AvatarView
+                        avatar={player.isBot ? '陪' : player.avatar}
+                        alt={`${player.nickname}头像`}
+                      />
                     </div>
-                    <div className="seat-status">
-                      <span className={`status-pill ${player.ready ? 'ready' : 'waiting'}`}>
-                        {player.ready ? '已准备' : '等待准备'}
-                      </span>
-                      <span className={`status-net ${player.online ? '' : 'offline'}`}>
-                        {player.online ? '在线' : '离线'}
-                      </span>
+                    <div className="seat-info">
+                      <div className="seat-name">
+                        <span>{player.nickname}</span>
+                        {seat === view.mySeat ? <span className="tag me-tag">你</span> : null}
+                        {player.isHost ? <span className="tag host-tag">房主</span> : null}
+                      </div>
+                      <div className="seat-status">
+                        <span className={`status-pill ${player.ready ? 'ready' : 'waiting'}`}>
+                          {player.ready ? '已准备' : '等待准备'}
+                        </span>
+                        <span className={`status-net ${player.online ? '' : 'offline'}`}>
+                          {player.online ? '在线' : '离线'}
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  </>
                 ) : (
                   <span className="empty-hint">等待朋友加入</span>
                 )}

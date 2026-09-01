@@ -37,9 +37,13 @@ export function ActionBar({ actions, onAction, onDiscard, canDiscard, selectedTi
   if (buttons.length === 0 && !canDiscard) return null;
 
   const discardDisabled = !canDiscard || !selectedTileId;
+  const isClaimWindow = buttons.some((action) => action.kind !== 'pass');
 
   return (
-    <div className="action-bar">
+    <div
+      className={`action-bar ${isClaimWindow ? 'has-claims' : ''} ${canDiscard && selectedTileId ? 'is-ready' : ''}`}
+      data-action-count={buttons.length}
+    >
       {buttons.map((action, index) => {
         const isCloseGate = action.kind === 'close-gate';
         const needsGateDiscard = isCloseGate && Boolean(action.tileIds?.length);

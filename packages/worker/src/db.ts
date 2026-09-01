@@ -1,3 +1,15 @@
+import {
+  DEFAULT_AVATAR,
+  isValidUsername,
+  normalizeUsername,
+  PASSWORD_MIN,
+  sanitizeAvatar,
+  sanitizeProfileBio,
+  sanitizeProfileNickname,
+  sanitizeProfileTitle,
+  USERNAME_MIN,
+  USERNAME_MAX,
+} from '@pizhou/shared';
 import type {
   FriendItem,
   FriendRequestItem,
@@ -64,12 +76,114 @@ export interface FriendRequestRow {
   created_at: number;
 }
 
-export async function hashPassword(password: string): Promise<string> {
-  const enc = new TextEncoder().encode(`${password}:pizhou_salt_v1`);
+const PASSWORD_HASH_PREFIX = 'pbkdf2-sha256';
+const PASSWORD_HASH_ITERATIONS = 120_000;
+const PASSWORD_SALT_BYTES = 16;
+const LEGACY_PASSWORD_SALT = 'pizhou_salt_v1';
+
+function encodeBase64Url(bytes: Uint8Array): string {
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function decodeBase64Url(value: string): Uint8Array {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
+  const binary = atob(normalized);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+function constantTimeStringEqual(left: string, right: string): boolean {
+  let difference = left.length ^ right.length;
+  const length = Math.max(left.length, right.length);
+  for (let i = 0; i < length; i += 1) {
+    difference |= (left.charCodeAt(i) || 0) ^ (right.charCodeAt(i) || 0);
+  }
+  return difference === 0;
+}
+
+async function legacyHashPassword(password: string): Promise<string> {
+  const enc = new TextEncoder().encode(`${password}:${LEGACY_PASSWORD_SALT}`);
   const buf = await crypto.subtle.digest('SHA-256', enc);
   return Array.from(new Uint8Array(buf))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
+}
+
+export async function hashPassword(password: string): Promise<string> {
+  const salt = crypto.getRandomValues(new Uint8Array(PASSWORD_SALT_BYTES));
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits'],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt,
+      iterations: PASSWORD_HASH_ITERATIONS,
+      hash: 'SHA-256',
+    },
+    key,
+    256,
+  );
+  return `${PASSWORD_HASH_PREFIX}$${PASSWORD_HASH_ITERATIONS}$${encodeBase64Url(salt)}$${encodeBase64Url(new Uint8Array(bits))}`;
+}
+
+async function verifyPassword(
+  password: string,
+  storedHash: string,
+): Promise<{ valid: boolean; needsUpgrade: boolean }> {
+  if (!storedHash.startsWith(`${PASSWORD_HASH_PREFIX}$`)) {
+    const legacyHash = await legacyHashPassword(password);
+    return {
+      valid: constantTimeStringEqual(legacyHash, storedHash),
+      needsUpgrade: true,
+    };
+  }
+
+  const parts = storedHash.split('$');
+  if (parts.length !== 4) return { valid: false, needsUpgrade: false };
+  const iterations = Number(parts[1]);
+  if (!Number.isInteger(iterations) || iterations < 10_000 || iterations > 1_000_000) {
+    return { valid: false, needsUpgrade: false };
+  }
+
+  try {
+    const salt = decodeBase64Url(parts[2]!);
+    const expected = decodeBase64Url(parts[3]!);
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(password),
+      { name: 'PBKDF2' },
+      false,
+      ['deriveBits'],
+    );
+    const bits = await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+      key,
+      expected.length * 8,
+    );
+    const actual = new Uint8Array(bits);
+    let difference = actual.length ^ expected.length;
+    for (let i = 0; i < Math.max(actual.length, expected.length); i += 1) {
+      difference |= (actual[i] || 0) ^ (expected[i] || 0);
+    }
+    return { valid: difference === 0, needsUpgrade: iterations < PASSWORD_HASH_ITERATIONS };
+  } catch {
+    return { valid: false, needsUpgrade: false };
+  }
+}
+
+function generateToken(userId: string): string {
+  const suffix = typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 14)}`;
+  return `tk_${userId}_${suffix}`;
 }
 
 export function generateId(prefix = 'u'): string {
@@ -167,13 +281,37 @@ export class HubDatabase {
     }
   }
 
+  private async usernameExists(username: string, excludeUserId?: string): Promise<boolean> {
+    if (this.sql) {
+      const rows = this.sql.exec(
+        `SELECT id FROM users WHERE LOWER(username) = LOWER(?)${excludeUserId ? ' AND id != ?' : ''}`,
+        ...(excludeUserId ? [username, excludeUserId] : [username]),
+      ).toArray();
+      return rows.length > 0;
+    }
+    for (const user of this.memUsers.values()) {
+      if (excludeUserId && user.id === excludeUserId) continue;
+      if (user.username.toLowerCase() === username.toLowerCase()) return true;
+    }
+    return false;
+  }
+
+  async getUserById(userId: string): Promise<UserRow | null> {
+    if (!userId) return null;
+    if (this.sql) {
+      const rows = this.sql.exec(`SELECT * FROM users WHERE id = ?`, userId).toArray();
+      return (rows[0] as UserRow) ?? null;
+    }
+    return this.memUsers.get(userId) ?? null;
+  }
+
   async createGuest(nickname?: string): Promise<{ token: string; user: UserProfile }> {
     const userId = generateId('guest');
     const username = `guest_${userId}`;
-    const token = `tk_${userId}_${Math.random().toString(36).slice(2, 10)}`;
+    const token = generateToken(userId);
     const passHash = await hashPassword(token);
     const now = Date.now();
-    const finalNick = nickname?.trim() || `雀友${userId.replace('guest_', '')}`;
+    const finalNick = sanitizeProfileNickname(nickname, `雀友${userId.replace('guest_', '')}`);
 
     if (this.sql) {
       this.sql.exec(
@@ -202,7 +340,7 @@ export class HubDatabase {
       this.memProfiles.set(userId, {
         user_id: userId,
         nickname: finalNick,
-        avatar: '🀄',
+        avatar: DEFAULT_AVATAR,
         title: '初学雀友',
         bio: '不碰坎不上，单钓不换张！',
         updated_at: now,
@@ -215,7 +353,7 @@ export class HubDatabase {
         userId,
         username,
         nickname: finalNick,
-        avatar: '🀄',
+        avatar: DEFAULT_AVATAR,
         title: '初学雀友',
         bio: '不碰坎不上，单钓不换张！',
         isGuest: true,
@@ -226,24 +364,18 @@ export class HubDatabase {
   }
 
   async register(username: string, password: string, nickname?: string): Promise<{ token: string; user: UserProfile } | string> {
-    const cleanUser = username.trim();
-    if (cleanUser.length < 2) return '账号长度至少2位';
-    if (!password || password.length < 4) return '密码长度至少4位';
-
-    if (this.sql) {
-      const existing = this.sql.exec(`SELECT id FROM users WHERE username = ?`, cleanUser).toArray();
-      if (existing.length > 0) return '账号已被注册';
-    } else {
-      for (const u of this.memUsers.values()) {
-        if (u.username === cleanUser) return '账号已被注册';
-      }
-    }
+    const cleanUser = normalizeUsername(username);
+    if (cleanUser.length < USERNAME_MIN) return `账号长度至少${USERNAME_MIN}位`;
+    if (cleanUser.length > USERNAME_MAX) return `账号长度不能超过${USERNAME_MAX}位`;
+    if (!isValidUsername(cleanUser)) return '账号不能包含控制字符';
+    if (typeof password !== 'string' || password.length < PASSWORD_MIN) return `密码长度至少${PASSWORD_MIN}位`;
+    if (await this.usernameExists(cleanUser)) return '账号已被注册';
 
     const userId = generateId('usr');
-    const token = `tk_${userId}_${Math.random().toString(36).slice(2, 10)}`;
+    const token = generateToken(userId);
     const passHash = await hashPassword(password);
     const now = Date.now();
-    const finalNick = nickname?.trim() || cleanUser;
+    const finalNick = sanitizeProfileNickname(nickname, cleanUser);
 
     if (this.sql) {
       this.sql.exec(
@@ -272,7 +404,7 @@ export class HubDatabase {
       this.memProfiles.set(userId, {
         user_id: userId,
         nickname: finalNick,
-        avatar: '🀄',
+        avatar: DEFAULT_AVATAR,
         title: '初学雀友',
         bio: '不碰坎不上，单钓不换张！',
         updated_at: now,
@@ -285,7 +417,7 @@ export class HubDatabase {
         userId,
         username: cleanUser,
         nickname: finalNick,
-        avatar: '🀄',
+        avatar: DEFAULT_AVATAR,
         title: '初学雀友',
         bio: '不碰坎不上，单钓不换张！',
         isGuest: false,
@@ -296,30 +428,39 @@ export class HubDatabase {
   }
 
   async login(username: string, password: string): Promise<{ token: string; user: UserProfile } | string> {
-    const cleanUser = username.trim();
-    const passHash = await hashPassword(password);
+    const cleanUser = normalizeUsername(username);
+    if (typeof password !== 'string') return '账号或密码不正确';
 
     let userRow: UserRow | null = null;
     if (this.sql) {
-      const rows = this.sql.exec(`SELECT * FROM users WHERE username = ?`, cleanUser).toArray();
+      const rows = this.sql.exec(`SELECT * FROM users WHERE LOWER(username) = LOWER(?)`, cleanUser).toArray();
       if (rows.length > 0) userRow = rows[0] as UserRow;
     } else {
       for (const u of this.memUsers.values()) {
-        if (u.username === cleanUser) {
+        if (u.username.toLowerCase() === cleanUser.toLowerCase()) {
           userRow = u;
           break;
         }
       }
     }
 
-    if (!userRow || userRow.password_hash !== passHash) {
+    if (!userRow) {
       return '账号或密码不正确';
     }
 
-    const token = `tk_${userRow.id}_${Math.random().toString(36).slice(2, 10)}`;
+    const passwordCheck = await verifyPassword(password, userRow.password_hash);
+    if (!passwordCheck.valid) return '账号或密码不正确';
+
+    const token = generateToken(userRow.id);
     if (this.sql) {
-      this.sql.exec(`UPDATE users SET token = ? WHERE id = ?`, token, userRow.id);
+      if (passwordCheck.needsUpgrade) {
+        const upgradedHash = await hashPassword(password);
+        this.sql.exec(`UPDATE users SET password_hash = ?, token = ? WHERE id = ?`, upgradedHash, token, userRow.id);
+      } else {
+        this.sql.exec(`UPDATE users SET token = ? WHERE id = ?`, token, userRow.id);
+      }
     } else {
+      if (passwordCheck.needsUpgrade) userRow.password_hash = await hashPassword(password);
       userRow.token = token;
     }
 
@@ -330,7 +471,7 @@ export class HubDatabase {
         userId: userRow.id,
         username: userRow.username,
         nickname: userRow.username,
-        avatar: '🀄',
+        avatar: DEFAULT_AVATAR,
         title: '初学雀友',
         bio: '不碰坎不上，单钓不换张！',
         isGuest: Boolean(userRow.is_guest),
@@ -338,6 +479,94 @@ export class HubDatabase {
         updatedAt: Date.now(),
       },
     };
+  }
+
+  async upgradeGuest(
+    userId: string,
+    username: string,
+    password: string,
+    nickname?: string,
+  ): Promise<{ token: string; user: UserProfile } | string> {
+    const user = await this.getUserById(userId);
+    if (!user) return '账号不存在';
+    if (!user.is_guest) return '该账号已经是正式账号';
+
+    const cleanUser = normalizeUsername(username);
+    if (cleanUser.length < USERNAME_MIN) return `账号长度至少${USERNAME_MIN}位`;
+    if (cleanUser.length > USERNAME_MAX) return `账号长度不能超过${USERNAME_MAX}位`;
+    if (!isValidUsername(cleanUser)) return '账号不能包含控制字符';
+    if (typeof password !== 'string' || password.length < PASSWORD_MIN) return `密码长度至少${PASSWORD_MIN}位`;
+    if (await this.usernameExists(cleanUser, userId)) return '账号已被注册';
+
+    const passHash = await hashPassword(password);
+    const token = generateToken(userId);
+    if (this.sql) {
+      this.sql.exec(
+        `UPDATE users SET username = ?, password_hash = ?, token = ?, is_guest = 0 WHERE id = ?`,
+        cleanUser,
+        passHash,
+        token,
+        userId,
+      );
+    } else {
+      user.username = cleanUser;
+      user.password_hash = passHash;
+      user.token = token;
+      user.is_guest = 0;
+    }
+
+    if (nickname !== undefined) {
+      await this.updateProfile(userId, { nickname });
+    }
+    const profile = await this.getProfile(userId);
+    if (!profile) return '账号资料初始化失败';
+    return { token, user: profile };
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<{ token: string; user: UserProfile } | string> {
+    const user = await this.getUserById(userId);
+    if (!user) return '账号不存在';
+    if (user.is_guest) return '游客账号请先升级为正式账号';
+    if (typeof currentPassword !== 'string') return '当前密码不正确';
+    if (typeof newPassword !== 'string' || newPassword.length < PASSWORD_MIN) return `新密码长度至少${PASSWORD_MIN}位`;
+    if (currentPassword === newPassword) return '新密码不能与当前密码相同';
+
+    const passwordCheck = await verifyPassword(currentPassword, user.password_hash);
+    if (!passwordCheck.valid) return '当前密码不正确';
+
+    const passHash = await hashPassword(newPassword);
+    const token = generateToken(userId);
+    if (this.sql) {
+      this.sql.exec(
+        `UPDATE users SET password_hash = ?, token = ? WHERE id = ?`,
+        passHash,
+        token,
+        userId,
+      );
+    } else {
+      user.password_hash = passHash;
+      user.token = token;
+    }
+
+    const profile = await this.getProfile(userId);
+    if (!profile) return '账号资料读取失败';
+    return { token, user: profile };
+  }
+
+  async revokeToken(token: string): Promise<boolean> {
+    const user = await this.getUserByToken(token);
+    if (!user) return false;
+    const replacement = generateToken(user.id);
+    if (this.sql) {
+      this.sql.exec(`UPDATE users SET token = ? WHERE id = ?`, replacement, user.id);
+    } else {
+      user.token = replacement;
+    }
+    return true;
   }
 
   async getUserByToken(token: string): Promise<UserRow | null> {
@@ -366,10 +595,10 @@ export class HubDatabase {
       return {
         userId: r.id,
         username: r.username,
-        nickname: r.nickname || r.username,
-        avatar: r.avatar || '🀄',
-        title: r.title || '初学雀友',
-        bio: r.bio || '不碰坎不上，单钓不换张！',
+        nickname: sanitizeProfileNickname(r.nickname, r.username),
+        avatar: sanitizeAvatar(r.avatar, DEFAULT_AVATAR),
+        title: sanitizeProfileTitle(r.title),
+        bio: sanitizeProfileBio(r.bio),
         isGuest: Boolean(r.is_guest),
         createdAt: r.created_at,
         updatedAt: r.updated_at || r.created_at,
@@ -382,10 +611,10 @@ export class HubDatabase {
     return {
       userId: user.id,
       username: user.username,
-      nickname: p?.nickname || user.username,
-      avatar: p?.avatar || '🀄',
-      title: p?.title || '初学雀友',
-      bio: p?.bio || '不碰坎不上，单钓不换张！',
+      nickname: sanitizeProfileNickname(p?.nickname, user.username),
+      avatar: sanitizeAvatar(p?.avatar, DEFAULT_AVATAR),
+      title: sanitizeProfileTitle(p?.title),
+      bio: sanitizeProfileBio(p?.bio),
       isGuest: Boolean(user.is_guest),
       createdAt: user.created_at,
       updatedAt: p?.updated_at || user.created_at,
@@ -397,10 +626,12 @@ export class HubDatabase {
     const current = await this.getProfile(userId);
     if (!current) return null;
 
-    const nickname = data.nickname?.trim() || current.nickname;
-    const avatar = data.avatar || current.avatar;
-    const title = data.title || current.title;
-    const bio = data.bio !== undefined ? data.bio : current.bio;
+    const nickname = sanitizeProfileNickname(data.nickname, current.nickname);
+    const avatar = data.avatar === undefined
+      ? current.avatar
+      : sanitizeAvatar(data.avatar, current.avatar);
+    const title = sanitizeProfileTitle(data.title, current.title);
+    const bio = sanitizeProfileBio(data.bio, current.bio);
 
     if (this.sql) {
       this.sql.exec(
@@ -599,9 +830,9 @@ export class HubDatabase {
           users.push({
             id: u.id,
             username: u.username,
-            nickname: nick,
-            avatar: p?.avatar || '🀄',
-            title: p?.title || '初学雀友',
+            nickname: sanitizeProfileNickname(nick, u.username),
+            avatar: sanitizeAvatar(p?.avatar, DEFAULT_AVATAR),
+            title: sanitizeProfileTitle(p?.title),
           });
         }
       }
@@ -615,9 +846,9 @@ export class HubDatabase {
       results.push({
         userId: u.id,
         username: u.username,
-        nickname: u.nickname || u.username,
-        avatar: u.avatar || '🀄',
-        title: u.title || '初学雀友',
+        nickname: sanitizeProfileNickname(u.nickname, u.username),
+        avatar: sanitizeAvatar(u.avatar, DEFAULT_AVATAR),
+        title: sanitizeProfileTitle(u.title),
         isFriend,
         hasPendingRequest: hasPending,
       });
@@ -698,9 +929,9 @@ export class HubDatabase {
         id: r.id,
         fromUserId: r.from_user_id,
         fromUsername: r.from_username,
-        fromNickname: r.from_nickname || r.from_username,
-        fromAvatar: r.from_avatar || '🀄',
-        fromTitle: r.from_title || '初学雀友',
+        fromNickname: sanitizeProfileNickname(r.from_nickname, r.from_username),
+        fromAvatar: sanitizeAvatar(r.from_avatar, DEFAULT_AVATAR),
+        fromTitle: sanitizeProfileTitle(r.from_title),
         createdAt: r.created_at,
       }));
     }
@@ -715,9 +946,9 @@ export class HubDatabase {
             id: r.id,
             fromUserId: r.from_user_id,
             fromUsername: u.username,
-            fromNickname: p?.nickname || u.username,
-            fromAvatar: p?.avatar || '🀄',
-            fromTitle: p?.title || '初学雀友',
+            fromNickname: sanitizeProfileNickname(p?.nickname, u.username),
+            fromAvatar: sanitizeAvatar(p?.avatar, DEFAULT_AVATAR),
+            fromTitle: sanitizeProfileTitle(p?.title),
             createdAt: r.created_at,
           });
         }
@@ -789,10 +1020,10 @@ export class HubDatabase {
       return rows.map((r) => ({
         userId: r.friend_id,
         username: r.username,
-        nickname: r.nickname || r.username,
-        avatar: r.avatar || '🀄',
-        title: r.title || '初学雀友',
-        bio: r.bio || '不碰坎不上，单钓不换张！',
+        nickname: sanitizeProfileNickname(r.nickname, r.username),
+        avatar: sanitizeAvatar(r.avatar, DEFAULT_AVATAR),
+        title: sanitizeProfileTitle(r.title),
+        bio: sanitizeProfileBio(r.bio),
         status: 'offline',
         addedAt: r.added_at,
       }));
@@ -807,10 +1038,10 @@ export class HubDatabase {
           items.push({
             userId: f.friend_id,
             username: u.username,
-            nickname: p?.nickname || u.username,
-            avatar: p?.avatar || '🀄',
-            title: p?.title || '初学雀友',
-            bio: p?.bio || '不碰坎不上，单钓不换张！',
+            nickname: sanitizeProfileNickname(p?.nickname, u.username),
+            avatar: sanitizeAvatar(p?.avatar, DEFAULT_AVATAR),
+            title: sanitizeProfileTitle(p?.title),
+            bio: sanitizeProfileBio(p?.bio),
             status: 'offline',
             addedAt: f.created_at,
           });

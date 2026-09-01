@@ -1,18 +1,20 @@
 import { useState } from 'react';
-import type { UserProfile } from '@pizhou/shared';
+import { NICKNAME_MAX, PASSWORD_MIN, USERNAME_MAX, type UserProfile } from '@pizhou/shared';
 import { apiGuestLogin, apiLogin, apiRegister } from '../api/auth';
 
 interface AuthModalProps {
   serverUrl: string;
   currentUser: UserProfile | null;
   onClose: () => void;
-  onSuccess: (user: UserProfile) => void;
+  onSuccess: (user: UserProfile, token?: string) => void;
 }
 
 export function AuthModal({ serverUrl, currentUser, onClose, onSuccess }: AuthModalProps) {
   const [tab, setTab] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordConfirmation, setPasswordConfirmation] = useState('');
+  const [registrationNickname, setRegistrationNickname] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -21,7 +23,7 @@ export function AuthModal({ serverUrl, currentUser, onClose, onSuccess }: AuthMo
     setError('');
     try {
       const res = await apiGuestLogin(serverUrl, currentUser?.nickname);
-      onSuccess(res.user);
+      onSuccess(res.user, res.token);
       onClose();
     } catch (err: any) {
       setError(err.message || '游客登录失败');
@@ -40,7 +42,7 @@ export function AuthModal({ serverUrl, currentUser, onClose, onSuccess }: AuthMo
     setError('');
     try {
       const res = await apiLogin(serverUrl, username, password);
-      onSuccess(res.user);
+      onSuccess(res.user, res.token);
       onClose();
     } catch (err: any) {
       setError(err.message || '登录失败');
@@ -60,16 +62,28 @@ export function AuthModal({ serverUrl, currentUser, onClose, onSuccess }: AuthMo
       setError('账号至少需 2 个字符');
       return;
     }
-    if (password.length < 4) {
-      setError('密码至少需 4 位');
+    if (cleanUser.length > USERNAME_MAX) {
+      setError(`账号不能超过 ${USERNAME_MAX} 个字符`);
+      return;
+    }
+    if (password.length < PASSWORD_MIN) {
+      setError(`密码至少需 ${PASSWORD_MIN} 位`);
+      return;
+    }
+    if (password !== passwordConfirmation) {
+      setError('两次输入的密码不一致');
       return;
     }
     setLoading(true);
     setError('');
     try {
-      // Nickname directly uses username
-      const res = await apiRegister(serverUrl, cleanUser, password, cleanUser);
-      onSuccess(res.user);
+      const res = await apiRegister(
+        serverUrl,
+        cleanUser,
+        password,
+        registrationNickname.trim() || cleanUser,
+      );
+      onSuccess(res.user, res.token);
       onClose();
     } catch (err: any) {
       setError(err.message || '注册失败');
@@ -122,9 +136,25 @@ export function AuthModal({ serverUrl, currentUser, onClose, onSuccess }: AuthMo
               placeholder={tab === 'login' ? '请输入您的账号' : '设置账号名（自动作为昵称）'}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              maxLength={tab === 'register' ? USERNAME_MAX : undefined}
+              autoComplete="username"
               autoFocus
             />
           </div>
+
+          {tab === 'register' ? (
+            <div className="form-group">
+              <label>游戏昵称</label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="可稍后在档案中修改"
+                value={registrationNickname}
+                onChange={(e) => setRegistrationNickname(e.target.value)}
+                maxLength={NICKNAME_MAX}
+              />
+            </div>
+          ) : null}
 
           <div className="form-group">
             <label>登录密码</label>
@@ -134,8 +164,23 @@ export function AuthModal({ serverUrl, currentUser, onClose, onSuccess }: AuthMo
               placeholder="请输入密码"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
             />
           </div>
+
+          {tab === 'register' ? (
+            <div className="form-group">
+              <label>确认密码</label>
+              <input
+                type="password"
+                className="input-field"
+                placeholder={`再次输入密码（至少 ${PASSWORD_MIN} 位）`}
+                value={passwordConfirmation}
+                onChange={(e) => setPasswordConfirmation(e.target.value)}
+                autoComplete="new-password"
+              />
+            </div>
+          ) : null}
 
           <button type="submit" className="btn-action primary auth-submit-btn" disabled={loading}>
             {loading ? '处理中...' : tab === 'login' ? '立即登录' : '立即注册并登录'}

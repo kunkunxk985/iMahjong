@@ -195,6 +195,13 @@ test('三组碰坎杠后可选择出牌并关门，臭牌记录采用全桌牌�
   assert.deepEqual(runtime.hand.map((tile) => tile.key).sort(), ['tong-1', 'tong-1', 'tong-2', 'tong-2']);
   assert.deepEqual(runtime.discardedBeforeClose.sort(), ['dragon-1', 'wan-8', 'wan-9']);
   assert.equal(runtime.discards.some((tile) => tile.id === gateDiscard.id), true);
+
+  // 关门完成后，之后才出现的牌不能改变这位玩家的“关门前牌河”快照；
+  // 其他尚未关门的玩家仍要继续记录这张牌。
+  const postCloseDiscard = makeTile('wan', 7, 0);
+  game['recordResolvedDiscard'](postCloseDiscard);
+  assert.equal(runtime.discardedBeforeClose.includes(postCloseDiscard.key), false);
+  assert.equal(game.seats[1]!.discardedBeforeClose.includes(postCloseDiscard.key), true);
 });
 
 test('有吃牌或不足三组时不能两对关门', () => {
@@ -324,7 +331,7 @@ test('关门后不能吃碰杠别家弃牌，只允许胡或过', () => {
   assert.equal(claimsHu?.some((item) => item.kind === 'ming-gang'), false);
 });
 
-test('三组两对遇到未出现过的香牌点炮，可真实胡牌并触发包香', () => {
+test('三组两对未关门遇到未出现过的香牌点炮，可真实胡牌并触发包香', () => {
   const game = new PizhouGame({ dealer: 2 });
   const winner = game.seats[0]!;
   winner.hand = [
@@ -337,7 +344,7 @@ test('三组两对遇到未出现过的香牌点炮，可真实胡牌并触发�
     { type: 'peng', tiles: [makeTile('tiao', 4, 0), makeTile('tiao', 4, 1), makeTile('tiao', 4, 2)] },
   ];
   winner.closed = false;
-  winner.closedTwoPair = true;
+  winner.closedTwoPair = false;
   winner.discardedBeforeClose = [];
 
   const shot = makeTile('tong', 1, 2);

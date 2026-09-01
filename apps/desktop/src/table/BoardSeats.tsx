@@ -6,6 +6,7 @@ import {
   type PublicPlayerView,
 } from '@pizhou/shared';
 import { TileView } from '../components/TileView';
+import { AvatarView } from '../components/AvatarView';
 
 export type BoardPosition = 'top' | 'right' | 'bottom' | 'left';
 type ViewPlayer = ClientView['players'][number];
@@ -25,7 +26,7 @@ export const BoardPlayer = memo(function BoardPlayer({
   you?: boolean;
   current: boolean;
 }) {
-  const avatar = player.isBot ? '陪' : player.nickname.slice(0, 1);
+  const avatar = player.isBot ? '陪' : player.avatar;
   return (
     <div
       className={`board-player board-player-${position} ${current ? 'is-current' : ''} ${you ? 'is-you' : ''}`}
@@ -33,7 +34,7 @@ export const BoardPlayer = memo(function BoardPlayer({
     >
       {current ? <span className="board-turn-pill">出牌中</span> : null}
       <div className={`board-avatar avatar-${player.seat}`}>
-        <span>{avatar}</span>
+        <AvatarView avatar={avatar} className="board-avatar-content" alt={`${player.nickname}头像`} />
         <i>{SEAT_NAMES[player.seat]}</i>
       </div>
       <div className="board-player-copy">
@@ -103,7 +104,7 @@ export const DiscardRiver = memo(function DiscardRiver({
           return (
             <div
               key={tile.id}
-              className={`board-discard-cell ${tile.id === flyingDiscardId ? 'is-flight-target' : ''}`}
+              className={`board-discard-cell ${tile.id === lastDiscardId ? 'is-last' : ''} ${tile.id === flyingDiscardId ? 'is-flight-target' : ''}`}
               data-discard-tile-id={tile.id}
             >
               <TileView

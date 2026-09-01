@@ -60,8 +60,12 @@ export interface SeatScore {
   decomp: WinDecomp;
 }
 
-function huMultiplierForSeat(score: SeatScore): number {
-  return (score.isDealer ? 2 : 1) * (score.piaoHun ? 2 : 1);
+/**
+ * 本房规则：飘荤先把飘荤者本人的牌面胡数乘 2；庄家不改自己的牌面胡数，
+ * 而是在两家查胡时把涉及庄家的胡差整体乘 2。幺差和荤底不走这里。
+ */
+function piaoHuMultiplierForSeat(score: SeatScore): number {
+  return score.piaoHun ? 2 : 1;
 }
 
 export interface ChaHuResult {
@@ -362,7 +366,9 @@ export function countPk(_hand: Array<{ key: string }>, exposed: Meld[]): {
 }
 
 export function isPiaoHun(hand: Array<{ key: string }>, exposed: Meld[]): boolean {
-  const { pk } = countPk(hand, exposed);
+  const { pk, chow } = countPk(hand, exposed);
+  // 飘荤要求成组部分是碰、坎或杠；含吃的四组牌走普通胡/吃牌听顺口径。
+  if (chow > 0) return false;
   const totalPk = pk;
   const pairs = Object.values(countKeys(hand)).filter((n) => n === 2).length;
   if (totalPk === 4 && hand.length === 1) return true;
@@ -404,7 +410,9 @@ export function detectBaoZhuang(input: BaoZhuangCheckInput): BaoZhuangReason | n
     if (canFormSequence(waitKey, discardKey)) return 'chow_wait_seq';
   }
   if (totalPk === 3 && chow === 0 && pairs === 2 && waitHand.length === 4) {
-    if (!input.closedTwoPair) return null;
+    // 公开邳州规则明确“两对关门玩家不受包香规则限制”——
+    // 包香只适用于尚未选择两对关门、仍以两对等牌的玩家。
+    if (input.closedTwoPair) return null;
     if (!(input.discardedBeforeClose ?? []).includes(discardKey)) return 'xiang';
   }
   return null;
@@ -468,11 +476,11 @@ export function scoreSeat(input: {
     breakdown.unshift({ label: input.winType === 'qidong-gang-hu' ? '起手杠胡' : '胡牌', hu: BASE_HU, yao: 0 });
     notes.push('胡牌+10胡');
     if (piao) {
-      notes.push('飘荤（本人胡数×2后结算）');
+      notes.push('飘荤（先将本人牌面胡数×2，再查胡）');
     }
   }
   if (input.isDealer) {
-    notes.push('庄家（本人胡数×2后结算）');
+    notes.push('庄家（涉及本人的两两胡差×2）');
   }
 
   if (notes.length === 0) {
@@ -587,11 +595,12 @@ export function settleChaHu(input: {
   for (let i = 0; i < 4; i += 1) {
     for (let j = i + 1; j < 4; j += 1) {
       const isDealerPair = i === input.dealer || j === input.dealer;
-      const huMultiplierA = huMultiplierForSeat(seats[i]!);
-      const huMultiplierB = huMultiplierForSeat(seats[j]!);
+      const huMultiplierA = piaoHuMultiplierForSeat(seats[i]!);
+      const huMultiplierB = piaoHuMultiplierForSeat(seats[j]!);
       const effectiveHuA = seats[i]!.hu * huMultiplierA;
       const effectiveHuB = seats[j]!.hu * huMultiplierB;
-      const diffHu = effectiveHuA - effectiveHuB;
+      const diffHuBeforeDealer = effectiveHuA - effectiveHuB;
+      const diffHu = diffHuBeforeDealer * (isDealerPair ? 2 : 1);
       const diffYao = seats[i]!.yao - seats[j]!.yao;
       const pairPoints = diffHu * HU_RATE + diffYao * YAO_RATE;
 
@@ -647,7 +656,7 @@ export function settleChaHu(input: {
     const winnerSeat = input.winnerSeat;
     const pack = baoZhuang.payerSeat;
     const winnerSeatObj = seats[winnerSeat]!;
-    const huMultiplierWinner = huMultiplierForSeat(winnerSeatObj);
+    const huMultiplierWinner = piaoHuMultiplierForSeat(winnerSeatObj);
     const effectiveHuWinner = winnerSeatObj.hu * huMultiplierWinner;
     let totalWin = 0;
 
@@ -661,9 +670,10 @@ export function settleChaHu(input: {
     for (let seat = 0; seat < 4; seat += 1) {
       if (seat === winnerSeat) continue;
       const opponent = seats[seat]!;
-      const huMultiplierOpp = huMultiplierForSeat(opponent);
+      const huMultiplierOpp = piaoHuMultiplierForSeat(opponent);
       const effectiveHuOpp = opponent.hu * huMultiplierOpp;
-      const diffHu = effectiveHuWinner - effectiveHuOpp;
+      const diffHuBeforeDealer = effectiveHuWinner - effectiveHuOpp;
+      const diffHu = diffHuBeforeDealer * (winnerSeat === input.dealer || seat === input.dealer ? 2 : 1);
       const diffYao = winnerSeatObj.yao - opponent.yao;
       const pairPoints = diffHu * HU_RATE + diffYao * YAO_RATE;
 

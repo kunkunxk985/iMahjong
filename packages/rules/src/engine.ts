@@ -5,6 +5,7 @@ import {
   sortTiles,
   type AvailableAction,
   type ClientView,
+  DEFAULT_AVATAR,
   type GameAction,
   type GamePhase,
   type PublicPlayerView,
@@ -29,6 +30,7 @@ import type { SeatRuntime } from './types.ts';
 
 export interface PlayerMeta {
   nickname: string;
+  avatar?: string;
   ready: boolean;
   online: boolean;
   isHost: boolean;
@@ -231,6 +233,7 @@ export class PizhouGame {
       const publicView: PublicPlayerView = {
         seat,
         nickname: meta.nickname,
+        avatar: meta.avatar ?? DEFAULT_AVATAR,
         ready: meta.ready,
         online: meta.online,
         isHost: meta.isHost,
@@ -555,6 +558,9 @@ export class PizhouGame {
    */
   private recordResolvedDiscard(tile: Tile): void {
     for (const target of this.seats) {
+      // “香/臭”只看该玩家报两对关门之前的牌河。关门完成后，
+      // 后续才落地的牌不能追溯改变这位玩家已经锁定的牌河快照。
+      if (target.closedTwoPair) continue;
       if (!target.discardedBeforeClose.includes(tile.key)) {
         target.discardedBeforeClose.push(tile.key);
       }

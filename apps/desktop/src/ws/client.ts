@@ -1,5 +1,6 @@
 /** Renderer-side WebSocket transport. Domain rules stay on the server. */
 import {
+  DEFAULT_AVATAR,
   DEFAULT_WS_URL,
   HEARTBEAT_INTERVAL_MS,
   isViewMessage,
@@ -33,6 +34,8 @@ export class GameClient {
   private handlers: ClientHandlers;
   private pendingReconnect: { roomCode: string; token: string } | null = null;
   private boundUser: { userId: string; token: string } | null = null;
+  private playerProfile: { nickname: string; avatar: string } | null = null;
+  private roomActive = false;
   private retries = 0;
   private closedByUser = false;
 
@@ -64,7 +67,12 @@ export class GameClient {
       }
       if (this.pendingReconnect) {
         const pending = this.pendingReconnect;
-        this.send({ type: 'player:reconnect', roomCode: pending.roomCode, token: pending.token });
+        this.send({
+          type: 'player:reconnect',
+          roomCode: pending.roomCode,
+          token: pending.token,
+          ...(this.playerProfile ?? {}),
+        });
       }
     };
     ws.onclose = () => {
@@ -110,6 +118,7 @@ export class GameClient {
       }
 
       if (isViewMessage(message)) {
+        this.roomActive = true;
         if (message.type === 'game:settlement') {
           this.handlers.onSettlement(message.settlement, message.view);
         } else {
@@ -122,6 +131,7 @@ export class GameClient {
       if (message.type === 'error') {
         if (message.code === 'left') {
           this.pendingReconnect = null;
+          this.roomActive = false;
           this.handlers.onLeft?.();
           return;
         }
@@ -159,20 +169,40 @@ export class GameClient {
     }
   }
 
+  unbindUser(): void {
+    this.boundUser = null;
+    this.playerProfile = null;
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.send({ type: 'friend:unbindUser' });
+    }
+  }
+
+  setPlayerProfile(nickname: string, avatar = DEFAULT_AVATAR): void {
+    this.playerProfile = { nickname, avatar };
+    if (this.roomActive && this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.send({ type: 'player:updateProfile', nickname, avatar });
+    }
+  }
+
   inviteFriend(toUserId: string, roomCode: string): void {
     this.send({ type: 'friend:invite', toUserId, roomCode });
   }
 
-  createRoom(nickname: string, solo = false): void {
-    this.send({ type: 'room:create', nickname, solo });
+  createRoom(nickname: string, avatarOrSolo: string | boolean = DEFAULT_AVATAR, solo = false): void {
+    const avatar = typeof avatarOrSolo === 'string' ? avatarOrSolo : DEFAULT_AVATAR;
+    const isSolo = typeof avatarOrSolo === 'boolean' ? avatarOrSolo : solo;
+    this.playerProfile = { nickname, avatar };
+    this.send({ type: 'room:create', nickname, avatar, solo: isSolo });
   }
 
-  joinRoom(roomCode: string, nickname: string): void {
-    this.send({ type: 'room:join', roomCode, nickname });
+  joinRoom(roomCode: string, nickname: string, avatar = DEFAULT_AVATAR): void {
+    this.playerProfile = { nickname, avatar };
+    this.send({ type: 'room:join', roomCode, nickname, avatar });
   }
 
   leave(): void {
     this.pendingReconnect = null;
+    this.roomActive = false;
     this.send({ type: 'room:leave' });
   }
 
@@ -195,7 +225,7 @@ export class GameClient {
   reconnect(roomCode: string, token: string): void {
     this.pendingReconnect = { roomCode, token };
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.send({ type: 'player:reconnect', roomCode, token });
+      this.send({ type: 'player:reconnect', roomCode, token, ...(this.playerProfile ?? {}) });
     }
   }
 

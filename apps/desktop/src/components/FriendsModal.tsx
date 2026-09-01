@@ -16,6 +16,7 @@ import {
   apiSearchUsers,
   apiSendFriendRequest,
 } from '../api/auth';
+import { AvatarView } from './AvatarView';
 
 interface FriendsModalProps {
   serverUrl: string;
@@ -212,7 +213,9 @@ export function FriendsModal({
                       <div key={f.userId} className="friend-card-row">
                         <div className="friend-card-left">
                           <div className="friend-card-avatar-wrap">
-                            <div className="friend-card-avatar">{f.avatar || '🀄'}</div>
+                            <div className="friend-card-avatar">
+                              <AvatarView avatar={f.avatar} alt={`${f.nickname}头像`} />
+                            </div>
                             <span
                               className={`friend-status-dot ${isPlaying ? 'playing' : isOnline ? 'online' : 'offline'}`}
                               title={isPlaying ? '对局中' : isOnline ? '大厅空闲' : '离线'}
@@ -281,7 +284,9 @@ export function FriendsModal({
                     {requests.map((r) => (
                       <div key={r.id} className="request-card-row">
                         <div className="friend-card-left">
-                          <div className="friend-card-avatar">{r.fromAvatar || '🀄'}</div>
+                          <div className="friend-card-avatar">
+                            <AvatarView avatar={r.fromAvatar} alt={`${r.fromNickname}头像`} />
+                          </div>
                           <div className="friend-card-info">
                             <div className="friend-name-row">
                               <span className="friend-nickname">{r.fromNickname}</span>
@@ -334,7 +339,9 @@ export function FriendsModal({
                   {searchResults.map((u) => (
                     <div key={u.userId} className="search-result-row">
                       <div className="friend-card-left">
-                        <div className="friend-card-avatar">{u.avatar || '🀄'}</div>
+                        <div className="friend-card-avatar">
+                          <AvatarView avatar={u.avatar} alt={`${u.nickname}头像`} />
+                        </div>
                         <div className="friend-card-info">
                           <div className="friend-name-row">
                             <span className="friend-nickname">{u.nickname}</span>
@@ -373,7 +380,12 @@ export function FriendsModal({
             <div className="friend-stats-card" onClick={(e) => e.stopPropagation()}>
               <div className="stats-card-header">
                 <div className="stats-user-meta">
-                  <div className="stats-avatar">{selectedFriendStats.user.avatar || '🀄'}</div>
+                  <div className="stats-avatar">
+                    <AvatarView
+                      avatar={selectedFriendStats.user.avatar}
+                      alt={`${selectedFriendStats.user.nickname}头像`}
+                    />
+                  </div>
                   <div>
                     <div className="stats-user-name">
                       <b>{selectedFriendStats.user.nickname}</b>

@@ -11,7 +11,7 @@ const BAO_LABEL: Record<BaoZhuangReason, string> = {
 const BAO_BRIEF: Record<BaoZhuangReason, string> = {
   four_wait_seq: '四组单钓、不换张，点炮牌与手中单张相连成顺，按飘荤处理。',
   chow_wait_seq: '带吃单钓、不换张，点炮牌与手中单张相连成顺，按普通胡处理。',
-  xiang: '三组两对未关门，点炮牌此前从未出现，按香牌飘荤处理。',
+  xiang: '三组两对但未选择两对关门，点炮牌此前从未出现，按香牌飘荤处理。',
 };
 
 interface HuCelebrationProps {
@@ -110,8 +110,8 @@ export function HuCelebration({ view, settlement, onFinish }: HuCelebrationProps
               </span>
               {settlement.dealerMultiplier > 1 && (
                 <span className="hu-meta-item">
-                  <b className="meta-tag">庄家倍率</b>
-                  <span className="meta-val gold">×2 翻倍</span>
+                  <b className="meta-tag">庄家胡差</b>
+                  <span className="meta-val gold">胡差 ×2</span>
                 </span>
               )}
             </div>

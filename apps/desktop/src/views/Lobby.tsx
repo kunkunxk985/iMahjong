@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { UserProfile } from '@pizhou/shared';
 import { MatchHistoryModal } from '../components/MatchHistoryModal';
+import { AvatarView } from '../components/AvatarView';
 
 export type NetworkStatus = 'connecting' | 'open' | 'closed';
 
@@ -76,7 +77,9 @@ export function Lobby({
             onClick={onOpenProfile}
             title="点击修改头像与头衔"
           >
-            <span className="pill-avatar">{user?.avatar || '🀄'}</span>
+            <span className="pill-avatar">
+              <AvatarView avatar={user?.avatar} alt="我的头像" />
+            </span>
             <span className="pill-name">{user?.nickname || user?.username || nickname}</span>
             <span className="pill-title">{user?.title || '初学雀友'}</span>
             <span className="pill-arrow">›</span>

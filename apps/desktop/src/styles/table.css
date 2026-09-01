@@ -169,6 +169,66 @@
   background: radial-gradient(ellipse at 0% 45%, rgba(251, 211, 111, 0.25), transparent 38%);
 }
 
+.board-turn-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  animation: board-turn-sweep 1.08s cubic-bezier(0.2, 0.85, 0.25, 1) both;
+}
+
+.board-turn-glow.is-top::after {
+  background: linear-gradient(180deg, rgba(255, 230, 150, 0.18), transparent 38%);
+}
+
+.board-turn-glow.is-right::after {
+  background: linear-gradient(270deg, rgba(255, 230, 150, 0.16), transparent 36%);
+}
+
+.board-turn-glow.is-bottom::after {
+  background: linear-gradient(0deg, rgba(255, 230, 150, 0.2), transparent 38%);
+}
+
+.board-turn-glow.is-left::after {
+  background: linear-gradient(90deg, rgba(255, 230, 150, 0.16), transparent 36%);
+}
+
+@keyframes board-turn-sweep {
+  0% { opacity: 0; transform: scale(0.96); }
+  30% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+
+/* Keep the same turn language on the avatar, rack and center compass. */
+.board-player.is-current .board-avatar::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(255, 236, 180, 0.72);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: avatar-current-ring 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes avatar-current-ring {
+  from { opacity: 0.35; transform: scale(0.94); }
+  to { opacity: 0.95; transform: scale(1.04); }
+}
+
+.mahjong-board.turn-top .board-concealed-top,
+.mahjong-board.turn-right .board-concealed-right,
+.mahjong-board.turn-bottom .board-hand-area,
+.mahjong-board.turn-left .board-concealed-left {
+  animation: active-seat-rack 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes active-seat-rack {
+  from { filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5)); }
+  to { filter: drop-shadow(0 6px 16px rgba(251, 211, 111, 0.42)); }
+}
+
 @keyframes board-turn-arrive {
   0% { opacity: 0; filter: brightness(0.8); }
   34% { opacity: 1; filter: brightness(1.16); }
@@ -372,8 +432,47 @@
   transition: opacity 0.08s linear;
 }
 
+.board-discard-cell.is-last::before,
+.board-discard-cell.is-last::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.board-discard-cell.is-last::before {
+  inset: -7px;
+  border-radius: 10px;
+  background: radial-gradient(ellipse, rgba(250, 204, 21, 0.32), transparent 70%);
+  filter: blur(2px);
+  animation: last-discard-beacon 1.5s ease-in-out infinite alternate;
+}
+
+.board-discard-cell.is-last::after {
+  inset: -4px;
+  border: 1px solid rgba(255, 226, 122, 0.62);
+  border-radius: 8px;
+  opacity: 0.3;
+  animation: last-discard-ring 1.5s ease-out infinite;
+}
+
+@keyframes last-discard-beacon {
+  from { opacity: 0.3; transform: scale(0.88); }
+  to { opacity: 0.82; transform: scale(1.08); }
+}
+
+@keyframes last-discard-ring {
+  0% { opacity: 0.72; transform: scale(0.92); }
+  100% { opacity: 0; transform: scale(1.24); }
+}
+
 .board-discard-cell.is-flight-target {
   opacity: 0;
+}
+
+.board-discard-cell.is-last > .tile {
+  position: relative;
+  z-index: 1;
 }
 
 .board-discard .tile.pose-lie {
@@ -488,27 +587,49 @@
   transform: none;
 }
 
-/* Left avatar: vertical bar, long edge hugging left screen edge, above left concealed tiles */
+/* Left avatar: horizontal seat plaque, above the left concealed tiles. */
 .board-player-left {
   top: 28%;
-  /* A 90deg rotation around the left-center origin extends half the plaque's
-     50px height outside its layout box. Keep that bleed inside the board. */
-  left: clamp(25px, 2vw, 30px);
+  left: clamp(18px, 1.7vw, 26px);
   right: auto;
-  transform-origin: left center;
-  transform: rotate(90deg);
-  flex-direction: row;
-}
-
-/* Right avatar: vertical bar, long edge hugging right screen edge, below right concealed tiles */
-.board-player-right {
-  top: 48%;
-  right: clamp(25px, 2vw, 30px);
-  left: auto;
-  transform-origin: right center;
-  transform: rotate(-90deg);
   flex-direction: row;
   text-align: left;
+  border-left: 2px solid rgba(125, 211, 252, 0.72);
+  --side-accent: #7dd3fc;
+}
+
+/* Right avatar: horizontal seat plaque, below the right concealed tiles. */
+.board-player-right {
+  top: 48%;
+  right: clamp(18px, 1.7vw, 26px);
+  left: auto;
+  flex-direction: row;
+  text-align: left;
+  border-right: 2px solid rgba(251, 191, 36, 0.72);
+  --side-accent: #fbbf24;
+}
+
+/* A slim jade/brass light strip gives each side plaque a clear outer edge
+   without adding another badge or stealing space from the player name. */
+.board-player-left::after,
+.board-player-right::after {
+  content: '';
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  width: 2px;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0.72;
+  background: linear-gradient(180deg, transparent, var(--side-accent), transparent);
+}
+
+.board-player-left::after {
+  left: 5px;
+}
+
+.board-player-right::after {
+  right: 5px;
 }
 
 /* Bottom avatar: Bottom-Left corner, never overlapping hand tiles */
@@ -550,18 +671,20 @@
   bottom: -9px;
 }
 
-/* Left plaque rotated 90°: local bottom → visual right (toward table center) */
+/* Keep the turn badge above the left horizontal plaque. */
 .board-player-left .board-turn-pill {
-  top: auto;
-  bottom: -9px;
+  top: -9px;
+  bottom: auto;
   right: auto;
-  left: 10px;
+  left: 12px;
 }
 
-/* Right plaque rotated -90°: local bottom → visual left (toward table center) */
+/* Keep the turn badge above the right horizontal plaque. */
 .board-player-right .board-turn-pill {
-  top: auto;
-  bottom: -9px;
+  top: -9px;
+  bottom: auto;
+  left: auto;
+  right: 12px;
 }
 
 .board-player.is-current .board-avatar {
@@ -610,8 +733,17 @@
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
+.board-avatar > .avatar-image {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .board-avatar i {
   position: absolute;
+  z-index: 2;
   right: 3px;
   bottom: 2px;
   color: #fef08a;
@@ -928,6 +1060,27 @@
   border: 1px solid rgba(239, 208, 128, 0.12);
   border-radius: 50%;
   pointer-events: none;
+}
+
+.board-compass-disc::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 1px solid rgba(255, 230, 150, 0.45);
+  border-top-color: transparent;
+  border-left-color: transparent;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.board-controller.is-active .board-compass-disc::after {
+  opacity: 0.78;
+  animation: compass-ring-sweep 2.4s linear infinite;
+}
+
+@keyframes compass-ring-sweep {
+  to { transform: rotate(360deg); }
 }
 
 .compass-disc-inner {
@@ -1252,6 +1405,28 @@
   transform: translateY(-20px);
 }
 
+/* A small light shelf separates the selected tile from the hand rail.  It
+   keeps the active choice readable even when several hint badges overlap. */
+.board-own-hand .tile.selected::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  width: 72%;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(250, 204, 21, 0.78), transparent 72%);
+  filter: blur(1px);
+  pointer-events: none;
+  transform: translateX(-50%) scale(0.78);
+  animation: selected-tile-shelf 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes selected-tile-shelf {
+  from { opacity: 0.36; transform: translateX(-50%) scale(0.72); }
+  to { opacity: 0.9; transform: translateX(-50%) scale(1); }
+}
+
 .board-own-melds {
   position: absolute;
   right: 0;
@@ -1296,6 +1471,7 @@
 }
 
 .board-action-area .action-bar {
+  position: relative;
   display: flex;
   gap: 7px;
   padding: 6px 7px 8px;
@@ -1309,6 +1485,38 @@
   backdrop-filter: blur(8px);
   pointer-events: auto !important;
   animation: action-bar-pop 0.26s cubic-bezier(0.22, 0.9, 0.28, 1.18) both;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.board-action-area .action-bar.has-claims {
+  border-color: rgba(45, 212, 191, 0.62);
+  box-shadow:
+    inset 0 1px rgba(204, 251, 241, 0.14),
+    0 7px 18px rgba(0, 0, 0, 0.42),
+    0 0 18px rgba(45, 212, 191, 0.18);
+}
+
+.board-action-area .action-bar.has-claims::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 1px solid rgba(94, 234, 212, 0.48);
+  border-radius: 17px;
+  pointer-events: none;
+  animation: claim-bar-pulse 1.2s ease-in-out infinite alternate;
+}
+
+.board-action-area .action-bar.is-ready:not(.has-claims) {
+  border-color: rgba(250, 204, 21, 0.56);
+  box-shadow:
+    inset 0 1px rgba(255, 240, 193, 0.12),
+    0 7px 18px rgba(0, 0, 0, 0.42),
+    0 0 16px rgba(250, 204, 21, 0.14);
+}
+
+@keyframes claim-bar-pulse {
+  from { opacity: 0.3; transform: scale(0.99); }
+  to { opacity: 0.9; transform: scale(1.01); }
 }
 
 @keyframes action-bar-pop {
@@ -1485,10 +1693,29 @@
 /* ─── Authoritative discard flight ─────────────────────────── */
 
 .discard-flight {
+  position: relative;
   filter: drop-shadow(0 12px 15px rgba(0, 0, 0, 0.58));
 }
 
+.discard-flight-glow {
+  position: absolute;
+  inset: -32%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(251, 211, 111, 0.42) 0%, rgba(251, 211, 111, 0.14) 42%, transparent 72%);
+  mix-blend-mode: screen;
+  animation: discard-flight-glow 0.3s ease-out both;
+}
+
+@keyframes discard-flight-glow {
+  0% { opacity: 0; transform: scale(0.45); }
+  24% { opacity: 0.95; transform: scale(0.9); }
+  100% { opacity: 0; transform: scale(1.35); }
+}
+
 .discard-flight-card {
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
   display: grid;
