@@ -212,6 +212,7 @@ export class PizhouGame {
     hostSeat: number;
     metas: PlayerMeta[];
     round?: number;
+    pointRate?: number;
   }): ClientView {
     const players = [0, 1, 2, 3].map((seat) => {
       const runtime = this.seats[seat]!;
@@ -290,6 +291,7 @@ export class PizhouGame {
       settlement: this.settlement,
       hostSeat: input.hostSeat,
       round: input.round ?? 1,
+      pointRate: input.pointRate,
     };
   }
 

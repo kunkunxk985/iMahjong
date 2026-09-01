@@ -7,13 +7,14 @@ interface WaitingRoomProps {
   onStart: () => void;
   onLeave: () => void;
   onRules: () => void;
+  onSetRate?: (rate: number) => void;
 }
 
 function isOccupied(view: ClientView['players'][number], seat: number): boolean {
   return view.nickname !== `空位${seat + 1}`;
 }
 
-export function WaitingRoom({ view, onReady, onStart, onLeave, onRules }: WaitingRoomProps) {
+export function WaitingRoom({ view, onReady, onStart, onLeave, onRules, onSetRate }: WaitingRoomProps) {
   const [copied, setCopied] = useState(false);
   const me = view.players[view.mySeat];
   const occupied = view.players.filter((player, seat) => isOccupied(player, seat));
@@ -76,6 +77,40 @@ export function WaitingRoom({ view, onReady, onStart, onLeave, onRules }: Waitin
             );
           })}
         </ul>
+
+        <div className="waiting-rate-panel">
+          <div className="waiting-rate-header">
+            <span className="waiting-rate-title">
+              💰 本局结算底分单价
+            </span>
+            <span className="waiting-rate-hint">
+              {isHost ? '房主可点击调整' : `房主已设定：${(view.pointRate ?? 0.1) > 0 ? `¥${view.pointRate ?? 0.1}/分` : '纯积分'}`}
+            </span>
+          </div>
+          <div className="waiting-rate-chips">
+            {[
+              { val: 0.1, label: '¥0.1 / 分' },
+              { val: 0.2, label: '¥0.2 / 分' },
+              { val: 0.5, label: '¥0.5 / 分' },
+              { val: 1.0, label: '¥1.0 / 分' },
+              { val: 0, label: '仅看积分' },
+            ].map((option) => {
+              const active = (view.pointRate ?? 0.1) === option.val;
+              return (
+                <button
+                  key={option.val}
+                  type="button"
+                  className={`waiting-rate-chip ${active ? 'active' : ''}`}
+                  disabled={!isHost}
+                  onClick={() => onSetRate?.(option.val)}
+                  title={isHost ? `切换为 ${option.label}` : undefined}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <p className="hint ok">已入座 {occupied.length}/4 · 已准备 {readyCount}/4</p>
 

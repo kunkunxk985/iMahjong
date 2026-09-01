@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { DEFAULT_WS_URL, type ClientView, type GameAction, type Settlement } from '@pizhou/shared';
+import { DEFAULT_WS_URL, type ClientView, type GameAction, type Settlement, type UserProfile } from '@pizhou/shared';
+import { apiGetProfile, apiGuestLogin, getStoredAuth, saveStoredAuth } from './api/auth';
+import { AuthModal } from './components/AuthModal';
 import { HuCelebration } from './components/HuCelebration';
+import { ProfileModal } from './components/ProfileModal';
 import { RulesModal } from './components/RulesModal';
 import { SettingsModal } from './components/SettingsModal';
 import { GameClient, isLoopbackWs } from './ws/client';
@@ -18,6 +21,11 @@ function celebrationKey(view: ClientView): string | null {
 
 function initialNickname(): string {
   try {
+    const savedUser = localStorage.getItem('pizhou.auth_user_v1');
+    if (savedUser) {
+      const parsed = JSON.parse(savedUser);
+      if (parsed?.nickname) return parsed.nickname;
+    }
     const saved = localStorage.getItem('pizhou.nickname');
     if (saved) return saved;
   } catch {
@@ -36,6 +44,10 @@ function savedOverrideUrl(): string {
 
 export function App() {
   const [nickname, setNicknameState] = useState(initialNickname);
+  const [auth, setAuth] = useState<{ token: string | null; user: UserProfile | null }>(() => getStoredAuth());
+  const [authOpen, setAuthOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+
   const [localUrl, setLocalUrl] = useState('');
   const [localUrlReady, setLocalUrlReady] = useState(false);
   const [overrideUrl, setOverrideUrl] = useState(savedOverrideUrl);
@@ -127,6 +139,27 @@ export function App() {
     : (overrideUrl.trim() || DEFAULT_WS_URL);
   const urlReady = soloIntent ? localUrlReady : true;
 
+  // Background auto-guest login or profile refresh
+  useEffect(() => {
+    if (!targetUrl) return;
+    const currentAuth = getStoredAuth();
+    if (!currentAuth.token || !currentAuth.user) {
+      apiGuestLogin(targetUrl, nickname)
+        .then((res) => {
+          setAuth(res);
+          if (res.user?.nickname) setNicknameState(res.user.nickname);
+        })
+        .catch(() => {});
+    } else if (currentAuth.token) {
+      apiGetProfile(targetUrl, currentAuth.token)
+        .then((user) => {
+          setAuth({ token: currentAuth.token, user });
+          if (user.nickname) setNicknameState(user.nickname);
+        })
+        .catch(() => {});
+    }
+  }, [targetUrl]);
+
   useEffect(() => {
     if (!urlReady || !targetUrl) return undefined;
     clientRef.current?.connect(targetUrl);
@@ -147,9 +180,30 @@ export function App() {
     setNicknameState(value);
     try {
       localStorage.setItem('pizhou.nickname', value);
-    } catch {
-      // Ignore storage failures; the current session still works.
+    } catch {}
+    if (auth.user) {
+      const updatedUser: UserProfile = { ...auth.user, nickname: value };
+      setAuth({ token: auth.token, user: updatedUser });
+      saveStoredAuth(auth.token, updatedUser);
     }
+  };
+
+  const handleAuthSuccess = (user: UserProfile) => {
+    const current = getStoredAuth();
+    setAuth({ token: current.token, user });
+    if (user.nickname) {
+      setNicknameState(user.nickname);
+    }
+  };
+
+  const handleLogout = () => {
+    saveStoredAuth(null, null);
+    setAuth({ token: null, user: null });
+    setProfileOpen(false);
+    // Auto re-generate guest
+    apiGuestLogin(targetUrl, nickname)
+      .then((res) => setAuth(res))
+      .catch(() => {});
   };
 
   const requireOnline = (): boolean => {
@@ -249,6 +303,7 @@ export function App() {
             onStart={() => clientRef.current?.start()}
             onLeave={leave}
             onRules={() => setRulesOpen(true)}
+            onSetRate={(rate) => clientRef.current?.setConfig({ pointRate: rate })}
           />
         ) : (
           <Lobby
@@ -257,12 +312,16 @@ export function App() {
             error={error}
             networkStatus={networkStatus}
             serverUrl={displayUrl}
+            token={auth.token}
+            user={auth.user}
             soloBusy={soloBusy}
             onCreateRoom={createRoom}
             onJoinRoom={joinRoom}
             onStartLocal={startLocal}
             onRules={() => setRulesOpen(true)}
             onSettings={() => setSettingsOpen(true)}
+            onOpenProfile={() => setProfileOpen(true)}
+            onOpenAuth={() => setAuthOpen(true)}
           />
         )}
 
@@ -280,8 +339,36 @@ export function App() {
             onLeave={leave}
             readyCount={view.players.filter((player) => player.ready).length}
             alreadyReady={Boolean(view.players[view.mySeat]?.ready)}
+            gameMode={mode === 'local' ? 'local' : 'online'}
+            serverUrl={displayUrl}
+            token={auth.token}
           />
         ) : null}
+
+        {authOpen ? (
+          <AuthModal
+            serverUrl={displayUrl}
+            currentUser={auth.user}
+            onClose={() => setAuthOpen(false)}
+            onSuccess={handleAuthSuccess}
+          />
+        ) : null}
+
+        {profileOpen && auth.user ? (
+          <ProfileModal
+            serverUrl={displayUrl}
+            token={auth.token}
+            user={auth.user}
+            onClose={() => setProfileOpen(false)}
+            onUpdate={handleAuthSuccess}
+            onOpenAuth={() => {
+              setProfileOpen(false);
+              setAuthOpen(true);
+            }}
+            onLogout={handleLogout}
+          />
+        ) : null}
+
         {rulesOpen ? <RulesModal onClose={() => setRulesOpen(false)} /> : null}
         {settingsOpen ? (
           <SettingsModal serverUrl={overrideUrl} onSave={saveServerUrl} onClose={() => setSettingsOpen(false)} />

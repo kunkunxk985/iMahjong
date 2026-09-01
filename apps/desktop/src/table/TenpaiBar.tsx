@@ -52,7 +52,7 @@ export function TenpaiBar({
       onClick={() => setShowMagnifier((prev) => !prev)}
       title="点击或悬浮查看胡牌胜算透视"
     >
-      {isClosed ? <span className="tenpai-closed-pill">🚪 已关门·免包香</span> : null}
+      {isClosed ? <span className="tenpai-closed-pill">🚪 已关门锁定</span> : null}
       <span className="tenpai-label">{previewLabel ? `打【${previewLabel}】听` : '听'}</span>
       {waits.map((key) => {
         const left = remainingCount(key, visible);
