@@ -404,7 +404,7 @@ export function detectBaoZhuang(input: BaoZhuangCheckInput): BaoZhuangReason | n
     if (canFormSequence(waitKey, discardKey)) return 'chow_wait_seq';
   }
   if (totalPk === 3 && pairs === 2 && waitHand.length === 4) {
-    if (input.closedTwoPair) return null;
+    if (!input.closedTwoPair) return null;
     if (!(input.discardedBeforeClose ?? []).includes(discardKey)) return 'xiang';
   }
   return null;

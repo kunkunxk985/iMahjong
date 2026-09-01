@@ -631,7 +631,13 @@ test('两对关门：关门本身不加胡，但胡牌仍按等牌状态飘荤',
   );
   const result = settleChaHu({
     seats: [
-      { hand, exposed, winningDiscardId: hand[2]!.id, closedTwoPair: true },
+      {
+        hand,
+        exposed,
+        winningDiscardId: hand[2]!.id,
+        closedTwoPair: true,
+        discardedBeforeClose: [hand[2]!.key],
+      },
       emptySeat(),
       emptySeat(),
       emptySeat(),
@@ -752,7 +758,7 @@ test('包庄：三坎两对香牌点炮', () => {
         exposed,
         winningDiscardId: hand[2]!.id,
         changed: false,
-        closedTwoPair: false,
+        closedTwoPair: true,
         discardedBeforeClose: [],
       },
       emptySeat(),
@@ -811,7 +817,7 @@ test('带吃听顺包庄按普通胡结算，不翻胡差也不收荤底', () =>
   assertAccounting(result);
 });
 
-test('关门免包香；未关门时按全桌关门前牌河区分香牌和臭牌', () => {
+test('两对关门后被香牌点炮触发包庄；未关门或臭牌不包庄', () => {
   const exposed: Meld[] = [
     { type: 'peng', tiles: tiles(['tiao', 2, 0], ['tiao', 2, 1], ['tiao', 2, 2]) },
     { type: 'kan', tiles: tiles(['tiao', 3, 0], ['tiao', 3, 1], ['tiao', 3, 2]) },
@@ -823,9 +829,12 @@ test('关门免包香；未关门时按全桌关门前牌河区分香牌和臭�
   );
   const base = { hand, exposed, ron: true, discardKey: 'tong-1' };
 
-  assert.equal(detectBaoZhuang({ ...base, closedTwoPair: false, discardedBeforeClose: [] }), 'xiang');
-  assert.equal(detectBaoZhuang({ ...base, closedTwoPair: false, discardedBeforeClose: ['tong-1'] }), null);
-  assert.equal(detectBaoZhuang({ ...base, closedTwoPair: true, discardedBeforeClose: [] }), null);
+  // 1. 赢家两对关门，且点炮牌为生张（香牌）：包庄
+  assert.equal(detectBaoZhuang({ ...base, closedTwoPair: true, discardedBeforeClose: [] }), 'xiang');
+  // 2. 赢家两对关门，但点炮牌为熟张（臭牌）：不包庄
+  assert.equal(detectBaoZhuang({ ...base, closedTwoPair: true, discardedBeforeClose: ['tong-1'] }), null);
+  // 3. 赢家未关门：不包庄
+  assert.equal(detectBaoZhuang({ ...base, closedTwoPair: false, discardedBeforeClose: [] }), null);
 });
 
 test('无关点炮牌不能误触发三坎两对包香', () => {

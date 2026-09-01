@@ -337,7 +337,7 @@ test('三组两对遇到未出现过的香牌点炮，可真实胡牌并触发�
     { type: 'peng', tiles: [makeTile('tiao', 4, 0), makeTile('tiao', 4, 1), makeTile('tiao', 4, 2)] },
   ];
   winner.closed = false;
-  winner.closedTwoPair = false;
+  winner.closedTwoPair = true;
   winner.discardedBeforeClose = [];
 
   const shot = makeTile('tong', 1, 2);
