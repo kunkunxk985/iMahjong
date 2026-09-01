@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { WebSocket } from 'ws';
-import { EMPTY_ROOM_TTL_MS } from '@pizhou/shared';
+import { EMPTY_ROOM_TTL_MS, type Settlement } from '@pizhou/shared';
 import { cancelBots, hasScheduledBots, scheduleBots } from '../src/bots.ts';
 import { RoomManager } from '../src/room.ts';
 
@@ -11,6 +11,26 @@ function socket(): WebSocket {
     readyState: 1,
     send() {},
   } as unknown as WebSocket;
+}
+
+function settlement(winnerSeat: number | null, liuju = false): Settlement {
+  return {
+    liuju,
+    winnerSeat,
+    winnerNickname: null,
+    winType: liuju ? 'liuju' : 'ping-hu',
+    hu: 0,
+    huBeforeDealer: 0,
+    yao: 0,
+    dealerMultiplier: 1,
+    selfDraw: false,
+    breakdown: [],
+    scores: [],
+    transactions: [],
+    hunDi: false,
+    baoZhuang: null,
+    drawReason: liuju ? 'wall' : null,
+  };
 }
 
 test('创建六位数字房号，空昵称使用座位默认名', () => {
@@ -35,6 +55,35 @@ test('四人准备后开始牌局', () => {
   assert.equal(created.room.phase, 'playing');
   assert.equal(created.room.round, 1);
   assert.ok(created.room.game);
+});
+
+test('房间换庄：流局和闲家胡换下一家，庄家胡才连庄', () => {
+  const manager = new RoomManager();
+  const created = manager.create('东家', socket());
+  for (const name of ['南家', '西家', '北家']) {
+    const joined = manager.join(created.room.code, name, socket());
+    assert.notEqual(typeof joined, 'string');
+  }
+
+  for (const player of created.room.occupied) player.ready = true;
+  assert.equal(created.room.startGame(), null);
+  assert.equal(created.room.dealer, 0);
+
+  created.room.game!.settlement = settlement(null, true);
+  created.room.resetToLobbyForAgain();
+  assert.equal(created.room.dealer, 1);
+
+  for (const player of created.room.occupied) player.ready = true;
+  assert.equal(created.room.startGame(), null);
+  created.room.game!.settlement = settlement(1);
+  created.room.resetToLobbyForAgain();
+  assert.equal(created.room.dealer, 1);
+
+  for (const player of created.room.occupied) player.ready = true;
+  assert.equal(created.room.startGame(), null);
+  created.room.game!.settlement = settlement(3);
+  created.room.resetToLobbyForAgain();
+  assert.equal(created.room.dealer, 2);
 });
 
 test('大厅房主离开后转移房主，最后一人离开后删除房间', () => {

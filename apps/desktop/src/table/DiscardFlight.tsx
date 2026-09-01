@@ -7,7 +7,7 @@ export interface DiscardFlight {
   face: string;
 }
 
-const FLIGHT_MS = 240;
+const FLIGHT_MS = 340;
 
 export function DiscardFlightLayer({ flight, onDone }: { flight: DiscardFlight; onDone: () => void }) {
   const elementRef = useRef<HTMLDivElement | null>(null);
@@ -26,12 +26,17 @@ export function DiscardFlightLayer({ flight, onDone }: { flight: DiscardFlight; 
     const anim = element.animate(
       [
         {
-          transform: 'translate3d(0, 0, 0) scale(1) rotateX(0deg)',
+          transform: 'translate3d(0, 0, 0) scale(1) rotateX(0deg) rotateZ(0deg)',
           opacity: 1,
         },
         {
-          transform: `translate3d(${dx}px, ${dy}px, 0) scale(${scale}) rotateX(28deg)`,
-          opacity: 0.96,
+          offset: 0.58,
+          transform: `translate3d(${dx * 0.55}px, ${dy * 0.5 - 26}px, 0) scale(${(1 + scale) / 2}) rotateX(10deg) rotateZ(-2deg)`,
+          opacity: 1,
+        },
+        {
+          transform: `translate3d(${dx}px, ${dy}px, 0) scale(${scale}) rotateX(30deg) rotateZ(0deg)`,
+          opacity: 0.98,
         },
       ],
       {
@@ -42,9 +47,9 @@ export function DiscardFlightLayer({ flight, onDone }: { flight: DiscardFlight; 
     );
 
     anim.onfinish = onDone;
-    anim.oncancel = onDone;
 
     return () => {
+      anim.onfinish = null;
       anim.cancel();
     };
   }, [flight, onDone]);
@@ -63,18 +68,9 @@ export function DiscardFlightLayer({ flight, onDone }: { flight: DiscardFlight; 
 
   return (
     <div ref={elementRef} className="discard-flight" style={style}>
-      <img
-        src={flight.face}
-        alt=""
-        draggable={false}
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          borderRadius: 4,
-          boxShadow: '0 8px 18px rgba(0,0,0,0.5)',
-        }}
-      />
+      <div className="discard-flight-card">
+        <img className="tile-skin" src={flight.face} alt="" draggable={false} />
+      </div>
     </div>
   );
 }

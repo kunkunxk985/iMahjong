@@ -9,11 +9,14 @@ import {
   playMyTurn,
   playPeng,
   playTick,
-  playReject,
   playSettle,
   playHover,
 } from './sfx';
 import { speakAction, speakDiscardTile } from './voice';
+
+function meldSignature(meld: ClientView['players'][number]['melds'][number]): string {
+  return `${meld.type}:${meld.tiles.map((tile) => tile.id).join(',')}:${meld.claimedTileId ?? ''}`;
+}
 
 export function useSoundEffects(view: ClientView): void {
   const prev = useRef<ClientView | null>(null);
@@ -47,8 +50,11 @@ export function useSoundEffects(view: ClientView): void {
     for (const player of view.players) {
       const oldPlayer = old.players.find((p) => p.seat === player.seat);
       if (!oldPlayer) continue;
-      if (player.melds.length > oldPlayer.melds.length) {
-        const newMeld = player.melds[player.melds.length - 1];
+      const oldMelds = oldPlayer.melds.map(meldSignature);
+      const nextMelds = player.melds.map(meldSignature);
+      const changedIndex = nextMelds.findIndex((signature, index) => signature !== oldMelds[index]);
+      if (player.melds.length > oldPlayer.melds.length || changedIndex >= 0) {
+        const newMeld = player.melds[changedIndex >= 0 ? changedIndex : player.melds.length - 1];
         if (newMeld) {
           const t = newMeld.type;
           if (t === 'chi') {
@@ -88,11 +94,8 @@ export function useSoundEffects(view: ClientView): void {
       }
     }
 
-    // Settlement / draw sound
-    if (
-      (!view.settlement && old.settlement) ||
-      (view.settlement?.liuju && !old.settlement?.liuju)
-    ) {
+    // Draw closure sound
+    if (view.settlement?.liuju && !old.settlement?.liuju) {
       playSettle();
     }
 
@@ -105,14 +108,6 @@ export function useSoundEffects(view: ClientView): void {
       playMyTurn();
     }
 
-    // Reject sound for expired/invalid actions
-    if (
-      view.availableActions.length === 0 &&
-      old.availableActions.length > 0 &&
-      view.gamePhase !== 'settlement'
-    ) {
-      playReject();
-    }
   }, [view]);
 
   // Countdown tick

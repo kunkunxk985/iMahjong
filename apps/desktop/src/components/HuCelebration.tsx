@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { SEAT_NAMES, type BaoZhuangReason, type ClientView, type Settlement } from '@pizhou/shared';
-import { playHu, playSettle } from '../audio/sfx';
 
 const BAO_LABEL: Record<BaoZhuangReason, string> = {
   four_wait_seq: '四组听顺包庄',
@@ -21,7 +20,7 @@ interface HuCelebrationProps {
 }
 
 export function HuCelebration({ view, settlement, onFinish }: HuCelebrationProps) {
-  const [countdown, setCountdown] = useState(3);
+  const [countdown, setCountdown] = useState(4);
   const isDraw = settlement.winType === 'liuju' || settlement.winnerSeat === null || settlement.winnerSeat === undefined;
   const winnerSeat = settlement.winnerSeat;
   const isMeWinner = winnerSeat === view.mySeat;
@@ -37,12 +36,6 @@ export function HuCelebration({ view, settlement, onFinish }: HuCelebrationProps
     : '点炮胡牌';
 
   useEffect(() => {
-    if (isDraw) {
-      playSettle();
-    } else {
-      playHu();
-    }
-
     const interval = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -66,7 +59,7 @@ export function HuCelebration({ view, settlement, onFinish }: HuCelebrationProps
       <div className="hu-celebration-card">
         {/* Top Calligraphy Badge */}
         <div className="hu-badge-banner">
-          {isDraw ? '💨 荒 牌 · 流 局' : settlement.winType === 'qidong-gang-hu' ? '⚡ 起 手 杠 胡' : '🀄 牌 局 告 捷 · 胡 牌'}
+          {isDraw ? '荒 牌 · 流 局' : settlement.winType === 'qidong-gang-hu' ? '起 手 杠 胡' : '牌 局 告 捷 · 胡 牌'}
         </div>
 
         {/* Main Title Banner */}
@@ -74,7 +67,7 @@ export function HuCelebration({ view, settlement, onFinish }: HuCelebrationProps
           {isDraw ? (
             <h1 className="hu-title-text draw">牌墙摸尽 · 本局流局</h1>
           ) : isMeWinner ? (
-            <h1 className="hu-title-text win">🎉 恭 喜 您 胡 牌 ！</h1>
+            <h1 className="hu-title-text win">恭 喜 您 胡 牌</h1>
           ) : (
             <h1 className="hu-title-text announce">
               【{SEAT_NAMES[winnerSeat!]}位 · {winnerName}】 {winTypeLabel}！
@@ -104,22 +97,22 @@ export function HuCelebration({ view, settlement, onFinish }: HuCelebrationProps
 
             <p className="hu-notice-text">
               {isMeWinner
-                ? '✨ 漂亮！已为您锁定胜局，所有玩家手牌已公开翻开。'
+                ? '漂亮！已为您锁定胜局，所有玩家手牌已公开翻开。'
                 : isMeDiscarder
-                ? '⚠️ 您打出的牌被胡牌点炮，四家牌面已公开翻开。'
-                : `🔔 【${winnerName}】已胡牌，本局结束，四家牌面已全部翻开。`}
+                ? '您打出的牌被胡牌点炮，四家牌面已公开翻开。'
+                : `【${winnerName}】已胡牌，本局结束，四家牌面已全部翻开。`}
             </p>
 
             {settlement.baoZhuang ? (
               <div className="hu-baozhuang-banner">
                 <div className="hu-baozhuang-title">
-                  ⚡ 判定包庄 · {BAO_LABEL[settlement.baoZhuang.reason]}
+                  判定包庄 · {BAO_LABEL[settlement.baoZhuang.reason]}
                 </div>
                 <p className="hu-baozhuang-desc">
                   {BAO_BRIEF[settlement.baoZhuang.reason]}{' '}
                   {settlement.baoZhuang.payerSeat === view.mySeat
-                    ? '⚠️ 您是本次点炮方，需要代付另外两家原本应向胡家支付的份额；如有荤底，三家荤底也由您承担。'
-                    : `🛡️ 【${view.players[settlement.baoZhuang.payerSeat]?.nickname || `${SEAT_NAMES[settlement.baoZhuang.payerSeat]}位`}】是本次包庄者，将代付另外两家原本应向胡家支付的份额。`}
+                    ? '您是本次点炮方，需要代付另外两家原本应向胡家支付的份额；如有荤底，三家荤底也由您承担。'
+                    : `【${view.players[settlement.baoZhuang.payerSeat]?.nickname || `${SEAT_NAMES[settlement.baoZhuang.payerSeat]}位`}】是本次包庄者，将代付另外两家原本应向胡家支付的份额。`}
                 </p>
               </div>
             ) : null}

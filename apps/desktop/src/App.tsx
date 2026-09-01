@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEFAULT_WS_URL, type ClientView, type GameAction, type Settlement } from '@pizhou/shared';
 import { HuCelebration } from './components/HuCelebration';
 import { RulesModal } from './components/RulesModal';
@@ -10,6 +10,11 @@ import { Table } from './views/Table';
 import { WaitingRoom } from './views/WaitingRoom';
 
 type Mode = 'home' | 'local' | 'online';
+
+function celebrationKey(view: ClientView): string | null {
+  if (!view.settlement) return null;
+  return `${view.roomCode}:${view.round}:${view.settlement.winnerSeat ?? 'draw'}:${view.settlement.winType}`;
+}
 
 function initialNickname(): string {
   try {
@@ -47,17 +52,18 @@ export function App() {
   const clientRef = useRef<GameClient | null>(null);
   const requestedModeRef = useRef<Mode>('home');
   const pendingSoloRef = useRef(false);
-  const seenSettlementRef = useRef<Settlement | null>(null);
+  const seenSettlementRef = useRef<string | null>(null);
 
   if (!clientRef.current) {
     clientRef.current = new GameClient({
       onView: (next) => {
         setMode(requestedModeRef.current === 'local' ? 'local' : 'online');
         setView(next);
-        if (next.settlement && next.settlement !== seenSettlementRef.current) {
-          seenSettlementRef.current = next.settlement;
+        const nextCelebrationKey = celebrationKey(next);
+        if (nextCelebrationKey && nextCelebrationKey !== seenSettlementRef.current) {
+          seenSettlementRef.current = nextCelebrationKey;
           setCelebrating(true);
-        } else if (!next.settlement) {
+        } else if (!nextCelebrationKey) {
           seenSettlementRef.current = null;
           setCelebrating(false);
         }
@@ -67,8 +73,9 @@ export function App() {
       onSettlement: (nextSettlement, nextView) => {
         setMode(requestedModeRef.current === 'local' ? 'local' : 'online');
         setView(nextView);
-        if (nextSettlement !== seenSettlementRef.current) {
-          seenSettlementRef.current = nextSettlement;
+        const nextCelebrationKey = celebrationKey(nextView);
+        if (nextCelebrationKey && nextCelebrationKey !== seenSettlementRef.current) {
+          seenSettlementRef.current = nextCelebrationKey;
           setCelebrating(true);
         }
         setSettlement(nextSettlement);
@@ -83,6 +90,7 @@ export function App() {
         setMode('home');
         setView(null);
         setSettlement(null);
+        seenSettlementRef.current = null;
       },
     });
   }
@@ -198,10 +206,12 @@ export function App() {
     setMode('home');
     setView(null);
     setSettlement(null);
+    seenSettlementRef.current = null;
     setError('');
   };
 
   const again = () => clientRef.current?.again();
+  const finishCelebration = useCallback(() => setCelebrating(false), []);
 
   const saveServerUrl = (value: string) => {
     const next = value.trim();
@@ -260,7 +270,7 @@ export function App() {
           <HuCelebration
             view={view}
             settlement={settlement}
-            onFinish={() => setCelebrating(false)}
+            onFinish={finishCelebration}
           />
         ) : settlement && view?.phase === 'settlement' ? (
           <SettlementModal

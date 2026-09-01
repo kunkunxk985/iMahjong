@@ -58,9 +58,15 @@ export interface PairwiseTransaction {
   huB: number;
   yaoA: number;
   yaoB: number;
+  /** A 家牌面胡数在庄家、飘荤规则下的本人倍率。 */
+  huMultiplierA: number;
+  /** B 家牌面胡数在庄家、飘荤规则下的本人倍率。 */
+  huMultiplierB: number;
+  /** A 家用于两两比较的折算胡数。 */
+  effectiveHuA: number;
+  /** B 家用于两两比较的折算胡数。 */
+  effectiveHuB: number;
   isDealerPair: boolean;
-  /** 飘荤只作用于胡差结算，不改变 huA / huB 本身。 */
-  piaoMultiplier: number;
   deltaHu: number;
   deltaYao: number;
   points: number;
@@ -82,6 +88,7 @@ export interface Settlement {
   hu: number;
   huBeforeDealer: number;
   yao: number;
+  /** 赢家本人的庄家倍率，仅供展示；不是整组两两胡差倍率。 */
   dealerMultiplier: number;
   selfDraw: boolean;
   breakdown: ScoreBreakdownItem[];

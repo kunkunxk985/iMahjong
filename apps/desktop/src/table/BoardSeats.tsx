@@ -26,20 +26,25 @@ export function BoardPlayer({
 }) {
   const avatar = player.isBot ? '陪' : player.nickname.slice(0, 1);
   return (
-    <div className={`board-player board-player-${position} ${current ? 'is-current' : ''} ${you ? 'is-you' : ''}`}>
+    <div
+      className={`board-player board-player-${position} ${current ? 'is-current' : ''} ${you ? 'is-you' : ''}`}
+      aria-current={current ? 'true' : undefined}
+    >
+      {current ? <span className="board-turn-pill">出牌中</span> : null}
       <div className={`board-avatar avatar-${player.seat}`}>
         <span>{avatar}</span>
         <i>{SEAT_NAMES[player.seat]}</i>
       </div>
       <div className="board-player-copy">
         <strong>{player.nickname}{you ? ' · 你' : ''}</strong>
-        <span>
+        <span className="board-player-status">
+          <i className={`board-status-dot ${player.online ? 'is-online' : 'is-offline'}`} />
           {player.isDealer ? <b className="board-dealer">庄</b> : null}
           {player.closed ? <b className="board-closed">关</b> : null}
           {player.isBot ? '陪练' : player.isHost ? '房主' : player.online ? '在线' : '离线'}
         </span>
       </div>
-      <em>{player.score}</em>
+      <em aria-label={`积分 ${player.score}`}><small>分</small>{player.score > 0 ? `+${player.score}` : player.score}</em>
     </div>
   );
 }
@@ -77,12 +82,14 @@ export function DiscardRiver({
   player,
   position,
   lastDiscardId,
+  flyingDiscardId,
   highlightKey,
   onTileHover,
 }: {
   player: PublicPlayerView;
   position: BoardPosition;
   lastDiscardId?: string;
+  flyingDiscardId?: string | null;
   highlightKey?: string | null;
   onTileHover?: (key: string | null) => void;
 }) {
@@ -99,7 +106,8 @@ export function DiscardRiver({
           return (
             <div
               key={tile.id}
-              className="board-discard-cell"
+              className={`board-discard-cell ${tile.id === flyingDiscardId ? 'is-flight-target' : ''}`}
+              data-discard-tile-id={tile.id}
               style={{ transform: `rotate(${rot}deg)` }}
             >
               <TileView

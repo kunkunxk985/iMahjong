@@ -14,6 +14,10 @@ interface SeatSplashEvent {
   nickname: string;
 }
 
+function meldSignature(meld: ClientView['players'][number]['melds'][number]): string {
+  return `${meld.type}:${meld.tiles.map((tile) => tile.id).join(',')}:${meld.claimedTileId ?? ''}`;
+}
+
 function getRelativePosition(seat: number, mySeat: number): 'bottom' | 'top' | 'left' | 'right' {
   const rel = (seat - mySeat + 4) % 4;
   if (rel === 0) return 'bottom';
@@ -24,58 +28,18 @@ function getRelativePosition(seat: number, mySeat: number): 'bottom' | 'top' | '
 
 export function ActionSplash({ view }: ActionSplashProps) {
   const [splashes, setSplashes] = useState<SeatSplashEvent[]>([]);
-  const prevMeldsCountsRef = useRef<number[]>([0, 0, 0, 0]);
-  const prevClosedRef = useRef<boolean[]>([false, false, false, false]);
-  const prevSettlementRef = useRef<boolean>(false);
-
-  useEffect(() => {
-    // 1. Hu splash
-    if (view.settlement && !prevSettlementRef.current) {
-      prevSettlementRef.current = true;
-      if (view.settlement.winnerSeat !== null && view.settlement.winnerSeat !== undefined) {
-        const winnerSeat = view.settlement.winnerSeat;
-        const isQiDong = view.settlement.winType === 'qidong-gang-hu';
-        triggerSeatSplash(
-          isQiDong ? '⚡ 起手杠胡' : '🀄 胡 牌',
-          'hu',
-          winnerSeat,
-        );
-      }
-    } else if (!view.settlement) {
-      prevSettlementRef.current = false;
-    }
-
-    // 2. Melds & Closed splash
-    view.players.forEach((player, seatIdx) => {
-      const meldsCount = player.melds.length;
-      const prevCount = prevMeldsCountsRef.current[seatIdx] || 0;
-      if (meldsCount > prevCount) {
-        const lastMeld = player.melds[meldsCount - 1];
-        if (lastMeld) {
-          if (lastMeld.type === 'kan') {
-            triggerSeatSplash('坎 上', 'kan', seatIdx);
-          } else if (lastMeld.type === 'an-gang' || lastMeld.type === 'zi-gang' || lastMeld.type === 'ming-gang') {
-            triggerSeatSplash(lastMeld.type === 'an-gang' ? '暗 杠' : '杠', 'gang', seatIdx);
-          } else if (lastMeld.type === 'peng') {
-            triggerSeatSplash('碰', 'peng', seatIdx);
-          } else if (lastMeld.type === 'chi') {
-            triggerSeatSplash('吃', 'chi', seatIdx);
-          }
-        }
-      }
-      prevMeldsCountsRef.current[seatIdx] = meldsCount;
-
-      if (player.closed && !prevClosedRef.current[seatIdx]) {
-        triggerSeatSplash('🚪 关 门', 'close-gate', seatIdx);
-      }
-      prevClosedRef.current[seatIdx] = Boolean(player.closed);
-    });
-  }, [view.sequence, view.settlement, view.players]);
+  const prevMeldsRef = useRef<Map<number, string[]>>(
+    new Map(view.players.map((player) => [player.seat, player.melds.map(meldSignature)])),
+  );
+  const prevClosedRef = useRef<Map<number, boolean>>(
+    new Map(view.players.map((player) => [player.seat, Boolean(player.closed)])),
+  );
+  const prevSettlementRef = useRef<boolean>(Boolean(view.settlement));
 
   const triggerSeatSplash = (text: string, type: SeatSplashEvent['type'], seat: number) => {
     const splashId = Date.now() + Math.random();
     const position = getRelativePosition(seat, view.mySeat);
-    const player = view.players[seat];
+    const player = view.players.find((item) => item.seat === seat);
     const nickname = player?.nickname || `${SEAT_NAMES[seat]}位`;
 
     const newSplash: SeatSplashEvent = {
@@ -93,6 +57,51 @@ export function ActionSplash({ view }: ActionSplashProps) {
       setSplashes((prev) => prev.filter((s) => s.id !== splashId));
     }, 1300);
   };
+
+  useEffect(() => {
+    // 1. Hu splash
+    if (view.settlement && !prevSettlementRef.current) {
+      prevSettlementRef.current = true;
+      if (view.settlement.winnerSeat !== null && view.settlement.winnerSeat !== undefined) {
+        const winnerSeat = view.settlement.winnerSeat;
+        const isQiDong = view.settlement.winType === 'qidong-gang-hu';
+        triggerSeatSplash(
+          isQiDong ? '起手杠胡' : '胡 牌',
+          'hu',
+          winnerSeat,
+        );
+      }
+    } else if (!view.settlement) {
+      prevSettlementRef.current = false;
+    }
+
+    // 2. Melds & Closed splash
+    view.players.forEach((player) => {
+      const nextSignatures = player.melds.map(meldSignature);
+      const previousSignatures = prevMeldsRef.current.get(player.seat) ?? [];
+      const changedIndex = nextSignatures.findIndex((signature, index) => signature !== previousSignatures[index]);
+      if (player.melds.length > previousSignatures.length || changedIndex >= 0) {
+        const changedMeld = player.melds[changedIndex >= 0 ? changedIndex : player.melds.length - 1];
+        if (changedMeld) {
+          if (changedMeld.type === 'kan') {
+            triggerSeatSplash('坎 上', 'kan', player.seat);
+          } else if (changedMeld.type === 'an-gang' || changedMeld.type === 'zi-gang' || changedMeld.type === 'ming-gang') {
+            triggerSeatSplash(changedMeld.type === 'an-gang' ? '暗 杠' : '杠', 'gang', player.seat);
+          } else if (changedMeld.type === 'peng') {
+            triggerSeatSplash('碰', 'peng', player.seat);
+          } else if (changedMeld.type === 'chi') {
+            triggerSeatSplash('吃', 'chi', player.seat);
+          }
+        }
+      }
+      prevMeldsRef.current.set(player.seat, nextSignatures);
+
+      if (player.closed && !prevClosedRef.current.get(player.seat)) {
+        triggerSeatSplash('关 门', 'close-gate', player.seat);
+      }
+      prevClosedRef.current.set(player.seat, Boolean(player.closed));
+    });
+  }, [view.sequence, view.settlement, view.players]);
 
   if (splashes.length === 0) return null;
 
