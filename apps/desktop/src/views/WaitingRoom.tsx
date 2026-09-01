@@ -8,13 +8,14 @@ interface WaitingRoomProps {
   onLeave: () => void;
   onRules: () => void;
   onSetRate?: (rate: number) => void;
+  onInviteFriends?: () => void;
 }
 
 function isOccupied(view: ClientView['players'][number], seat: number): boolean {
   return view.nickname !== `空位${seat + 1}`;
 }
 
-export function WaitingRoom({ view, onReady, onStart, onLeave, onRules, onSetRate }: WaitingRoomProps) {
+export function WaitingRoom({ view, onReady, onStart, onLeave, onRules, onSetRate, onInviteFriends }: WaitingRoomProps) {
   const [copied, setCopied] = useState(false);
   const me = view.players[view.mySeat];
   const occupied = view.players.filter((player, seat) => isOccupied(player, seat));
@@ -124,6 +125,17 @@ export function WaitingRoom({ view, onReady, onStart, onLeave, onRules, onSetRat
               {me.ready ? '取消准备' : '准备好了'}
             </button>
           ) : null}
+
+          {onInviteFriends && !full && (
+            <button
+              type="button"
+              className="btn-action ghost invite-friends-btn"
+              onClick={onInviteFriends}
+            >
+              👥 邀请在线好友
+            </button>
+          )}
+
           {isHost ? (
             <button type="button" className="btn-action hero" disabled={!canStart} onClick={onStart}>
               {canStart ? '开始游戏' : full ? `等待全员准备（${readyCount}/4）` : `还差 ${4 - occupied.length} 人`}

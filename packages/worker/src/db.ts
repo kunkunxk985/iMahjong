@@ -1,4 +1,12 @@
-import type { GameMode, MatchRecord, ModeStats, UserProfile } from '@pizhou/shared';
+import type {
+  FriendItem,
+  FriendRequestItem,
+  GameMode,
+  MatchRecord,
+  ModeStats,
+  UserProfile,
+  UserSearchResult,
+} from '@pizhou/shared';
 
 export interface UserRow {
   id: string;
@@ -41,6 +49,21 @@ export interface MatchRow {
   created_at: number;
 }
 
+export interface FriendRow {
+  id: string;
+  user_id: string;
+  friend_id: string;
+  created_at: number;
+}
+
+export interface FriendRequestRow {
+  id: string;
+  from_user_id: string;
+  to_user_id: string;
+  status: string;
+  created_at: number;
+}
+
 export async function hashPassword(password: string): Promise<string> {
   const enc = new TextEncoder().encode(`${password}:pizhou_salt_v1`);
   const buf = await crypto.subtle.digest('SHA-256', enc);
@@ -61,6 +84,8 @@ export class HubDatabase {
   private memUsers = new Map<string, UserRow>();
   private memProfiles = new Map<string, ProfileRow>();
   private memMatches: MatchRow[] = [];
+  private memFriends: FriendRow[] = [];
+  private memFriendRequests: FriendRequestRow[] = [];
 
   constructor(storage?: any) {
     if (storage && storage.sql) {
@@ -115,6 +140,27 @@ export class HubDatabase {
         );
 
         CREATE INDEX IF NOT EXISTS idx_matches_user_mode ON matches(user_id, mode, timestamp DESC);
+
+        CREATE TABLE IF NOT EXISTS friends (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          friend_id TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          UNIQUE(user_id, friend_id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_friends_user ON friends(user_id);
+
+        CREATE TABLE IF NOT EXISTS friend_requests (
+          id TEXT PRIMARY KEY,
+          from_user_id TEXT NOT NULL,
+          to_user_id TEXT NOT NULL,
+          status TEXT DEFAULT 'pending',
+          created_at INTEGER NOT NULL,
+          UNIQUE(from_user_id, to_user_id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_friend_requests_to ON friend_requests(to_user_id, status);
       `);
     } catch (e) {
       console.warn('HubDatabase initSql warning:', e);
@@ -181,7 +227,7 @@ export class HubDatabase {
 
   async register(username: string, password: string, nickname?: string): Promise<{ token: string; user: UserProfile } | string> {
     const cleanUser = username.trim();
-    if (cleanUser.length < 3) return '账号长度至少3位';
+    if (cleanUser.length < 2) return '账号长度至少2位';
     if (!password || password.length < 4) return '密码长度至少4位';
 
     if (this.sql) {
@@ -270,7 +316,6 @@ export class HubDatabase {
       return '账号或密码不正确';
     }
 
-    // Refresh token
     const token = `tk_${userRow.id}_${Math.random().toString(36).slice(2, 10)}`;
     if (this.sql) {
       this.sql.exec(`UPDATE users SET token = ? WHERE id = ?`, token, userRow.id);
@@ -493,7 +538,6 @@ export class HubDatabase {
       scores: r.scores_json ? JSON.parse(r.scores_json) : [],
     }));
 
-    // Calculate stats
     const totalMatches = matches.length;
     const wins = matches.filter((m) => m.myIsWinner).length;
     const draws = matches.filter((m) => m.liuju).length;
@@ -517,5 +561,278 @@ export class HubDatabase {
     };
 
     return { matches, stats };
+  }
+
+  // ==========================================
+  // Friends & Social Features
+  // ==========================================
+
+  async searchUsers(query: string, currentUserId: string): Promise<UserSearchResult[]> {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+
+    let users: Array<{ id: string; username: string; nickname: string; avatar: string; title: string }> = [];
+
+    if (this.sql) {
+      users = this.sql.exec(
+        `SELECT u.id, u.username, p.nickname, p.avatar, p.title
+         FROM users u
+         LEFT JOIN profiles p ON u.id = p.user_id
+         WHERE (LOWER(u.username) LIKE ? OR LOWER(p.nickname) LIKE ? OR LOWER(u.id) LIKE ?)
+           AND u.id != ?
+         LIMIT 10`,
+        `%${q}%`,
+        `%${q}%`,
+        `%${q}%`,
+        currentUserId,
+      ).toArray();
+    } else {
+      for (const u of this.memUsers.values()) {
+        if (u.id === currentUserId) continue;
+        const p = this.memProfiles.get(u.id);
+        const nick = p?.nickname || u.username;
+        if (
+          u.username.toLowerCase().includes(q) ||
+          nick.toLowerCase().includes(q) ||
+          u.id.toLowerCase().includes(q)
+        ) {
+          users.push({
+            id: u.id,
+            username: u.username,
+            nickname: nick,
+            avatar: p?.avatar || '🀄',
+            title: p?.title || '初学雀友',
+          });
+        }
+      }
+    }
+
+    // Determine friendship & pending request status
+    const results: UserSearchResult[] = [];
+    for (const u of users) {
+      const isFriend = await this.isFriend(currentUserId, u.id);
+      const hasPending = await this.hasPendingRequest(currentUserId, u.id);
+      results.push({
+        userId: u.id,
+        username: u.username,
+        nickname: u.nickname || u.username,
+        avatar: u.avatar || '🀄',
+        title: u.title || '初学雀友',
+        isFriend,
+        hasPendingRequest: hasPending,
+      });
+    }
+
+    return results;
+  }
+
+  async isFriend(userIdA: string, userIdB: string): Promise<boolean> {
+    if (this.sql) {
+      const rows = this.sql.exec(
+        `SELECT id FROM friends WHERE user_id = ? AND friend_id = ?`,
+        userIdA,
+        userIdB,
+      ).toArray();
+      return rows.length > 0;
+    }
+    return this.memFriends.some((f) => f.user_id === userIdA && f.friend_id === userIdB);
+  }
+
+  async hasPendingRequest(fromUserId: string, toUserId: string): Promise<boolean> {
+    if (this.sql) {
+      const rows = this.sql.exec(
+        `SELECT id FROM friend_requests WHERE from_user_id = ? AND to_user_id = ? AND status = 'pending'`,
+        fromUserId,
+        toUserId,
+      ).toArray();
+      return rows.length > 0;
+    }
+    return this.memFriendRequests.some(
+      (r) => r.from_user_id === fromUserId && r.to_user_id === toUserId && r.status === 'pending',
+    );
+  }
+
+  async sendFriendRequest(fromUserId: string, toUserId: string): Promise<{ success: true } | string> {
+    if (fromUserId === toUserId) return '不能添加自己为好友';
+    const target = await this.getProfile(toUserId);
+    if (!target) return '找不到该玩家';
+
+    if (await this.isFriend(fromUserId, toUserId)) return '对方已经是您的好友';
+    if (await this.hasPendingRequest(fromUserId, toUserId)) return '好友申请已发送，等待对方同意';
+
+    const id = `freq_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const now = Date.now();
+
+    if (this.sql) {
+      this.sql.exec(
+        `INSERT OR REPLACE INTO friend_requests (id, from_user_id, to_user_id, status, created_at)
+         VALUES (?, ?, ?, 'pending', ?)`,
+        id,
+        fromUserId,
+        toUserId,
+        now,
+      );
+    } else {
+      this.memFriendRequests = [
+        { id, from_user_id: fromUserId, to_user_id: toUserId, status: 'pending', created_at: now },
+        ...this.memFriendRequests.filter((r) => !(r.from_user_id === fromUserId && r.to_user_id === toUserId)),
+      ];
+    }
+
+    return { success: true };
+  }
+
+  async getFriendRequests(userId: string): Promise<FriendRequestItem[]> {
+    if (this.sql) {
+      const rows = this.sql.exec(
+        `SELECT r.id, r.from_user_id, r.created_at, u.username as from_username, p.nickname as from_nickname, p.avatar as from_avatar, p.title as from_title
+         FROM friend_requests r
+         JOIN users u ON r.from_user_id = u.id
+         LEFT JOIN profiles p ON r.from_user_id = p.user_id
+         WHERE r.to_user_id = ? AND r.status = 'pending'
+         ORDER BY r.created_at DESC`,
+        userId,
+      ).toArray() as any[];
+
+      return rows.map((r) => ({
+        id: r.id,
+        fromUserId: r.from_user_id,
+        fromUsername: r.from_username,
+        fromNickname: r.from_nickname || r.from_username,
+        fromAvatar: r.from_avatar || '🀄',
+        fromTitle: r.from_title || '初学雀友',
+        createdAt: r.created_at,
+      }));
+    }
+
+    const items: FriendRequestItem[] = [];
+    for (const r of this.memFriendRequests) {
+      if (r.to_user_id === userId && r.status === 'pending') {
+        const u = this.memUsers.get(r.from_user_id);
+        const p = this.memProfiles.get(r.from_user_id);
+        if (u) {
+          items.push({
+            id: r.id,
+            fromUserId: r.from_user_id,
+            fromUsername: u.username,
+            fromNickname: p?.nickname || u.username,
+            fromAvatar: p?.avatar || '🀄',
+            fromTitle: p?.title || '初学雀友',
+            createdAt: r.created_at,
+          });
+        }
+      }
+    }
+    return items;
+  }
+
+  async respondFriendRequest(requestId: string, userId: string, accept: boolean): Promise<{ success: true } | string> {
+    let req: FriendRequestRow | null = null;
+    if (this.sql) {
+      const rows = this.sql.exec(`SELECT * FROM friend_requests WHERE id = ? AND to_user_id = ?`, requestId, userId).toArray();
+      if (rows.length > 0) req = rows[0] as FriendRequestRow;
+    } else {
+      req = this.memFriendRequests.find((r) => r.id === requestId && r.to_user_id === userId) ?? null;
+    }
+
+    if (!req) return '好友申请不存在或已处理';
+
+    const now = Date.now();
+    if (accept) {
+      const fid1 = `fr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const fid2 = `fr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}_2`;
+
+      if (this.sql) {
+        this.sql.exec(`UPDATE friend_requests SET status = 'accepted' WHERE id = ?`, requestId);
+        this.sql.exec(
+          `INSERT OR IGNORE INTO friends (id, user_id, friend_id, created_at) VALUES (?, ?, ?, ?)`,
+          fid1,
+          req.to_user_id,
+          req.from_user_id,
+          now,
+        );
+        this.sql.exec(
+          `INSERT OR IGNORE INTO friends (id, user_id, friend_id, created_at) VALUES (?, ?, ?, ?)`,
+          fid2,
+          req.from_user_id,
+          req.to_user_id,
+          now,
+        );
+      } else {
+        req.status = 'accepted';
+        this.memFriends.push({ id: fid1, user_id: req.to_user_id, friend_id: req.from_user_id, created_at: now });
+        this.memFriends.push({ id: fid2, user_id: req.from_user_id, friend_id: req.to_user_id, created_at: now });
+      }
+    } else {
+      if (this.sql) {
+        this.sql.exec(`UPDATE friend_requests SET status = 'rejected' WHERE id = ?`, requestId);
+      } else {
+        req.status = 'rejected';
+      }
+    }
+
+    return { success: true };
+  }
+
+  async getFriends(userId: string): Promise<FriendItem[]> {
+    if (this.sql) {
+      const rows = this.sql.exec(
+        `SELECT f.friend_id, f.created_at as added_at, u.username, p.nickname, p.avatar, p.title, p.bio
+         FROM friends f
+         JOIN users u ON f.friend_id = u.id
+         LEFT JOIN profiles p ON f.friend_id = p.user_id
+         WHERE f.user_id = ?
+         ORDER BY f.created_at DESC`,
+        userId,
+      ).toArray() as any[];
+
+      return rows.map((r) => ({
+        userId: r.friend_id,
+        username: r.username,
+        nickname: r.nickname || r.username,
+        avatar: r.avatar || '🀄',
+        title: r.title || '初学雀友',
+        bio: r.bio || '不碰坎不上，单钓不换张！',
+        status: 'offline',
+        addedAt: r.added_at,
+      }));
+    }
+
+    const items: FriendItem[] = [];
+    for (const f of this.memFriends) {
+      if (f.user_id === userId) {
+        const u = this.memUsers.get(f.friend_id);
+        const p = this.memProfiles.get(f.friend_id);
+        if (u) {
+          items.push({
+            userId: f.friend_id,
+            username: u.username,
+            nickname: p?.nickname || u.username,
+            avatar: p?.avatar || '🀄',
+            title: p?.title || '初学雀友',
+            bio: p?.bio || '不碰坎不上，单钓不换张！',
+            status: 'offline',
+            addedAt: f.created_at,
+          });
+        }
+      }
+    }
+    return items;
+  }
+
+  async deleteFriend(userId: string, friendId: string): Promise<void> {
+    if (this.sql) {
+      this.sql.exec(
+        `DELETE FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)`,
+        userId,
+        friendId,
+        friendId,
+        userId,
+      );
+    } else {
+      this.memFriends = this.memFriends.filter(
+        (f) => !(f.user_id === userId && f.friend_id === friendId) && !(f.user_id === friendId && f.friend_id === userId),
+      );
+    }
   }
 }

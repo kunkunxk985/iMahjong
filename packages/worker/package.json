@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --import tsx --test tests/db.test.ts",
+    "test": "node --import tsx --test 'tests/**/*.test.ts'",
     "typecheck": "tsc --noEmit",
     "deploy": "npx wrangler deploy",
     "dev": "npx wrangler dev"

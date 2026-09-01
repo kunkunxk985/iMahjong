@@ -6,6 +6,8 @@ import {
   newActionId,
   type C2SMessage,
   type ClientView,
+  type FriendInvite,
+  type FriendPresenceStatus,
   type GameAction,
   type S2CMessage,
   type Settlement,
@@ -17,6 +19,8 @@ export interface ClientHandlers {
   onError: (message: string, code?: string) => void;
   onStatus: (status: 'connecting' | 'open' | 'closed') => void;
   onLeft?: () => void;
+  onFriendInvited?: (invite: FriendInvite) => void;
+  onFriendPresence?: (presence: { userId: string; status: FriendPresenceStatus; playingRoomCode?: string }) => void;
 }
 
 export type ConnectionStatus = 'connecting' | 'open' | 'closed';
@@ -28,6 +32,7 @@ export class GameClient {
   private retry: ReturnType<typeof setTimeout> | null = null;
   private handlers: ClientHandlers;
   private pendingReconnect: { roomCode: string; token: string } | null = null;
+  private boundUser: { userId: string; token: string } | null = null;
   private retries = 0;
   private closedByUser = false;
 
@@ -54,6 +59,9 @@ export class GameClient {
       this.retries = 0;
       this.handlers.onStatus('open');
       this.heartbeat = setInterval(() => this.send({ type: 'player:heartbeat' }), HEARTBEAT_INTERVAL_MS);
+      if (this.boundUser) {
+        this.send({ type: 'friend:bindUser', userId: this.boundUser.userId, token: this.boundUser.token });
+      }
       if (this.pendingReconnect) {
         const pending = this.pendingReconnect;
         this.send({ type: 'player:reconnect', roomCode: pending.roomCode, token: pending.token });
@@ -80,6 +88,27 @@ export class GameClient {
         this.handlers.onError('服务器返回了无法识别的消息');
         return;
       }
+
+      if (message.type === 'friend:invited') {
+        this.handlers.onFriendInvited?.({
+          fromUserId: message.fromUserId,
+          fromNickname: message.fromNickname,
+          fromAvatar: message.fromAvatar,
+          roomCode: message.roomCode,
+          timestamp: Date.now(),
+        });
+        return;
+      }
+
+      if (message.type === 'friend:presence') {
+        this.handlers.onFriendPresence?.({
+          userId: message.userId,
+          status: message.status,
+          playingRoomCode: message.playingRoomCode,
+        });
+        return;
+      }
+
       if (isViewMessage(message)) {
         if (message.type === 'game:settlement') {
           this.handlers.onSettlement(message.settlement, message.view);
@@ -121,6 +150,17 @@ export class GameClient {
         // Ignore sockets that are already closing.
       }
     }
+  }
+
+  bindUser(userId: string, token: string): void {
+    this.boundUser = { userId, token };
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.send({ type: 'friend:bindUser', userId, token });
+    }
+  }
+
+  inviteFriend(toUserId: string, roomCode: string): void {
+    this.send({ type: 'friend:invite', toUserId, roomCode });
   }
 
   createRoom(nickname: string, solo = false): void {

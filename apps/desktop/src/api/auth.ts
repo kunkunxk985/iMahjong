@@ -1,4 +1,13 @@
-import type { AuthResponse, GameMode, MatchRecord, ModeStats, UserProfile } from '@pizhou/shared';
+import type {
+  AuthResponse,
+  FriendItem,
+  FriendRequestItem,
+  GameMode,
+  MatchRecord,
+  ModeStats,
+  UserProfile,
+  UserSearchResult,
+} from '@pizhou/shared';
 
 const TOKEN_KEY = 'pizhou.auth_token_v1';
 const USER_KEY = 'pizhou.auth_user_v1';
@@ -151,4 +160,125 @@ export async function apiSaveMatch(serverWsUrl: string, token: string, record: M
     const data = await res.json().catch(() => ({}));
     throw new Error(data.error || '同步战绩失败');
   }
+}
+
+// ==========================================
+// Friends API Client
+// ==========================================
+
+export async function apiSearchUsers(
+  serverWsUrl: string,
+  token: string,
+  query: string,
+): Promise<UserSearchResult[]> {
+  const httpUrl = wsToHttpUrl(serverWsUrl);
+  const res = await fetch(`${httpUrl}/api/friends/search?q=${encodeURIComponent(query)}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || '搜索雀友失败');
+  return (data.results || []) as UserSearchResult[];
+}
+
+export async function apiGetFriends(serverWsUrl: string, token: string): Promise<FriendItem[]> {
+  const httpUrl = wsToHttpUrl(serverWsUrl);
+  const res = await fetch(`${httpUrl}/api/friends/list`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || '获取好友列表失败');
+  return (data.friends || []) as FriendItem[];
+}
+
+export async function apiGetFriendRequests(serverWsUrl: string, token: string): Promise<FriendRequestItem[]> {
+  const httpUrl = wsToHttpUrl(serverWsUrl);
+  const res = await fetch(`${httpUrl}/api/friends/requests`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || '获取好友申请失败');
+  return (data.requests || []) as FriendRequestItem[];
+}
+
+export async function apiSendFriendRequest(
+  serverWsUrl: string,
+  token: string,
+  toUserId: string,
+): Promise<void> {
+  const httpUrl = wsToHttpUrl(serverWsUrl);
+  const res = await fetch(`${httpUrl}/api/friends/request`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ toUserId }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || '发送好友申请失败');
+}
+
+export async function apiRespondFriendRequest(
+  serverWsUrl: string,
+  token: string,
+  requestId: string,
+  accept: boolean,
+): Promise<void> {
+  const httpUrl = wsToHttpUrl(serverWsUrl);
+  const res = await fetch(`${httpUrl}/api/friends/respond`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ requestId, accept }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || '处理好友申请失败');
+}
+
+export async function apiDeleteFriend(serverWsUrl: string, token: string, friendId: string): Promise<void> {
+  const httpUrl = wsToHttpUrl(serverWsUrl);
+  const res = await fetch(`${httpUrl}/api/friends/delete`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ friendId }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || '删除好友失败');
+}
+
+export async function apiGetFriendStats(
+  serverWsUrl: string,
+  token: string,
+  friendId: string,
+): Promise<{
+  user: UserProfile;
+  stats: ModeStats;
+  recentMatches: MatchRecord[];
+  status: string;
+  playingRoomCode?: string;
+}> {
+  const httpUrl = wsToHttpUrl(serverWsUrl);
+  const res = await fetch(`${httpUrl}/api/friends/stats?friendId=${encodeURIComponent(friendId)}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || '获取好友战绩失败');
+  return data;
 }
