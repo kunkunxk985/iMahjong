@@ -40,12 +40,12 @@ function assertAccounting(result: ReturnType<typeof settleChaHu>): void {
 
 test('幺头与普通牌计胡表', () => {
   assert.deepEqual(unitValue('dragon-1', 'pair'), { hu: 2, yao: 0 });
-  assert.deepEqual(unitValue('dragon-1', 'peng'), { hu: 4, yao: 1 });
+  assert.deepEqual(unitValue('dragon-1', 'peng'), { hu: 2, yao: 0 });
   assert.deepEqual(unitValue('dragon-1', 'pung'), { hu: 4, yao: 1 });
   assert.deepEqual(unitValue('dragon-1', 'song_kong'), { hu: 8, yao: 2 });
   assert.deepEqual(unitValue('dragon-1', 'zi_kong'), { hu: 12, yao: 3 });
   assert.deepEqual(unitValue('tiao-5', 'pair'), { hu: 1, yao: 0 });
-  assert.deepEqual(unitValue('tiao-5', 'peng'), { hu: 2, yao: 0 });
+  assert.deepEqual(unitValue('tiao-5', 'peng'), { hu: 1, yao: 0 });
   assert.deepEqual(unitValue('tiao-5', 'pung'), { hu: 2, yao: 0 });
   assert.deepEqual(unitValue('tiao-5', 'song_kong'), { hu: 4, yao: 0 });
   assert.deepEqual(unitValue('tiao-5', 'zi_kong'), { hu: 6, yao: 0 });
@@ -233,12 +233,12 @@ test('点炮双碰：点炮形成碰，留下的对子照常计分', () => {
   const winner = result.seats[0]!;
   assert.equal(winner.units.some((unit) => unit.key === 'tiao-1' && unit.kind === 'pung'), false);
   assert.equal(winner.units.some((unit) => unit.key === 'tiao-1' && unit.kind === 'peng'), true);
-  // 五筒对1胡 + 一条幺牌碰4胡1幺 + 胡牌10胡。
-  assert.equal(winner.huBeforeDealer, 15);
-  assert.equal(winner.yao, 1);
+  // 五筒对1胡 + 一条幺牌碰2胡 + 胡牌10胡。
+  assert.equal(winner.huBeforeDealer, 13);
+  assert.equal(winner.yao, 0);
 });
 
-test('点炮补成普通牌三张按碰计 2 胡', () => {
+test('点炮补成普通牌三张按碰计 1 胡', () => {
   const concealed = tiles(
     ['wan', 1, 0], ['wan', 2, 0], ['wan', 3, 0],
     ['wan', 4, 0], ['wan', 5, 0], ['wan', 6, 0],
@@ -266,15 +266,15 @@ test('点炮补成普通牌三张按碰计 2 胡', () => {
     winner.units.filter((unit) => unit.key === 'tiao-5'),
     [{ key: 'tiao-5', kind: 'peng' }],
   );
-  assert.equal(winner.hu, 13);
+  assert.equal(winner.hu, 12);
   assert.equal(winner.yao, 0);
   const discarderTransaction = result.transactions.find(
     (tx) => tx.seatA === 0 && tx.seatB === 1,
   )!;
-  // 胡家13胡、点炮家0胡；不因点炮额外翻倍。
-  assert.equal(discarderTransaction.deltaHu, 13);
+  // 胡家12胡、点炮家0胡；不因点炮额外翻倍。
+  assert.equal(discarderTransaction.deltaHu, 12);
   assert.equal(discarderTransaction.deltaYao, 0);
-  assert.equal(discarderTransaction.points, 13 * HU_RATE);
+  assert.equal(discarderTransaction.points, 12 * HU_RATE);
 });
 
 test('来牌同时看似可碰和成顺时，只采用能完整胡牌的合法拆法', () => {
@@ -652,7 +652,7 @@ test('两对关门：关门本身不加胡，但胡牌仍按等牌状态飘荤',
   const winner = result.seats[0]!;
   assert.equal(result.baoZhuang, null);
   assert.equal(winner.piaoHun, true);
-  assert.equal(winner.huBeforeDealer, 19);
+  assert.equal(winner.huBeforeDealer, 10 + 3 + 1 + 1);
   assert.equal(winner.yao, 0);
   assert.equal(winner.units.some((unit) => unit.key === 'tong-6' && unit.kind === 'pair'), true);
   assert.equal(winner.units.some((unit) => unit.key === 'tong-5' && unit.kind === 'peng'), true);
@@ -679,7 +679,7 @@ test('四组牌单钓自摸按飘荤结算，最后对子照常计胡', () => {
 
   const winner = result.seats[0]!;
   assert.equal(winner.piaoHun, true);
-  assert.equal(winner.huBeforeDealer, 19);
+  assert.equal(winner.huBeforeDealer, 10 + 4 + 1);
   assert.equal(winner.yao, 0);
   assert.equal(winner.units.length, 5);
 });
@@ -775,12 +775,12 @@ test('包庄：三坎两对香牌点炮', () => {
   assert.equal(result.baoZhuang?.reason, 'xiang');
   assert.equal(result.baoZhuang?.payerSeat, 2);
   assert.equal(result.seats[0]?.piaoHun, true);
-  // 赢家21胡1幺，飘荤后本人折算42胡；三家胡账126+30(幺)=156，加三份荤底90=246。
-  // 庄家原始0胡，翻倍后仍为0；2号包庄后独付246。
-  assert.equal(result.seats[0]?.hu, 21);
-  assert.deepEqual(result.deltas, [246, 0, -246, 0]);
-  assert.deepEqual(result.payables, [0, 0, 246, 0]);
-  assert.deepEqual(result.receivables, [246, 0, 0, 0]);
+  // 赢家16胡，飘荤后本人折算32胡；三家胡账96，加三份荤底90。
+  // 庄家原始0胡，翻倍后仍为0；2号包庄后独付186。
+  assert.equal(result.seats[0]?.hu, 16);
+  assert.deepEqual(result.deltas, [186, 0, -186, 0]);
+  assert.deepEqual(result.payables, [0, 0, 186, 0]);
+  assert.deepEqual(result.receivables, [186, 0, 0, 0]);
   assertAccounting(result);
 });
 
@@ -807,13 +807,13 @@ test('带吃听顺包庄按普通胡结算，不翻胡差也不收荤底', () =>
   });
 
   assert.equal(result.baoZhuang?.reason, 'chow_wait_seq');
-  assert.equal(result.seats[0]?.hu, 16);
+  assert.equal(result.seats[0]?.hu, 14);
   assert.equal(result.seats[0]?.piaoHun, false);
   assert.equal(result.hunDi, false);
-  // 赢家16胡；其余三家都是0胡，庄家本人0×2仍是0。1号包庄后代付48。
-  assert.deepEqual(result.deltas, [48, -48, 0, 0]);
-  assert.deepEqual(result.payables, [0, 48, 0, 0]);
-  assert.deepEqual(result.receivables, [48, 0, 0, 0]);
+  // 赢家14胡；其余三家都是0胡，庄家本人0×2仍是0。1号包庄后代付42。
+  assert.deepEqual(result.deltas, [42, -42, 0, 0]);
+  assert.deepEqual(result.payables, [0, 42, 0, 0]);
+  assert.deepEqual(result.receivables, [42, 0, 0, 0]);
   assertAccounting(result);
 });
 

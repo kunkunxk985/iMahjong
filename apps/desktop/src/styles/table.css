@@ -478,31 +478,33 @@
   pointer-events: none;
 }
 
-/* Top avatar: top center with ample margin above concealed hand */
+/* Top avatar: to the right of top tiles (opponent's left from their perspective) */
 .board-player-top {
   top: 14px;
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%);
+  right: 20px;
+  left: auto;
+  transform: none;
 }
 
-/* Left avatar: upper left area */
+/* Left avatar: vertical bar, long edge hugging left screen edge, above left concealed tiles */
 .board-player-left {
-  top: 18%;
+  top: 28%;
   left: 20px;
   right: auto;
-  transform: translateY(-50%);
+  transform-origin: left center;
+  transform: rotate(90deg);
   flex-direction: row;
 }
 
-/* Right avatar: upper right area */
+/* Right avatar: vertical bar, long edge hugging right screen edge, below right concealed tiles */
 .board-player-right {
-  top: 18%;
+  top: 48%;
   right: 20px;
   left: auto;
-  transform: translateY(-50%);
-  flex-direction: row-reverse;
-  text-align: right;
+  transform-origin: right center;
+  transform: rotate(-90deg);
+  flex-direction: row;
+  text-align: left;
 }
 
 /* Bottom avatar: Bottom-Left corner, never overlapping hand tiles */
@@ -538,15 +540,24 @@
   white-space: nowrap;
 }
 
-/* Keep the turn badge inside the table-facing side of each player plaque. */
+/* Keep the turn badge on the table-facing side of each player plaque */
 .board-player-top .board-turn-pill {
   top: auto;
   bottom: -9px;
 }
 
-.board-player-right .board-turn-pill {
+/* Left plaque rotated 90°: local bottom → visual right (toward table center) */
+.board-player-left .board-turn-pill {
+  top: auto;
+  bottom: -9px;
   right: auto;
   left: 10px;
+}
+
+/* Right plaque rotated -90°: local bottom → visual left (toward table center) */
+.board-player-right .board-turn-pill {
+  top: auto;
+  bottom: -9px;
 }
 
 .board-player.is-current .board-avatar {
