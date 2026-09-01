@@ -2,7 +2,6 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import {
   ACTION_TIMEOUT_MS,
   isPrivatePlayerView,
-  SEAT_NAMES,
   tileLabel,
   type AvailableAction,
   type ClientView,
@@ -21,7 +20,8 @@ import { isMuted, toggleMute } from '../audio/sfx';
 import { BoardPlayer, ConcealedHand, DiscardRiver, relativeSeat } from '../table/BoardSeats';
 import { DiscardFlightLayer, type DiscardFlight } from '../table/DiscardFlight';
 import { countVisibleTiles, TenpaiBar } from '../table/TenpaiBar';
-import { GameClock, useCountdown } from '../table/clock';
+import { GameClock } from '../table/clock';
+import { CenterCompass } from '../table/CenterCompass';
 
 interface TableProps {
   view: ClientView;
@@ -149,7 +149,6 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
     }
   };
 
-  const left = useCountdown(view.turnDeadline);
   const me = view.players.find((player) => player.seat === view.mySeat);
   const myHand = me && isPrivatePlayerView(me) ? me.hand : [];
   const myMelds: Meld[] = me ? me.melds : [];
@@ -465,7 +464,6 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
   }, [myHand, selectedId, lastDrawnId, canDiscard, view.availableActions, view.sequence]);
 
   const timeoutSeconds = practice ? 18 : ACTION_TIMEOUT_MS / 1000;
-  const ring = Math.max(0, Math.min(100, (left / timeoutSeconds) * 100));
   const phaseText =
     view.gamePhase === 'qidong'
       ? '起手杠：可胡可过'
@@ -486,7 +484,6 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
         : currentRel === 3
           ? 'left'
           : 'none';
-  const urgent = left > 0 && left <= 5 && (myTurn || claiming);
 
   return (
     <div
@@ -586,41 +583,18 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
         </div>
       ) : null}
 
-      {/* ── Central Grand Mahjong Compass Disc ── */}
-      <div className={`board-controller ${myTurn || claiming ? 'is-active' : ''} ${urgent ? 'is-urgent' : ''}`}>
-            <div className="compass-meta-bar">
-              <span className="meta-wall">剩余 <b>{view.wallCount}</b> 张</span>
-              <span className="meta-dot">·</span>
-              <span className="meta-round">第 <b>{view.round || 1}</b> 局</span>
-            </div>
-
-            <div className="board-compass-disc" style={{ background: `conic-gradient(#f3c34f ${ring}%, rgba(255, 255, 255, 0.08) 0)` }}>
-              <div className="compass-disc-inner">
-                <div className={`compass-wind-node wind-top ${currentRel === 2 ? 'is-turn' : ''}`}>
-                  <span className="wind-label">{SEAT_NAMES[(view.mySeat + 2) % 4]}</span>
-                  <i className="wind-pointer">▲</i>
-                </div>
-                <div className={`compass-wind-node wind-right ${currentRel === 1 ? 'is-turn' : ''}`}>
-                  <span className="wind-label">{SEAT_NAMES[(view.mySeat + 1) % 4]}</span>
-                  <i className="wind-pointer">▶</i>
-                </div>
-                <div className={`compass-wind-node wind-bottom ${currentRel === 0 ? 'is-turn' : ''}`}>
-                  <span className="wind-label">{SEAT_NAMES[view.mySeat]}</span>
-                  <i className="wind-pointer">▼</i>
-                </div>
-                <div className={`compass-wind-node wind-left ${currentRel === 3 ? 'is-turn' : ''}`}>
-                  <span className="wind-label">{SEAT_NAMES[(view.mySeat + 3) % 4]}</span>
-                  <i className="wind-pointer">◀</i>
-                </div>
-
-                <div className="compass-countdown">
-                  <strong className="countdown-number">{left > 0 ? left : '--'}</strong>
-                </div>
-              </div>
-            </div>
-
-            <div className="compass-phase-badge" aria-live="polite">{phaseText}</div>
-      </div>
+      {/* ── Central Grand Mahjong Compass Disc (Isolated from Table re-renders) ── */}
+      <CenterCompass
+        deadline={view.turnDeadline}
+        timeoutSeconds={timeoutSeconds}
+        mySeat={view.mySeat}
+        currentRel={currentRel ?? 0}
+        myTurn={myTurn}
+        claiming={claiming}
+        wallCount={view.wallCount}
+        round={view.round || 1}
+        phaseText={phaseText}
+      />
 
       <div className="board-discard-layer" aria-label="四方弃牌">
         {([0, 1, 2, 3] as const).map((rel) => {

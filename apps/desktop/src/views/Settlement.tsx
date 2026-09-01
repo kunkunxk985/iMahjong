@@ -21,7 +21,7 @@ const BAO_LABEL: Record<BaoZhuangReason, string> = {
 const BAO_EXPLANATION: Record<BaoZhuangReason, string> = {
   four_wait_seq: '胡家已有四组碰、坎或杠，单张听牌且始终未换张；该点炮牌与手中单张能相连成顺，本局按飘荤结算。',
   chow_wait_seq: '胡家已有四组牌且其中含吃，单张听牌且始终未换张；该点炮牌与手中单张能相连成顺，本局按普通胡结算。',
-  xiang: '胡家已有三组碰、坎或杠并剩两对，且未两对关门；该点炮牌此前全桌从未打出，属于香牌，本局按飘荤结算。',
+  xiang: '胡家已有三组碰、坎或杠并已两对关门锁定听口；该点炮牌此前全桌从未打出，属于香牌，由点炮者按飘荤包庄。',
 };
 
 const DRAW_LABEL: Record<string, string> = {
