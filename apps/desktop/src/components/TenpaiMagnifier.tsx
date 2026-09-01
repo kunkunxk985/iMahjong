@@ -82,11 +82,11 @@ export function TenpaiMagnifier({
 
       <div className="magnifier-footer">
         {isClosed ? (
-          <span className="footer-tag safe">🛡️ 已经关门：享受胡牌飘荤，且出牌免受包香惩罚</span>
+          <span className="footer-tag safe">🛡️ 已经关门：享受胡牌飘荤，静候对手打香牌包全桌</span>
         ) : isPiaoHunChance ? (
-          <span className="footer-tag warning">⚠️ 暂未关门：四坎一张自摸飘荤；若未关门打香牌点炮将触发包庄！</span>
+          <span className="footer-tag warning">💡 建议关门：手牌成型可点击关门防守，并让打香牌点炮的对手包庄</span>
         ) : (
-          <span className="footer-tag neutral">💡 提示：主动坎上三张可累积胡数，凑齐四组或两对可关门防守</span>
+          <span className="footer-tag neutral">💡 提示：主动坎上三张可累积胡数，凑齐四组或两对可关门听牌</span>
         )}
       </div>
     </div>

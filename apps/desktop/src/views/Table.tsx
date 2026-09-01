@@ -329,8 +329,9 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
     return set;
   }, [view.players]);
 
-  // Player is in Bao-Zhuang risk phase if having >= 3 melds and NOT closed
-  const inXiangRiskPhase = Boolean(me && me.melds.length >= 3 && !me.closed);
+  // Player is in Bao-Zhuang risk phase ONLY when at least one OPPONENT has declared Guan-Men (closed)
+  const hasClosedOpponent = Boolean(view.players.some((p) => p.seat !== view.mySeat && p.closed));
+  const inXiangRiskPhase = Boolean(hasClosedOpponent && !me?.closed);
 
   const discard = () => {
     if (!selectedId || !canDiscard) return;
