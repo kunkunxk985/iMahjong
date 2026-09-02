@@ -408,28 +408,31 @@
   display: none;
 }
 
-/* Top river: centered, clearly below top hand rack and above compass */
-.board-discard-top {
-  top: 25%;
-  left: 50%;
-  right: auto;
-  width: min(440px, 34vw);
-  transform: translateX(-50%);
-}
+/* ─── Discard Rivers: Perfectly Symmetrical 4-Quadrant Ring (四向等距对称牌河) ─── */
 
-/* Bottom river: centered, clearly below compass and above bottom player hand */
-.board-discard-bottom {
-  top: 65%;
-  bottom: auto;
+/* Top river: exactly north of compass */
+.board-discard-top {
+  top: calc(50% - clamp(130px, 15vh, 170px));
   left: 50%;
   right: auto;
+  bottom: auto;
   width: min(440px, 34vw);
   transform: translate(-50%, -50%);
 }
 
-/* Left river: vertical cluster spacious to the left of compass */
+/* Bottom river: exactly south of compass */
+.board-discard-bottom {
+  top: calc(50% + clamp(130px, 15vh, 170px));
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  width: min(440px, 34vw);
+  transform: translate(-50%, -50%);
+}
+
+/* Left river: exactly west of compass */
 .board-discard-left {
-  top: 45%;
+  top: 50%;
   left: calc(50% - clamp(200px, 17vw, 260px));
   right: auto;
   bottom: auto;
@@ -437,9 +440,9 @@
   transform: translate(-50%, -50%);
 }
 
-/* Right river: vertical cluster spacious to the right of compass */
+/* Right river: exactly east of compass */
 .board-discard-right {
-  top: 45%;
+  top: 50%;
   left: calc(50% + clamp(200px, 17vw, 260px));
   right: auto;
   bottom: auto;
@@ -595,144 +598,132 @@
   gap: 8px;
   min-width: clamp(130px, 11vw, 172px);
   padding: 6px 12px 6px 8px;
-  background: rgba(6, 20, 14, 0.88);
-  border: 1.5px solid rgba(245, 214, 120, 0.45);
-  border-radius: 12px;
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.65),
-    0 0 16px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    inset 0 0 12px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 14px 4px 5px;
+  border-radius: 999px;
+  background: rgba(8, 24, 18, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(250, 204, 21, 0.38);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.65);
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.25, 1);
+  user-select: none;
 }
 
 .board-player.is-current {
   border-color: #fde047;
-  background: rgba(16, 38, 28, 0.92);
+  background: rgba(16, 42, 30, 0.96);
   box-shadow:
-    0 0 0 1px rgba(253, 224, 71, 0.4),
-    0 0 28px rgba(250, 204, 21, 0.5),
-    0 10px 24px rgba(0, 0, 0, 0.7);
+    0 0 0 1px rgba(253, 224, 71, 0.5),
+    0 0 26px rgba(250, 204, 21, 0.6),
+    0 8px 24px rgba(0, 0, 0, 0.7);
   transform: scale(1.04);
 }
 
 .board-player.is-you {
   border-color: rgba(52, 211, 153, 0.85);
   box-shadow:
-    0 0 20px rgba(16, 185, 129, 0.35),
-    0 8px 24px rgba(0, 0, 0, 0.65);
+    0 0 18px rgba(16, 185, 129, 0.35),
+    0 6px 20px rgba(0, 0, 0, 0.65);
 }
 
-/* Top avatar: to the right of top tiles (opponent's left from their perspective) */
+/* 1. Top Player: Dead center at the top edge, perfectly aligned with vertical table axis */
 .board-player-top {
-  /* Keep the plaque below the top toolbar; the previous 14px position left it
-     underneath the z-index 12 toolbar and only a thin edge was visible. */
-  top: clamp(54px, 7.2vh, 70px);
-  right: clamp(25px, 2vw, 30px);
-  left: auto;
-  transform: none;
-}
-
-/* Left avatar: horizontal seat plaque, above the left concealed tiles. */
-.board-player-left {
-  top: 28%;
-  left: clamp(18px, 1.7vw, 26px);
+  top: clamp(14px, 2vh, 22px);
+  left: 50%;
   right: auto;
-  flex-direction: row;
-  text-align: left;
-  border-left: 2px solid rgba(125, 211, 252, 0.72);
-  --side-accent: #7dd3fc;
+  transform: translateX(-50%);
 }
 
-/* Right avatar: horizontal seat plaque, below the right concealed tiles. */
-.board-player-right {
-  top: 48%;
-  right: clamp(18px, 1.7vw, 26px);
-  left: auto;
-  flex-direction: row;
-  text-align: left;
-  border-right: 2px solid rgba(251, 191, 36, 0.72);
-  --side-accent: #fbbf24;
+.board-player-top.is-current {
+  transform: translateX(-50%) scale(1.04);
 }
 
-/* A slim jade/brass light strip gives each side plaque a clear outer edge
-   without adding another badge or stealing space from the player name. */
-.board-player-left::after,
-.board-player-right::after {
-  content: '';
-  position: absolute;
-  top: 9px;
-  bottom: 9px;
-  width: 2px;
-  border-radius: 999px;
-  pointer-events: none;
-  opacity: 0.72;
-  background: linear-gradient(180deg, transparent, var(--side-accent), transparent);
-}
-
-.board-player-left::after {
-  left: 5px;
-}
-
-.board-player-right::after {
-  right: 5px;
-}
-
-/* Bottom avatar: Bottom-Left corner, never overlapping hand tiles */
+/* 2. Bottom Player: Cleanly anchored at bottom left corner, spacious and never overlapping hand */
 .board-player-bottom {
-  bottom: 20px;
-  left: 24px;
+  bottom: 18px;
+  left: clamp(20px, 2.5vw, 40px);
   right: auto;
   transform: none;
 }
 
-.board-player.is-current {
-  border-color: rgba(255, 218, 111, 0.9);
-  box-shadow:
-    0 0 0 2px rgba(250, 204, 21, 0.1),
-    0 0 22px rgba(250, 204, 21, 0.38),
-    0 7px 18px rgba(0, 0, 0, 0.5);
+/* 3. Left Player: Exactly mirrored with Right Player, positioned above left concealed tiles */
+.board-player-left {
+  top: calc(50% - 190px);
+  left: clamp(18px, 2vw, 36px);
+  right: auto;
+  transform: none;
 }
 
-.board-turn-pill {
+/* 4. Right Player: Exact bilateral mirror of Left Player */
+.board-player-right {
+  top: calc(50% - 190px);
+  right: clamp(18px, 2vw, 36px);
+  left: auto;
+  transform: none;
+}
+
+/* ─── Streamlined Avatar & Meta inside Plaque ───────────────── */
+
+.player-avatar-wrap {
+  position: relative;
+  width: clamp(34px, 2.6vw, 42px);
+  height: clamp(34px, 2.6vw, 42px);
+  flex-shrink: 0;
+}
+
+.board-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1.5px solid #fde047;
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.45);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 35% 25%, #1f5039 0%, #0a251a 100%);
+}
+
+.board-avatar-content {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.player-seat-badge {
   position: absolute;
-  z-index: 3;
-  top: -9px;
-  right: 10px;
-  padding: 2px 7px;
-  color: #2b1b04;
-  background: linear-gradient(180deg, #ffeaa6, #d7a834);
-  border: 1px solid rgba(255, 244, 193, 0.9);
-  border-radius: 999px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.42);
+  bottom: -2px;
+  right: -3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid #fde047;
+  color: #fef08a;
   font-size: 9px;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.65);
 }
 
-/* Keep the turn badge on the table-facing side of each player plaque */
-.board-player-top .board-turn-pill {
-  top: auto;
-  bottom: -9px;
-}
-
-/* Keep the turn badge above the left horizontal plaque. */
-.board-player-left .board-turn-pill {
-  top: -9px;
-  bottom: auto;
-  right: auto;
-  left: 12px;
-}
-
-/* Keep the turn badge above the right horizontal plaque. */
-.board-player-right .board-turn-pill {
-  top: -9px;
-  bottom: auto;
-  left: auto;
-  right: 12px;
+.player-dealer-badge {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  border: 1px solid #fff;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.7);
 }
 
 .board-player.is-current .board-avatar {
@@ -740,128 +731,57 @@
 }
 
 @keyframes current-pulse {
-  0%, 100% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.3), inset 0 0 0 2px rgba(255, 255, 255, 0.15); }
-  50% { box-shadow: 0 0 24px rgba(250, 204, 21, 0.8), inset 0 0 0 2px rgba(255, 236, 180, 0.45); }
+  0%, 100% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.4), inset 0 0 0 2px rgba(255, 255, 255, 0.2); }
+  50% { box-shadow: 0 0 26px rgba(250, 204, 21, 0.9), inset 0 0 0 2px rgba(255, 236, 180, 0.5); }
 }
 
-.board-player.is-you .board-avatar {
-  border-color: rgba(109, 224, 190, 0.9);
-  box-shadow: 0 0 18px rgba(52, 211, 153, 0.42), inset 0 0 0 2px rgba(255, 255, 255, 0.16);
-}
-
-.board-avatar {
-  position: relative;
-  width: clamp(36px, 2.8vw, 46px);
-  height: clamp(36px, 2.8vw, 46px);
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  border: 1.5px solid rgba(245, 214, 120, 0.85);
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 34% 26%, rgba(90, 150, 112, 0.62), transparent 32%),
-    linear-gradient(145deg, rgba(31, 80, 57, 0.96), rgba(8, 35, 24, 0.98));
-  box-shadow: 0 4px 9px rgba(0, 0, 0, 0.42), inset 0 0 0 2px rgba(255, 255, 255, 0.1);
-  flex-shrink: 0;
-}
-
-.board-avatar::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.3), transparent 42%, rgba(0, 0, 0, 0.25));
-}
-
-.board-avatar span {
-  position: relative;
-  color: #fffbeb;
-  font-family: var(--serif);
-  font-size: clamp(15px, 1.3vw, 22px);
-  font-weight: 600;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.board-avatar > .avatar-image {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.board-avatar i {
-  position: absolute;
-  z-index: 2;
-  right: 3px;
-  bottom: 2px;
-  color: #fef08a;
-  font-size: 9px;
-  font-style: normal;
-  text-shadow: 0 0 6px rgba(250, 204, 21, 0.8);
-}
-
-.board-player-copy {
+.player-meta-wrap {
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  min-width: 0;
+  gap: 2px;
+  text-align: left;
+  min-width: 54px;
+  max-width: 100px;
 }
 
-.board-player-copy strong {
-  color: #fffbeb;
-  font-size: clamp(11px, 0.95vw, 13px);
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.board-player-title {
-  overflow: hidden;
-  color: rgba(255, 231, 157, 0.8) !important;
-  font-size: clamp(8px, 0.68vw, 10px) !important;
-  line-height: 1.1;
-  text-overflow: ellipsis;
-}
-
-.board-player-copy span {
-  color: rgba(186, 230, 253, 0.7);
-  font-size: clamp(9px, 0.8vw, 11px);
-  white-space: nowrap;
-}
-
-.board-player-status {
+.player-name-row {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
 }
 
-.board-status-dot {
-  width: 5px;
-  height: 5px;
-  display: inline-block;
-  border-radius: 50%;
-  background: #64748b;
-  flex: 0 0 auto;
+.player-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: #fffbeb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
-.board-status-dot.is-online {
-  background: #55d99d;
-  box-shadow: 0 0 5px rgba(85, 217, 157, 0.72);
+.player-you-tag {
+  font-size: 9px;
+  color: #34d399;
+  font-weight: 800;
+  padding: 0 3px;
+  border-radius: 3px;
+  background: rgba(52, 211, 153, 0.2);
+  border: 1px solid rgba(52, 211, 153, 0.4);
 }
 
-.board-status-dot.is-offline {
-  background: #f87171;
+.player-score-row {
+  display: flex;
+  align-items: center;
 }
 
-.board-player-copy .board-dealer {
-  color: #fde047;
-  margin-right: 3px;
-}
-
-.board-player-copy .board-closed {
-  color: #fca5a5;
-  margin-right: 3px;
+.player-score {
+  font-size: 12px;
+  font-weight: 800;
+  color: #fef08a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 
 .board-player em {
@@ -919,9 +839,9 @@
   margin-left: 0;
 }
 
-/* Top concealed: 3D standing rack with generous 24px+ margin below top player avatar */
+/* Top concealed: 3D standing rack below top player avatar */
 .board-concealed-top {
-  top: 76px;
+  top: clamp(68px, 8.5vh, 88px);
   left: 50%;
   transform: translateX(-50%);
 }
@@ -930,10 +850,10 @@
   margin-left: -1px;
 }
 
-/* Left concealed: 3D standing rack in lower left area */
+/* Left concealed: 3D standing rack, vertically centered at 50% */
 .board-concealed-left {
-  top: 60%;
-  left: 44px;
+  top: 50%;
+  left: clamp(28px, 2.8vw, 48px);
   transform: translateY(-50%) rotate(90deg);
   transform-origin: center center;
   display: flex;
@@ -946,10 +866,10 @@
   margin-top: 0;
 }
 
-/* Right concealed: 3D standing rack in upper right area (Rotational symmetry) */
+/* Right concealed: 3D standing rack, vertically centered at 50% (Exact mirror) */
 .board-concealed-right {
-  top: 38%;
-  right: 44px;
+  top: 50%;
+  right: clamp(28px, 2.8vw, 48px);
   transform: translateY(-50%) rotate(-90deg);
   transform-origin: center center;
   display: flex;

@@ -27,27 +27,34 @@ export const BoardPlayer = memo(function BoardPlayer({
   current: boolean;
 }) {
   const avatar = player.isBot ? '陪' : player.avatar;
+  const seatName = SEAT_NAMES[player.seat];
+
   return (
     <div
       className={`board-player board-player-${position} ${current ? 'is-current' : ''} ${you ? 'is-you' : ''}`}
       aria-current={current ? 'true' : undefined}
     >
-      {current ? <span className="board-turn-pill">出牌中</span> : null}
-      <div className={`board-avatar avatar-${player.seat}`}>
-        <AvatarView avatar={avatar} className="board-avatar-content" alt={`${player.nickname}头像`} />
-        <i>{SEAT_NAMES[player.seat]}</i>
+      <div className="player-avatar-wrap">
+        <div className={`board-avatar avatar-${player.seat}`}>
+          <AvatarView avatar={avatar} className="board-avatar-content" alt={`${player.nickname}头像`} />
+        </div>
+        <span className="player-seat-badge" title={`座位：${seatName}风`}>{seatName}</span>
+        {player.isDealer ? <span className="player-dealer-badge" title="当前庄家">庄</span> : null}
       </div>
-      <div className="board-player-copy">
-        <strong>{player.nickname}{you ? ' · 你' : ''}</strong>
-        {player.title ? <span className="board-player-title">{player.title}</span> : null}
-        <span className="board-player-status">
-          <i className={`board-status-dot ${player.online ? 'is-online' : 'is-offline'}`} />
-          {player.isDealer ? <b className="board-dealer">庄</b> : null}
-          {player.closed ? <b className="board-closed">关</b> : null}
-          {player.isBot ? '陪练' : player.isHost ? '房主' : player.online ? '在线' : '离线'}
-        </span>
+
+      <div className="player-meta-wrap">
+        <div className="player-name-row">
+          <span className="player-name" title={player.nickname}>
+            {player.nickname}
+          </span>
+          {you ? <span className="player-you-tag">我</span> : null}
+        </div>
+        <div className="player-score-row">
+          <span className="player-score" aria-label={`积分 ${player.score}`}>
+            {player.score > 0 ? `+${player.score}` : player.score}
+          </span>
+        </div>
       </div>
-      <em aria-label={`积分 ${player.score}`}><small>分</small>{player.score > 0 ? `+${player.score}` : player.score}</em>
     </div>
   );
 });
