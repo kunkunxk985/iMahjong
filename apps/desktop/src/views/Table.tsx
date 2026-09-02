@@ -305,8 +305,8 @@ export function Table({
     if (!lastDrawnId || lastDrawnId === prevDrawnRef.current) return;
     setEnteringId(lastDrawnId);
     prevDrawnRef.current = lastDrawnId;
-    // Keep the class until draw-arc-in (0.48s) fully finishes
-    const timer = setTimeout(() => setEnteringId(undefined), 540);
+    // Keep the class until draw-arc-in (0.2s) fully finishes
+    const timer = setTimeout(() => setEnteringId(undefined), 220);
     return () => clearTimeout(timer);
   }, [lastDrawnId]);
 
@@ -344,7 +344,7 @@ export function Table({
           { transform: `translate3d(${dx}px, 0, 0)` },
           { transform: 'translate3d(0, 0, 0)' },
         ],
-        { duration: 200, easing: 'cubic-bezier(0.2, 0.85, 0.25, 1)' },
+        { duration: 160, easing: 'cubic-bezier(0.2, 0.9, 0.25, 1)' },
       );
     }
   }, [myHandIds]);

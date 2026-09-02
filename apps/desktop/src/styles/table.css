@@ -217,16 +217,9 @@
   to { opacity: 0.95; transform: scale(1.04); }
 }
 
-.mahjong-board.turn-top .board-concealed-top,
-.mahjong-board.turn-right .board-concealed-right,
-.mahjong-board.turn-bottom .board-hand-area,
-.mahjong-board.turn-left .board-concealed-left {
-  animation: active-seat-rack 1.8s ease-in-out infinite alternate;
-}
-
-@keyframes active-seat-rack {
-  from { filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5)); }
-  to { filter: drop-shadow(0 6px 16px rgba(251, 211, 111, 0.42)); }
+/* Turn racks receive a subtle static elevation without GPU filter re-rendering */
+.mahjong-board.turn-bottom .board-hand-area {
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.45));
 }
 
 @keyframes board-turn-arrive {
@@ -493,8 +486,8 @@
 .board-discard-cell.is-last::before {
   inset: -7px;
   border-radius: 10px;
-  background: radial-gradient(ellipse, rgba(250, 204, 21, 0.32), transparent 70%);
-  filter: blur(2px);
+  background: radial-gradient(ellipse, rgba(250, 204, 21, 0.36), transparent 70%);
+  transform: translateZ(0);
   animation: last-discard-beacon 1.5s ease-in-out infinite alternate;
 }
 
@@ -503,6 +496,7 @@
   border: 1px solid rgba(255, 226, 122, 0.62);
   border-radius: 8px;
   opacity: 0.3;
+  transform: translateZ(0);
   animation: last-discard-ring 1.5s ease-out infinite;
 }
 
@@ -536,9 +530,10 @@
     0 1px 0 #fff7cc,
     0 2.5px 0 #18683b,
     0 4px 0 #0d4a25,
-    0 12px 24px rgba(250, 204, 21, 0.6) !important;
-  animation: tile-drop-bounce 0.32s cubic-bezier(0.18, 1.4, 0.3, 1) both;
+    0 8px 18px rgba(250, 204, 21, 0.55) !important;
+  animation: tile-land-settle 0.12s cubic-bezier(0.2, 0.9, 0.25, 1) both;
   z-index: 5;
+  transform: translateZ(0);
 }
 
 .last-discard-marker {
@@ -560,18 +555,12 @@
   to { transform: translate(-50%, 4px) scale(1.1); }
 }
 
-@keyframes tile-drop-bounce {
+@keyframes tile-land-settle {
   0% {
-    transform: translate3d(0, -18px, 0) scale(1.18);
-    opacity: 0.6;
-  }
-  60% {
-    transform: translate3d(0, 2px, 0) scale(0.98);
-    opacity: 1;
+    transform: translate3d(0, -3px, 0) scale(1.02);
   }
   100% {
     transform: translate3d(0, 0, 0) scale(1);
-    opacity: 1;
   }
 }
 
@@ -1752,23 +1741,22 @@
 
 .discard-flight {
   position: relative;
-  filter: drop-shadow(0 12px 15px rgba(0, 0, 0, 0.58));
+  transform: translateZ(0);
 }
 
 .discard-flight-glow {
   position: absolute;
-  inset: -32%;
+  inset: -20%;
   border-radius: 50%;
   pointer-events: none;
-  background: radial-gradient(circle, rgba(251, 211, 111, 0.42) 0%, rgba(251, 211, 111, 0.14) 42%, transparent 72%);
-  mix-blend-mode: screen;
-  animation: discard-flight-glow 0.3s ease-out both;
+  background: radial-gradient(circle, rgba(251, 211, 111, 0.45) 0%, rgba(251, 211, 111, 0.12) 42%, transparent 72%);
+  transform: translateZ(0);
+  animation: discard-flight-glow 0.22s ease-out both;
 }
 
 @keyframes discard-flight-glow {
-  0% { opacity: 0; transform: scale(0.45); }
-  24% { opacity: 0.95; transform: scale(0.9); }
-  100% { opacity: 0; transform: scale(1.35); }
+  0% { opacity: 0.8; transform: scale(0.6); }
+  100% { opacity: 0; transform: scale(1.3); }
 }
 
 .discard-flight-card {
@@ -1787,7 +1775,8 @@
     0 1px 0 #d8c8a0,
     0 3px 0 #176038,
     0 5px 0 #082f1b,
-    0 9px 16px rgba(0, 0, 0, 0.48);
+    0 10px 22px rgba(0, 0, 0, 0.55);
+  transform: translateZ(0);
 }
 
 .discard-flight-card .tile-skin {
@@ -1801,13 +1790,14 @@
 }
 
 .board-hand-area .tenpai-bar {
-  animation: tenpai-bar-in 0.22s cubic-bezier(0.22, 0.9, 0.28, 1.12) both;
-  transition: transform 0.2s cubic-bezier(0.22, 0.9, 0.28, 1.12);
+  animation: tenpai-bar-in 0.16s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  transition: transform 0.16s cubic-bezier(0.2, 0.9, 0.25, 1);
+  will-change: transform, opacity;
 }
 
 @keyframes tenpai-bar-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 /* ─── Network Status ────────────────────────────────────────── */
