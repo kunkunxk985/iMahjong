@@ -1806,9 +1806,20 @@ input:focus-visible {
   padding: 7px 4px;
   border-bottom: 1px solid rgba(201, 162, 39, 0.18);
 }
-.settlement tr.winner { color: var(--gold-soft); }
-.up { color: #9ad7b8; }
-.down { color: #ffb4b4; }
+.settlement tr.winner {
+  color: #fef08a;
+  background: rgba(250, 204, 21, 0.1);
+  box-shadow: inset 2px 0 0 #fde047;
+}
+.up {
+  color: #34d399;
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+}
+.down {
+  color: #f87171;
+  font-weight: 800;
+}
 .offline { opacity: 0.62; }
 .hint { color: #cbbd8d; font-size: 13px; }
 .rules-modal {
@@ -3720,79 +3731,86 @@ input:focus-visible {
 }
 
 .mode-big-card.online-tile {
-  background: linear-gradient(150deg, rgba(30, 58, 138, 0.45) 0%, rgba(15, 23, 42, 0.85) 100%);
-  border: 1.5px solid rgba(96, 165, 250, 0.45);
+  background:
+    radial-gradient(circle at 50% 15%, rgba(59, 130, 246, 0.22) 0%, transparent 65%),
+    linear-gradient(150deg, rgba(30, 58, 138, 0.5) 0%, rgba(15, 23, 42, 0.92) 100%);
+  border: 1.5px solid rgba(96, 165, 250, 0.55);
 }
 
 .mode-big-card.online-tile:hover {
-  transform: translateY(-4px);
+  transform: translateY(-6px) scale(1.02);
   border-color: #93c5fd;
-  box-shadow: 0 16px 36px rgba(59, 130, 246, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 20px 48px rgba(59, 130, 246, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .mode-big-card.local-tile {
-  background: linear-gradient(150deg, rgba(6, 78, 59, 0.45) 0%, rgba(15, 23, 42, 0.85) 100%);
-  border: 1.5px solid rgba(52, 211, 153, 0.45);
+  background:
+    radial-gradient(circle at 50% 15%, rgba(16, 185, 129, 0.22) 0%, transparent 65%),
+    linear-gradient(150deg, rgba(6, 78, 59, 0.5) 0%, rgba(15, 23, 42, 0.92) 100%);
+  border: 1.5px solid rgba(52, 211, 153, 0.55);
 }
 
 .mode-big-card.local-tile:hover {
-  transform: translateY(-4px);
+  transform: translateY(-6px) scale(1.02);
   border-color: #6ee7b7;
-  box-shadow: 0 16px 36px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 20px 48px rgba(16, 185, 129, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .mode-card-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
   background: rgba(255, 255, 255, 0.08);
-  border: 1.5px solid rgba(254, 240, 138, 0.35);
+  border: 1.5px solid rgba(254, 240, 138, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
-  margin-bottom: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  transition: all 0.25s ease;
+  font-size: 34px;
+  margin-bottom: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .mode-big-card:hover .mode-card-icon {
-  transform: scale(1.08);
+  transform: scale(1.12);
   border-color: #fde047;
-  box-shadow: 0 0 20px rgba(250, 204, 21, 0.3);
+  box-shadow: 0 0 26px rgba(250, 204, 21, 0.5);
 }
 
 .mode-card-info h3 {
-  font-size: 18px;
+  font-size: 20px;
   font-family: var(--serif, inherit);
+  font-weight: 800;
   color: #fffbeb;
   margin: 0 0 6px;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
 }
 
 .mode-card-info p {
-  font-size: 12px;
+  font-size: 13px;
   color: #cbd5e1;
-  margin: 0 0 16px;
-  line-height: 1.5;
+  margin: 0 0 18px;
+  line-height: 1.6;
 }
 
 .mode-card-enter {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
   color: #fef08a;
-  padding: 6px 16px;
+  padding: 8px 22px;
   border-radius: 999px;
-  background: rgba(250, 204, 21, 0.18);
-  border: 1px solid rgba(254, 240, 138, 0.4);
-  transition: all 0.2s ease;
+  background: rgba(250, 204, 21, 0.2);
+  border: 1px solid rgba(254, 240, 138, 0.5);
+  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .mode-big-card:hover .mode-card-enter {
   background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #fffbeb;
   border-color: #fde047;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.5);
+  transform: scale(1.06);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 /* Online Room Panel */
