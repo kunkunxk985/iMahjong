@@ -11,9 +11,10 @@ jobs:
     name: Verify (Node ${{ matrix.node-version }} on ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [20.x]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node-version: [20.x, 22.x]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,5 +28,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Full Verification
-        run: npm run verify
+      - name: Architecture Boundary Check
+        run: npm run check:architecture
+
+      - name: TypeScript Typecheck
+        run: npm run typecheck
+
+      - name: Unit Tests (Rules & Server & Worker)
+        run: npm test
+
+      - name: Four-Player Integration Smoke Test
+        run: npm run smoke
+
+      - name: Desktop App Bundle Build
+        run: npm run build
+

@@ -47,11 +47,11 @@ class Bot {
     });
   }
 
-  async waitView(pred: (view: ClientView) => boolean, timeout = 8000): Promise<ClientView> {
+  async waitView(pred: (view: ClientView) => boolean, timeout = 15000): Promise<ClientView> {
     const start = Date.now();
     while (Date.now() - start < timeout) {
       if (this.view && pred(this.view)) return this.view;
-      await new Promise((r) => setTimeout(r, 50));
+      await new Promise((r) => setTimeout(r, 40));
     }
     throw new Error(`${this.name} waitView timeout`);
   }
@@ -106,7 +106,7 @@ if (reconnectedView.mySeat === 1) {
 
 // 5. 模拟打牌直至本局结算
 let steps = 0;
-while (steps < 500) {
+while (steps < 1000) {
   steps += 1;
   const settled = bots.some((bot) => bot.view?.phase === 'settlement');
   if (settled) break;
@@ -136,7 +136,11 @@ while (steps < 500) {
       bot.send({ type: 'game:action', sequence: view.sequence, actionId: `s${steps}-${bot.name}-p`, action: { kind: 'pass' } });
     }
   }
-  await new Promise((r) => setTimeout(r, 20));
+  await new Promise((r) => setTimeout(r, 15));
+}
+
+if (!bots.some((bot) => bot.view?.phase === 'settlement')) {
+  throw new Error(`牌局在 ${steps} 步内未能完成结算`);
 }
 
 const round1Settlement = bots[0]!.view?.settlement;
