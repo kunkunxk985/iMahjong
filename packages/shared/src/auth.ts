@@ -108,6 +108,7 @@ export interface UserSearchResult {
 export const USERNAME_MIN = 2;
 export const USERNAME_MAX = 24;
 export const PASSWORD_MIN = 6;
+export const DEFAULT_TITLE = '初学雀友';
 export const TITLE_MAX = 24;
 export const BIO_MAX = 120;
 
@@ -161,7 +162,7 @@ export function sanitizeProfileNickname(raw: unknown, fallback = '雀友'): stri
   return typeof raw === 'string' ? sanitizeNickname(raw, fallback) : fallback.slice(0, NICKNAME_MAX);
 }
 
-export function sanitizeProfileTitle(raw: unknown, fallback = '初学雀友'): string {
+export function sanitizeProfileTitle(raw: unknown, fallback = DEFAULT_TITLE): string {
   return sanitizeProfileText(raw, fallback, TITLE_MAX);
 }
 

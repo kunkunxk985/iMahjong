@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { NICKNAME_MAX, PASSWORD_MIN, USERNAME_MAX, type UserProfile } from '@pizhou/shared';
 import { apiGuestLogin, apiLogin, apiRegister } from '../api/auth';
 
@@ -17,6 +17,14 @@ export function AuthView({ serverUrl, onSuccess, onRules, onSettings }: AuthView
   const [registrationNickname, setRegistrationNickname] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const authStageRef = useRef<HTMLDivElement | null>(null);
+
+  const switchTab = (nextTab: 'login' | 'register') => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    setTab(nextTab);
+    setError('');
+    window.requestAnimationFrame(() => authStageRef.current?.scrollTo({ top: 0, behavior: 'auto' }));
+  };
 
   const handleGuest = async () => {
     setLoading(true);
@@ -90,12 +98,58 @@ export function AuthView({ serverUrl, onSuccess, onRules, onSettings }: AuthView
   };
 
   return (
-    <div className="auth-stage">
+    <div ref={authStageRef} className="auth-stage">
+      <aside className="auth-hero-panel" aria-label="邳州麻将游戏介绍">
+        <div className="auth-hero-seal-row">
+          <div className="auth-hero-mark" aria-hidden="true">🀄</div>
+          <span className="auth-city-badge">江苏 · 邳州</span>
+        </div>
+        <p className="auth-hero-eyebrow">PIZHOU MAHJONG · 地道家乡雀馆</p>
+        <h2>
+          今晚，和老朋友
+          <br />
+          <em>摸一圈</em>
+        </h2>
+        <p className="auth-hero-copy">
+          原汁原味的邳州经典麻将。两对关门、坎上自杠，头像、网名与每局胡账云端留存。
+        </p>
+
+        <div className="auth-feature-list">
+          <div className="auth-feature-item">
+            <span className="auth-feature-icon" aria-hidden="true">四</span>
+            <span>
+              <strong>四人好友联机</strong>
+              <small>6位房号一发，马上入桌开局</small>
+            </span>
+          </div>
+          <div className="auth-feature-item">
+            <span className="auth-feature-icon" aria-hidden="true">名</span>
+            <span>
+              <strong>雀士身份名片</strong>
+              <small>自定义头像、头衔与牌桌宣言</small>
+            </span>
+          </div>
+          <div className="auth-feature-item">
+            <span className="auth-feature-icon" aria-hidden="true">记</span>
+            <span>
+              <strong>战绩物理隔离</strong>
+              <small>联机实战与单机演练清晰独立</small>
+            </span>
+          </div>
+        </div>
+
+        <div className="auth-hero-status">
+          <span className="auth-status-dot" aria-hidden="true" />
+          云端雀士服务就绪 · 实时低延迟
+        </div>
+      </aside>
+
       <div className="auth-card">
-        {/* Game Title */}
+        <div className="gold-line" />
         <div className="auth-card-header">
-          <h1 className="auth-title">🀄 邳 州 麻 将</h1>
-          <p className="auth-subtitle">地道苏北规则 · 四人联机对战</p>
+          <span className="auth-card-kicker">雀士入口</span>
+          <h1 className="auth-title">进入邳州麻将</h1>
+          <p className="auth-subtitle">账号漫游 · 头像网名全端同步</p>
         </div>
 
         {error && <div className="auth-error-banner">{error}</div>}
@@ -105,20 +159,14 @@ export function AuthView({ serverUrl, onSuccess, onRules, onSettings }: AuthView
           <button
             type="button"
             className={`tab-btn ${tab === 'login' ? 'active' : ''}`}
-            onClick={() => {
-              setTab('login');
-              setError('');
-            }}
+            onClick={() => switchTab('login')}
           >
             🔑 账号登录
           </button>
           <button
             type="button"
             className={`tab-btn ${tab === 'register' ? 'active' : ''}`}
-            onClick={() => {
-              setTab('register');
-              setError('');
-            }}
+            onClick={() => switchTab('register')}
           >
             ✨ 快速注册
           </button>
@@ -127,7 +175,9 @@ export function AuthView({ serverUrl, onSuccess, onRules, onSettings }: AuthView
         {/* Form */}
         <form className="auth-form" onSubmit={tab === 'login' ? handleLogin : handleRegister}>
           <div className="form-group">
+            <label className="sr-only" htmlFor="auth-username">雀士账号</label>
             <input
+              id="auth-username"
               type="text"
               className="input-field"
               placeholder={tab === 'login' ? '请输入您的雀士账号' : '设置新账号（自动作为昵称）'}
@@ -141,7 +191,9 @@ export function AuthView({ serverUrl, onSuccess, onRules, onSettings }: AuthView
 
           {tab === 'register' ? (
             <div className="form-group">
+              <label className="sr-only" htmlFor="auth-nickname">游戏昵称</label>
               <input
+                id="auth-nickname"
                 type="text"
                 className="input-field"
                 placeholder="设置游戏昵称（可稍后在档案中修改）"
@@ -153,7 +205,9 @@ export function AuthView({ serverUrl, onSuccess, onRules, onSettings }: AuthView
           ) : null}
 
           <div className="form-group">
+            <label className="sr-only" htmlFor="auth-password">账号密码</label>
             <input
+              id="auth-password"
               type="password"
               className="input-field"
               placeholder="请输入密码"
@@ -165,7 +219,9 @@ export function AuthView({ serverUrl, onSuccess, onRules, onSettings }: AuthView
 
           {tab === 'register' ? (
             <div className="form-group">
+              <label className="sr-only" htmlFor="auth-password-confirmation">确认密码</label>
               <input
+                id="auth-password-confirmation"
                 type="password"
                 className="input-field"
                 placeholder={`再次输入密码（至少 ${PASSWORD_MIN} 位）`}

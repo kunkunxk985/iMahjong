@@ -1,3 +1,19 @@
+@media (max-width: 920px) {
+  .waiting-body-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .waiting-control-panel {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .waiting-control-panel .waiting-rate-panel {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 760px) {
   .hall-card,
   .waiting-card,
@@ -59,6 +75,56 @@
     grid-template-columns: 1fr;
   }
 
+  .waiting-hall {
+    align-items: center;
+    padding: 12px;
+  }
+
+  .waiting-card {
+    max-height: calc(100% - 10px);
+    padding-top: 22px;
+    padding-bottom: 18px;
+  }
+
+  .waiting-card > .gold-line {
+    margin-bottom: 16px;
+  }
+
+  .waiting-heading-row {
+    margin-bottom: 16px;
+  }
+
+  .waiting-heading-copy h1 {
+    font-size: 28px;
+  }
+
+  .waiting-heading-copy .sub {
+    margin-top: 8px;
+    font-size: 12px;
+  }
+
+  .waiting-control-panel {
+    display: flex;
+  }
+
+  .waiting-seats-section {
+    padding: 14px;
+  }
+
+  .waiting-footer {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .waiting-footer-actions {
+    width: 100%;
+  }
+
+  .waiting-footer-actions .btn-action {
+    flex: 1;
+  }
+
   .room-code-num {
     font-size: 23px;
   }
@@ -88,9 +154,39 @@
     height: 15px;
   }
 
+  .board-profile-button {
+    width: 29px;
+    padding: 2px;
+    justify-content: center;
+  }
+
+  .board-profile-label {
+    display: none;
+  }
+
   .board-title,
   .board-player-copy span,
   .board-player > em {
+    display: none;
+  }
+
+  .waiting-heading-row {
+    gap: 10px;
+  }
+
+  .waiting-profile-button {
+    padding-right: 6px;
+  }
+
+  .waiting-profile-button > span {
+    display: none;
+  }
+
+  .settlement-profile-button {
+    padding-right: 4px;
+  }
+
+  .settlement-profile-button > span {
     display: none;
   }
 
@@ -259,6 +355,207 @@
     height: 36px;
     padding: 0 10px;
     font-size: 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .waiting-heading-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .waiting-profile-button {
+    align-self: flex-start;
+    max-width: 100%;
+  }
+
+  .waiting-profile-button > span {
+    display: flex;
+  }
+
+  .room-code-banner {
+    grid-template-columns: 1fr auto;
+    gap: 4px 10px;
+    padding: 12px 14px;
+  }
+
+  .room-code-num {
+    grid-column: 1;
+    justify-self: start;
+    font-size: 25px;
+  }
+
+  .copy-btn {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .waiting-primary-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .waiting-primary-actions > :only-child {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 980px) {
+  .auth-stage {
+    gap: 0;
+    padding: 18px;
+  }
+
+  .auth-hero-panel {
+    display: none;
+  }
+
+  .auth-card {
+    flex-basis: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .lobby-hall {
+    padding: 12px;
+  }
+
+  .lobby-hall .hall-nav-bar {
+    max-width: none;
+    margin-bottom: 12px;
+    padding: 0 2px;
+  }
+
+  .lobby-hall .hall-logo-title {
+    gap: 7px;
+  }
+
+  .lobby-hall .hall-logo-title .logo-icon {
+    font-size: 22px;
+  }
+
+  .lobby-hall .hall-logo-title .logo-text {
+    font-size: 18px;
+  }
+
+  .lobby-hall .tier-card {
+    width: calc(100vw - 24px);
+    padding: 22px 18px 18px;
+  }
+
+  .lobby-hall .mode-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .lobby-hall .mode-big-card {
+    min-height: 190px;
+  }
+
+  .lobby-trust-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .lobby-trust-row span {
+    justify-content: flex-start;
+    padding: 7px 4px;
+  }
+
+  .lobby-hall .hall-footer {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .lobby-hall .hall-footer-actions {
+    width: 100%;
+  }
+
+  .lobby-hall .hall-footer-actions .hall-rules-btn {
+    flex: 1;
+  }
+}
+
+@media (max-width: 520px) {
+  .auth-card {
+    width: calc(100vw - 24px);
+    padding: 28px 20px 20px;
+  }
+
+  .auth-title {
+    font-size: 25px;
+  }
+
+  .auth-subtitle {
+    font-size: 12px;
+  }
+
+  .auth-bottom-links {
+    gap: 14px;
+  }
+
+  .lobby-hall .hall-user-pill {
+    gap: 5px;
+    padding-right: 8px;
+  }
+
+  .lobby-hall .pill-title {
+    display: none;
+  }
+
+  .lobby-hall .pill-name {
+    max-width: 78px;
+  }
+
+  .lobby-hall .hall-logout-btn {
+    padding: 5px 7px;
+  }
+
+  .lobby-hall .mode-select-intro h2 {
+    font-size: 22px;
+  }
+
+  .lobby-hall .online-panel-header {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .lobby-hall .back-btn {
+    position: static;
+  }
+
+  .lobby-hall .online-panel-header h2 {
+    flex: none;
+    align-self: center;
+  }
+}
+
+@media (max-height: 700px) {
+  .auth-stage {
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  .auth-stage .auth-card {
+    margin: 0 auto;
+  }
+
+  .lobby-hall {
+    align-items: center;
+    justify-content: flex-start;
+    overflow: auto;
+  }
+
+  .lobby-hall .hall-nav-bar {
+    flex: 0 0 auto;
+    margin-top: 12px;
+  }
+
+  .lobby-hall .tier-card {
+    flex: 0 0 auto;
+    margin-bottom: 12px;
   }
 }
 

@@ -39,6 +39,7 @@ export const BoardPlayer = memo(function BoardPlayer({
       </div>
       <div className="board-player-copy">
         <strong>{player.nickname}{you ? ' · 你' : ''}</strong>
+        {player.title ? <span className="board-player-title">{player.title}</span> : null}
         <span className="board-player-status">
           <i className={`board-status-dot ${player.online ? 'is-online' : 'is-offline'}`} />
           {player.isDealer ? <b className="board-dealer">庄</b> : null}

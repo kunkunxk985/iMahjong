@@ -6,9 +6,11 @@ import {
   type AvailableAction,
   type ClientView,
   DEFAULT_AVATAR,
+  DEFAULT_TITLE,
   type GameAction,
   type GamePhase,
   type PublicPlayerView,
+  sanitizeProfileTitle,
   type Settlement,
   type Tile,
   type WinType,
@@ -31,6 +33,7 @@ import type { SeatRuntime } from './types.ts';
 export interface PlayerMeta {
   nickname: string;
   avatar?: string;
+  title?: string;
   ready: boolean;
   online: boolean;
   isHost: boolean;
@@ -234,6 +237,7 @@ export class PizhouGame {
         seat,
         nickname: meta.nickname,
         avatar: meta.avatar ?? DEFAULT_AVATAR,
+        title: sanitizeProfileTitle(meta.title, DEFAULT_TITLE),
         ready: meta.ready,
         online: meta.online,
         isHost: meta.isHost,

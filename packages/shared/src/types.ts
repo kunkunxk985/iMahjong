@@ -119,6 +119,8 @@ export interface PublicPlayerView {
   seat: number;
   nickname: string;
   avatar: string;
+  /** 账号资料中的牌桌头衔；旧客户端/旧快照缺失时由界面回退到默认头衔。 */
+  title?: string;
   ready: boolean;
   online: boolean;
   isHost: boolean;
