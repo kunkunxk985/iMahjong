@@ -24,6 +24,7 @@ import { DiscardFlightLayer, type DiscardFlight } from '../table/DiscardFlight';
 import { countVisibleTiles, TenpaiBar } from '../table/TenpaiBar';
 import { GameClock } from '../table/clock';
 import { CenterCompass } from '../table/CenterCompass';
+import { Table3DView } from '../table3d/Table3DView';
 
 interface TableProps {
   view: ClientView;
@@ -115,6 +116,13 @@ export function Table({
     submittedSequence: number;
   } | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [is3DMode, setIs3DMode] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('pizhou_render_mode') !== '2d';
+    } catch {
+      return true;
+    }
+  });
   const [hoveredTileKey, setHoveredTileKey] = useState<string | null>(null);
   const [hoveredTileId, setHoveredTileId] = useState<string | null>(null);
   const [enteringId, setEnteringId] = useState<string | undefined>(undefined);
@@ -572,7 +580,7 @@ export function Table({
 
   return (
     <div
-      className={`mahjong-board turn-${currentPosition} ${myTurn ? 'is-my-turn' : ''}`}
+      className={`mahjong-board turn-${currentPosition} ${myTurn ? 'is-my-turn' : ''} ${is3DMode ? 'is-3d-mode' : ''}`}
       ref={boardRef}
     >
       <img className="board-wood-texture" src="./assets/wood.jpg" alt="" draggable={false} />
@@ -594,6 +602,24 @@ export function Table({
         <div key={view.currentSeat} className={`board-turn-glow is-${currentPosition}`} aria-hidden="true" />
       ) : null}
 
+      {is3DMode ? (
+        <Table3DView
+          view={view}
+          selectedTileId={selectedId}
+          onSelectTile={(tileId) => setSelectedId(tileId)}
+          onDiscardTile={(tileId) => {
+            setSelectedId(tileId);
+            if (canDiscard) {
+              discard();
+            }
+          }}
+          onTileHover={(tileKey, tileId) => {
+            setHoveredTileKey(tileKey);
+            setHoveredTileId(tileId);
+          }}
+        />
+      ) : null}
+
       <header className="board-topbar">
         <div className="board-room-info">
           {onRules ? (
@@ -610,6 +636,25 @@ export function Table({
           ) : null}
         </div>
         <div className="board-top-tools">
+          <button
+            type="button"
+            className={`board-icon-button board-3d-btn ${is3DMode ? 'active' : ''}`}
+            onClick={() => {
+              setIs3DMode((prev) => {
+                const next = !prev;
+                try {
+                  localStorage.setItem('pizhou_render_mode', next ? '3d' : '2d');
+                } catch {}
+                return next;
+              });
+            }}
+            title={is3DMode ? '当前：真 3D 物理视角 (点击切换 2D)' : '当前：经典 2D 视角 (点击切换 3D)'}
+            aria-label="切换 3D/2D 渲染模式"
+          >
+            <span style={{ fontSize: '11px', fontWeight: 800, color: is3DMode ? '#fde047' : '#94a3b8' }}>
+              {is3DMode ? '3D' : '2D'}
+            </span>
+          </button>
           <GameClock />
           {onOpenProfile ? (
             <button
