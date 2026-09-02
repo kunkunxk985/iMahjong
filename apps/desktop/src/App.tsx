@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   DEFAULT_AVATAR,
+  DEFAULT_TITLE,
   DEFAULT_WS_URL,
   type ClientView,
   type FriendInvite,
+  type GameChatMessage,
   type GameAction,
   type Settlement,
   type UserProfile,
@@ -60,6 +62,7 @@ export function App() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
   const [incomingInvite, setIncomingInvite] = useState<FriendInvite | null>(null);
+  const [incomingChat, setIncomingChat] = useState<GameChatMessage | null>(null);
 
   const [localUrl, setLocalUrl] = useState('');
   const [localUrlReady, setLocalUrlReady] = useState(false);
@@ -111,6 +114,7 @@ export function App() {
       onFriendInvited: (invite) => {
         setIncomingInvite(invite);
       },
+      onChat: (chat) => setIncomingChat(chat),
       onLeft: () => {
         pendingSoloRef.current = false;
         requestedModeRef.current = 'home';
@@ -119,6 +123,7 @@ export function App() {
         setView(null);
         setSettlement(null);
         seenSettlementRef.current = null;
+        setIncomingChat(null);
       },
     });
   }
@@ -195,7 +200,11 @@ export function App() {
 
   useEffect(() => {
     if (auth.user) {
-      clientRef.current?.setPlayerProfile(auth.user.nickname, auth.user.avatar || DEFAULT_AVATAR);
+      clientRef.current?.setPlayerProfile(
+        auth.user.nickname,
+        auth.user.avatar || DEFAULT_AVATAR,
+        auth.user.title || DEFAULT_TITLE,
+      );
     }
   }, [auth.user]);
 
@@ -210,10 +219,21 @@ export function App() {
       nickname.trim() || '玩家',
       auth.user?.avatar || DEFAULT_AVATAR,
       true,
+      auth.user?.title || DEFAULT_TITLE,
     );
   }, [networkStatus, nickname, auth.user]);
 
   const handleAuthSuccess = (user: UserProfile, nextToken?: string) => {
+    if (
+      !user ||
+      typeof user !== 'object' ||
+      typeof user.userId !== 'string' ||
+      !user.userId.trim() ||
+      typeof user.nickname !== 'string' ||
+      !user.nickname.trim()
+    ) {
+      throw new Error('账号服务返回的资料不完整，请先部署最新 CF Worker 后重试');
+    }
     const current = getStoredAuth();
     const token = nextToken ?? current.token;
     setAuth({ token, user });
@@ -237,6 +257,7 @@ export function App() {
     setAuthOpen(false);
     setFriendsOpen(false);
     setIncomingInvite(null);
+    setIncomingChat(null);
   };
 
   const requireOnline = (): boolean => {
@@ -255,13 +276,23 @@ export function App() {
   const createRoom = () => {
     if (!requireOnline()) return;
     requestedModeRef.current = 'online';
-    clientRef.current?.createRoom(nickname.trim(), auth.user?.avatar || DEFAULT_AVATAR);
+    clientRef.current?.createRoom(
+      nickname.trim(),
+      auth.user?.avatar || DEFAULT_AVATAR,
+      false,
+      auth.user?.title || DEFAULT_TITLE,
+    );
   };
 
   const joinRoom = (roomCode: string) => {
     if (!requireOnline()) return;
     requestedModeRef.current = 'online';
-    clientRef.current?.joinRoom(roomCode, nickname.trim(), auth.user?.avatar || DEFAULT_AVATAR);
+    clientRef.current?.joinRoom(
+      roomCode,
+      nickname.trim(),
+      auth.user?.avatar || DEFAULT_AVATAR,
+      auth.user?.title || DEFAULT_TITLE,
+    );
   };
 
   const startLocal = () => {
@@ -280,6 +311,7 @@ export function App() {
         nickname.trim(),
         auth.user?.avatar || DEFAULT_AVATAR,
         true,
+        auth.user?.title || DEFAULT_TITLE,
       );
     }
   };
@@ -298,6 +330,7 @@ export function App() {
     setView(null);
     setSettlement(null);
     seenSettlementRef.current = null;
+    setIncomingChat(null);
     setError('');
   };
 
@@ -356,6 +389,9 @@ export function App() {
             onAction={sendAction}
             onRules={() => setRulesOpen(true)}
             onLeave={leave}
+            onOpenProfile={() => setProfileOpen(true)}
+            onSendChat={(message, isEmote) => clientRef.current?.sendChat(message, isEmote)}
+            incomingChat={incomingChat}
             networkStatus={networkStatus}
             practice={mode === 'local'}
           />
@@ -369,6 +405,7 @@ export function App() {
             onRules={() => setRulesOpen(true)}
             onSetRate={(rate) => clientRef.current?.setConfig({ pointRate: rate })}
             onInviteFriends={() => setFriendsOpen(true)}
+            onOpenProfile={() => setProfileOpen(true)}
           />
         ) : (
           /* Step 2: Progressive Tiered Lobby */
@@ -408,6 +445,7 @@ export function App() {
             gameMode={mode === 'local' ? 'local' : 'online'}
             serverUrl={displayUrl}
             token={auth.token}
+            onOpenProfile={() => setProfileOpen(true)}
           />
         ) : null}
 

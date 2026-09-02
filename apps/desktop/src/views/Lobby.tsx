@@ -52,7 +52,7 @@ export function Lobby({
   };
 
   return (
-    <div className="hall">
+    <div className="hall lobby-hall">
       {/* Top Header Bar */}
       <header className="hall-nav-bar">
         <div className="hall-logo-title">
@@ -72,7 +72,8 @@ export function Lobby({
             </button>
           )}
 
-          <div
+          <button
+            type="button"
             className="hall-user-pill"
             onClick={onOpenProfile}
             title="点击修改头像与头衔"
@@ -83,7 +84,7 @@ export function Lobby({
             <span className="pill-name">{user?.nickname || user?.username || nickname}</span>
             <span className="pill-title">{user?.title || '初学雀友'}</span>
             <span className="pill-arrow">›</span>
-          </div>
+          </button>
 
           <button
             type="button"
@@ -102,40 +103,63 @@ export function Lobby({
           /* Step 1: Mode Selection Menu */
           <div className="mode-select-panel">
             <div className="mode-select-intro">
+              <span className="lobby-kicker">今晚开局 · 邳州老家牌桌</span>
               <h2>请选择游戏玩法</h2>
               <p>经典邳州查胡两两结 · 正宗地道玩法</p>
             </div>
 
             <div className="mode-cards-grid">
               {/* Online Mode Card */}
-              <div
+              <button
+                type="button"
                 className={`mode-big-card online-tile ${!onlineReady ? 'disabled' : ''}`}
-                onClick={() => {
-                  if (onlineReady) setSelectedMode('online');
-                }}
+                disabled={!onlineReady}
+                onClick={() => setSelectedMode('online')}
               >
-                <div className="mode-card-icon">👥</div>
+                <div className="mode-card-topline">
+                  <span className="mode-card-badge">好友桌</span>
+                  <span className="mode-card-meta">{onlineReady ? '4 人联机' : '连接中…'}</span>
+                </div>
+                <div className="mode-card-icon" aria-hidden="true">👥</div>
                 <div className="mode-card-info">
                   <h3>好友四人联机</h3>
                   <p>房主开房 · 输入6位房号即可对局 · 真实两两对账</p>
                 </div>
-                <span className="mode-card-enter">进入联机 ›</span>
-              </div>
+                <div className="mode-card-footer">
+                  <span className="mode-card-enter">进入联机</span>
+                  <span className="mode-card-arrow" aria-hidden="true">↗</span>
+                </div>
+              </button>
 
               {/* Single-Player Mode Card */}
-              <div
+              <button
+                type="button"
                 className="mode-big-card local-tile"
+                disabled={soloBusy}
                 onClick={onStartLocal}
               >
-                <div className="mode-card-icon">🤖</div>
+                <div className="mode-card-topline">
+                  <span className="mode-card-badge">随时开局</span>
+                  <span className="mode-card-meta">3 AI 陪练</span>
+                </div>
+                <div className="mode-card-icon" aria-hidden="true">🤖</div>
                 <div className="mode-card-info">
                   <h3>单机人机陪练</h3>
                   <p>无需等待 · 3名智能AI陪练 · 演练坎上与关门</p>
                 </div>
-                <span className="mode-card-enter">
-                  {soloBusy ? '正在启动…' : '开始对局 ›'}
-                </span>
-              </div>
+                <div className="mode-card-footer">
+                  <span className="mode-card-enter">
+                    {soloBusy ? '正在启动…' : '开始对局'}
+                  </span>
+                  <span className="mode-card-arrow" aria-hidden="true">↗</span>
+                </div>
+              </button>
+            </div>
+
+            <div className="lobby-trust-row" aria-label="游戏服务特点">
+              <span><i aria-hidden="true">✓</i> 房号实时同步</span>
+              <span><i aria-hidden="true">✓</i> 头像网名随牌桌</span>
+              <span><i aria-hidden="true">✓</i> 牌局自动记战绩</span>
             </div>
           </div>
         ) : (
@@ -193,8 +217,8 @@ export function Lobby({
 
         {/* Footer Utilities */}
         <div className="hall-footer">
-          <div className="hall-net-status">
-            <span className={`net-dot ${networkStatus}`} />
+          <div className="hall-net-status" role="status" aria-live="polite">
+            <span className={`net-dot ${networkStatus}`} aria-hidden="true" />
             <span className="net-text">
               {networkStatus === 'open' ? '云端服务已连接' : networkStatus === 'connecting' ? '连接中…' : '离线中'}
             </span>

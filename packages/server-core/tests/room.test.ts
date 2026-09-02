@@ -146,14 +146,72 @@ test('房主设置底分单价后同步到 ClientView', () => {
 test('房间 ClientView 会同步玩家自定义头像与网名', () => {
   const customAvatar = 'data:image/webp;base64,dGVzdC1hdmF0YXI=';
   const manager = new RoomManager();
-  const created = manager.create('云端雀士', socket(), false, 0.1, customAvatar);
-  const joined = manager.join(created.room.code, '朋友', socket(), '🐱');
+  const created = manager.create('云端雀士', socket(), false, 0.1, customAvatar, '大蒜宗师');
+  const joined = manager.join(created.room.code, '朋友', socket(), '🐱', '起手杠狂魔');
 
   assert.notEqual(typeof joined, 'string');
   const view = created.room.viewFor(created.player);
   assert.equal(view.players[0]?.nickname, '云端雀士');
   assert.equal(view.players[0]?.avatar, customAvatar);
+  assert.equal(view.players[0]?.title, '大蒜宗师');
   assert.equal(view.players[1]?.avatar, '🐱');
+  assert.equal(view.players[1]?.title, '起手杠狂魔');
+});
+
+test('牌桌快捷互动由服务端广播，并使用房间内的真实账号身份', () => {
+  const messagesForFirst: any[] = [];
+  const messagesForSecond: any[] = [];
+  const firstSocket = {
+    readyState: 1,
+    send(data: string) {
+      messagesForFirst.push(JSON.parse(data));
+    },
+  };
+  const secondSocket = {
+    readyState: 1,
+    send(data: string) {
+      messagesForSecond.push(JSON.parse(data));
+    },
+  };
+  const manager = new RoomManager();
+  const created = manager.create('云端雀士', firstSocket, false, 0.1, '🀄', '邳州雀友');
+  const joined = manager.join(created.room.code, '朋友', secondSocket, '🐱', '单钓不换张');
+  assert.notEqual(typeof joined, 'string');
+  messagesForFirst.length = 0;
+  messagesForSecond.length = 0;
+
+  handleMessage(manager, firstSocket, {
+    type: 'game:chat',
+    message: '  这把\n慢慢来  ',
+    isEmote: false,
+  });
+
+  assert.equal(messagesForFirst.length, 1);
+  assert.equal(messagesForSecond.length, 1);
+  assert.deepEqual(messagesForSecond[0], messagesForFirst[0]);
+  assert.equal(messagesForFirst[0].type, 'game:chat');
+  assert.equal(messagesForFirst[0].seat, 0);
+  assert.equal(messagesForFirst[0].nickname, '云端雀士');
+  assert.equal(messagesForFirst[0].avatar, '🀄');
+  assert.equal(messagesForFirst[0].title, '邳州雀友');
+  assert.equal(messagesForFirst[0].message, '这把慢慢来');
+});
+
+test('本地核心忽略由云端 Worker 处理的好友消息', () => {
+  const messages: any[] = [];
+  const ws = {
+    readyState: 1,
+    send(data: string) {
+      messages.push(JSON.parse(data));
+    },
+  };
+  const manager = new RoomManager();
+
+  handleMessage(manager, ws, { type: 'friend:bindUser', userId: 'user-1', token: 'token-1' });
+  handleMessage(manager, ws, { type: 'friend:unbindUser' });
+  handleMessage(manager, ws, { type: 'friend:invite', toUserId: 'user-2', roomCode: '123456' });
+
+  assert.deepEqual(messages, []);
 });
 
 test('游戏开始后底分单价固定，不可中途修改', () => {

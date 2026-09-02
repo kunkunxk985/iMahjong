@@ -1,6 +1,7 @@
 /** Renderer-side WebSocket transport. Domain rules stay on the server. */
 import {
   DEFAULT_AVATAR,
+  DEFAULT_TITLE,
   DEFAULT_WS_URL,
   HEARTBEAT_INTERVAL_MS,
   isViewMessage,
@@ -9,6 +10,7 @@ import {
   type ClientView,
   type FriendInvite,
   type FriendPresenceStatus,
+  type GameChatMessage,
   type GameAction,
   type S2CMessage,
   type Settlement,
@@ -22,6 +24,7 @@ export interface ClientHandlers {
   onLeft?: () => void;
   onFriendInvited?: (invite: FriendInvite) => void;
   onFriendPresence?: (presence: { userId: string; status: FriendPresenceStatus; playingRoomCode?: string }) => void;
+  onChat?: (chat: GameChatMessage) => void;
 }
 
 export type ConnectionStatus = 'connecting' | 'open' | 'closed';
@@ -34,7 +37,7 @@ export class GameClient {
   private handlers: ClientHandlers;
   private pendingReconnect: { roomCode: string; token: string } | null = null;
   private boundUser: { userId: string; token: string } | null = null;
-  private playerProfile: { nickname: string; avatar: string } | null = null;
+  private playerProfile: { nickname: string; avatar: string; title: string } | null = null;
   private roomActive = false;
   private retries = 0;
   private closedByUser = false;
@@ -117,6 +120,11 @@ export class GameClient {
         return;
       }
 
+      if (message.type === 'game:chat') {
+        this.handlers.onChat?.(message);
+        return;
+      }
+
       if (isViewMessage(message)) {
         this.roomActive = true;
         if (message.type === 'game:settlement') {
@@ -177,10 +185,10 @@ export class GameClient {
     }
   }
 
-  setPlayerProfile(nickname: string, avatar = DEFAULT_AVATAR): void {
-    this.playerProfile = { nickname, avatar };
+  setPlayerProfile(nickname: string, avatar = DEFAULT_AVATAR, title = DEFAULT_TITLE): void {
+    this.playerProfile = { nickname, avatar, title };
     if (this.roomActive && this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.send({ type: 'player:updateProfile', nickname, avatar });
+      this.send({ type: 'player:updateProfile', nickname, avatar, title });
     }
   }
 
@@ -188,16 +196,25 @@ export class GameClient {
     this.send({ type: 'friend:invite', toUserId, roomCode });
   }
 
-  createRoom(nickname: string, avatarOrSolo: string | boolean = DEFAULT_AVATAR, solo = false): void {
-    const avatar = typeof avatarOrSolo === 'string' ? avatarOrSolo : DEFAULT_AVATAR;
-    const isSolo = typeof avatarOrSolo === 'boolean' ? avatarOrSolo : solo;
-    this.playerProfile = { nickname, avatar };
-    this.send({ type: 'room:create', nickname, avatar, solo: isSolo });
+  sendChat(message: string, isEmote = false): void {
+    this.send({ type: 'game:chat', message, isEmote });
   }
 
-  joinRoom(roomCode: string, nickname: string, avatar = DEFAULT_AVATAR): void {
-    this.playerProfile = { nickname, avatar };
-    this.send({ type: 'room:join', roomCode, nickname, avatar });
+  createRoom(
+    nickname: string,
+    avatarOrSolo: string | boolean = DEFAULT_AVATAR,
+    solo = false,
+    title = DEFAULT_TITLE,
+  ): void {
+    const avatar = typeof avatarOrSolo === 'string' ? avatarOrSolo : DEFAULT_AVATAR;
+    const isSolo = typeof avatarOrSolo === 'boolean' ? avatarOrSolo : solo;
+    this.playerProfile = { nickname, avatar, title };
+    this.send({ type: 'room:create', nickname, avatar, title, solo: isSolo });
+  }
+
+  joinRoom(roomCode: string, nickname: string, avatar = DEFAULT_AVATAR, title = DEFAULT_TITLE): void {
+    this.playerProfile = { nickname, avatar, title };
+    this.send({ type: 'room:join', roomCode, nickname, avatar, title });
   }
 
   leave(): void {

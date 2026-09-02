@@ -5,10 +5,12 @@ import {
   PLAYER_COUNT,
   RECONNECT_WINDOW_MS,
   DEFAULT_AVATAR,
+  DEFAULT_TITLE,
   generateRoomCode,
   isValidRoomCode,
   normalizeRoomCode,
   sanitizeAvatar,
+  sanitizeProfileTitle,
   sanitizeNickname,
   type C2SMessage,
   type ClientView,
@@ -29,6 +31,7 @@ export interface RoomPlayer {
   seat: number;
   nickname: string;
   avatar: string;
+  title: string;
   token: string;
   ready: boolean;
   ws: UniversalWebSocket | null;
@@ -62,7 +65,12 @@ export class Room {
     return this.occupied.filter((player) => player.isBot || (player.ws && player.offlineAt === null)).length;
   }
 
-  addPlayer(nickname: string, ws: UniversalWebSocket, avatar = DEFAULT_AVATAR): RoomPlayer | string {
+  addPlayer(
+    nickname: string,
+    ws: UniversalWebSocket,
+    avatar = DEFAULT_AVATAR,
+    title = DEFAULT_TITLE,
+  ): RoomPlayer | string {
     const seat = this.players.findIndex((player) => player === null);
     if (seat < 0) return '房间已满';
     const name = sanitizeNickname(nickname, `玩家${seat + 1}`);
@@ -71,6 +79,7 @@ export class Room {
       seat,
       nickname: name,
       avatar: sanitizeAvatar(avatar),
+      title: sanitizeProfileTitle(title),
       token: randomUUID(),
       ready: false,
       ws,
@@ -91,6 +100,7 @@ export class Room {
       seat,
       nickname,
       avatar: DEFAULT_AVATAR,
+      title: '牌桌陪练',
       token: randomUUID(),
       ready: true,
       ws: null,
@@ -188,13 +198,14 @@ export class Room {
     this.phase = 'lobby';
   }
 
-  updatePlayerProfile(player: RoomPlayer, nickname: string, avatar?: string): string | null {
+  updatePlayerProfile(player: RoomPlayer, nickname: string, avatar?: string, title?: string): string | null {
     const name = sanitizeNickname(nickname, player.nickname);
     if (this.occupied.some((item) => item !== player && item.nickname === name)) {
       return '昵称已被使用';
     }
     player.nickname = name;
     player.avatar = sanitizeAvatar(avatar, player.avatar);
+    player.title = sanitizeProfileTitle(title, player.title);
     return null;
   }
 
@@ -225,6 +236,7 @@ export class Room {
       return {
         nickname: item?.nickname ?? `空位${seat + 1}`,
         avatar: item?.avatar ?? DEFAULT_AVATAR,
+        title: item?.title ?? DEFAULT_TITLE,
         ready: item?.ready ?? false,
         online: Boolean(item && (item.isBot || (item.ws && item.offlineAt === null))),
         isHost: seat === this.hostSeat,
@@ -261,6 +273,7 @@ export class Room {
         seat,
         nickname: metas[seat]!.nickname,
         avatar: metas[seat]!.avatar ?? DEFAULT_AVATAR,
+        title: metas[seat]!.title ?? DEFAULT_TITLE,
         ready: metas[seat]!.ready,
         online: metas[seat]!.online,
         isHost: metas[seat]!.isHost,
@@ -291,10 +304,11 @@ export class RoomManager {
     solo = false,
     pointRate = 0.1,
     avatar = DEFAULT_AVATAR,
+    title = DEFAULT_TITLE,
   ): { room: Room; player: RoomPlayer } {
     const room = new Room(generateRoomCode((code) => this.rooms.has(code)));
     room.pointRate = typeof pointRate === 'number' && pointRate >= 0 ? pointRate : 0.1;
-    const player = room.addPlayer(nickname, ws, avatar);
+    const player = room.addPlayer(nickname, ws, avatar, title);
     if (typeof player === 'string') throw new Error(player);
     if (solo) {
       room.solo = true;
@@ -310,6 +324,7 @@ export class RoomManager {
     nickname: string,
     ws: UniversalWebSocket,
     avatar = DEFAULT_AVATAR,
+    title = DEFAULT_TITLE,
   ): { room: Room; player: RoomPlayer } | string {
     const code = normalizeRoomCode(roomCode);
     if (!isValidRoomCode(code)) return '房间号应为6位数字';
@@ -317,7 +332,7 @@ export class RoomManager {
     if (!room) return '房间不存在';
     if (room.phase === 'playing') return '对局已开始，请使用重连';
     if (room.occupied.length >= PLAYER_COUNT) return '房间已满';
-    const player = room.addPlayer(nickname, ws, avatar);
+    const player = room.addPlayer(nickname, ws, avatar, title);
     if (typeof player === 'string') return player;
     return { room, player };
   }

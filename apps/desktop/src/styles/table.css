@@ -315,6 +315,56 @@
   height: 27px;
 }
 
+.board-profile-button {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 142px;
+  height: 29px;
+  padding: 2px 8px 2px 3px;
+  border: 1px solid rgba(109, 224, 190, 0.34);
+  border-radius: 999px;
+  background: rgba(52, 211, 153, 0.08);
+  color: #eafff6;
+  cursor: pointer;
+  transition: transform 0.16s ease, color 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+  pointer-events: auto;
+}
+
+.board-profile-button:hover {
+  color: #fff4c2;
+  border-color: rgba(250, 218, 130, 0.7);
+  background: rgba(250, 204, 21, 0.14);
+  transform: translateY(-1px);
+}
+
+.board-profile-avatar {
+  width: 23px;
+  height: 23px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 23px;
+  overflow: hidden;
+  border: 1px solid rgba(245, 214, 120, 0.66);
+  border-radius: 50%;
+  background: rgba(245, 214, 120, 0.14);
+  font-size: 13px;
+}
+
+.board-profile-avatar.avatar-image {
+  object-fit: cover;
+}
+
+.board-profile-label {
+  overflow: hidden;
+  max-width: 96px;
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .board-exit-button {
   width: 29px;
   height: 29px;
@@ -765,6 +815,14 @@
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.board-player-title {
+  overflow: hidden;
+  color: rgba(255, 231, 157, 0.8) !important;
+  font-size: clamp(8px, 0.68vw, 10px) !important;
+  line-height: 1.1;
   text-overflow: ellipsis;
 }
 

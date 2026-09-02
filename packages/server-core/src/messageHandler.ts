@@ -1,3 +1,4 @@
+import { CHAT_MESSAGE_MAX } from '@pizhou/shared';
 import {
   RoomManager,
   broadcastSettlement,
@@ -8,6 +9,22 @@ import {
   type UniversalWebSocket,
 } from './room.ts';
 import { cancelBots, scheduleBots } from './bots.ts';
+
+function sanitizeChatMessage(raw: unknown): string {
+  if (typeof raw !== 'string') return '';
+  return raw
+    .replace(/[\u0000-\u001f\u007f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, CHAT_MESSAGE_MAX);
+}
+
+function createChatId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `chat-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
 
 export function handleMessage(
   manager: RoomManager,
@@ -30,6 +47,7 @@ export function handleMessage(
       Boolean(message.solo),
       message.pointRate,
       message.avatar,
+      message.title,
     );
     send(ws, { type: 'room:created', roomCode: room.code, token: player.token, seat: player.seat });
     if (room.solo) {
@@ -49,7 +67,7 @@ export function handleMessage(
   }
 
   if (message.type === 'room:join') {
-    const result = manager.join(message.roomCode.trim(), message.nickname, ws, message.avatar);
+    const result = manager.join(message.roomCode.trim(), message.nickname, ws, message.avatar, message.title);
     if (typeof result === 'string') {
       send(ws, { type: 'error', message: result, code: 'join-failed' });
       return;
@@ -71,7 +89,12 @@ export function handleMessage(
       return;
     }
     if (message.nickname !== undefined) {
-      const profileError = result.room.updatePlayerProfile(result.player, message.nickname, message.avatar);
+      const profileError = result.room.updatePlayerProfile(
+        result.player,
+        message.nickname,
+        message.avatar,
+        message.title,
+      );
       if (profileError) send(ws, { type: 'error', message: profileError, code: 'profile-update-failed' });
     }
     send(ws, {
@@ -84,6 +107,18 @@ export function handleMessage(
     return;
   }
 
+  // Friend actions are persisted by the Cloudflare Worker. The local core is
+  // also used by the desktop preview, so treat these messages as transport
+  // no-ops instead of showing a misleading "请先创建或加入房间" error before
+  // the player has entered a table.
+  if (
+    message.type === 'friend:bindUser' ||
+    message.type === 'friend:unbindUser' ||
+    message.type === 'friend:invite'
+  ) {
+    return;
+  }
+
   const found = manager.bySocket(ws);
   if (!found) {
     send(ws, { type: 'error', message: '请先创建或加入房间' });
@@ -91,6 +126,26 @@ export function handleMessage(
   }
   const { room, player } = found;
   room.heartbeat(player);
+
+  if (message.type === 'game:chat') {
+    const content = sanitizeChatMessage(message.message);
+    if (!content) {
+      send(ws, { type: 'error', message: '互动内容不能为空', code: 'chat-invalid' });
+      return;
+    }
+    const chat = {
+      type: 'game:chat' as const,
+      id: createChatId(),
+      seat: player.seat,
+      nickname: player.nickname,
+      avatar: player.avatar,
+      title: player.title,
+      message: content,
+      isEmote: Boolean(message.isEmote),
+    };
+    for (const item of room.occupied) send(item.ws, chat);
+    return;
+  }
 
   if (message.type === 'room:ready') {
     if (room.phase === 'playing') {
@@ -103,7 +158,7 @@ export function handleMessage(
   }
 
   if (message.type === 'player:updateProfile') {
-    const profileError = room.updatePlayerProfile(player, message.nickname, message.avatar);
+    const profileError = room.updatePlayerProfile(player, message.nickname, message.avatar, message.title);
     if (profileError) {
       send(ws, { type: 'error', message: profileError, code: 'profile-update-failed' });
       return;

@@ -14,6 +14,7 @@ export const HEARTBEAT_INTERVAL_MS = 10_000;
 export const HEARTBEAT_TIMEOUT_MS = 35_000;
 export const RECONNECT_WINDOW_MS = 30 * 60 * 1000;
 export const EMPTY_ROOM_TTL_MS = 30 * 60 * 1000;
+export const CHAT_MESSAGE_MAX = 48;
 
 export const NICKNAME_MAX = 12;
 export const BASE_HU = 10;

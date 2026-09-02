@@ -1,4 +1,11 @@
-import { DEFAULT_AVATAR, sanitizeAvatar } from '@pizhou/shared';
+import {
+  DEFAULT_AVATAR,
+  DEFAULT_TITLE,
+  sanitizeAvatar,
+  sanitizeProfileBio,
+  sanitizeProfileNickname,
+  sanitizeProfileTitle,
+} from '@pizhou/shared';
 import type {
   AuthResponse,
   FriendItem,
@@ -30,6 +37,63 @@ async function readApiResponse<T>(res: Response, fallback: string): Promise<T> {
   return data as T;
 }
 
+const AUTH_RESPONSE_FORMAT_ERROR =
+  '账号服务返回的资料不完整，请先部署最新 CF Worker 后重试';
+
+function normalizeUserProfile(raw: unknown): UserProfile | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const candidate = raw as Partial<UserProfile>;
+  const userId = typeof candidate.userId === 'string' ? candidate.userId.trim() : '';
+  const username = typeof candidate.username === 'string' ? candidate.username.trim() : '';
+  if (!userId || !username) return null;
+
+  const createdAt =
+    typeof candidate.createdAt === 'number' && Number.isFinite(candidate.createdAt)
+      ? candidate.createdAt
+      : Date.now();
+  return {
+    userId,
+    username,
+    nickname: sanitizeProfileNickname(candidate.nickname, username),
+    avatar: sanitizeAvatar(candidate.avatar, DEFAULT_AVATAR),
+    title: sanitizeProfileTitle(candidate.title, DEFAULT_TITLE),
+    bio: sanitizeProfileBio(candidate.bio),
+    isGuest: candidate.isGuest === true,
+    createdAt,
+    updatedAt:
+      typeof candidate.updatedAt === 'number' && Number.isFinite(candidate.updatedAt)
+        ? candidate.updatedAt
+        : createdAt,
+  };
+}
+
+async function readAuthResponse(res: Response, fallback: string): Promise<AuthResponse> {
+  const data = await readApiResponse<unknown>(res, fallback);
+  if (!data || typeof data !== 'object') {
+    throw new ApiError(`${fallback}：${AUTH_RESPONSE_FORMAT_ERROR}`, 502);
+  }
+
+  const candidate = data as { token?: unknown; user?: unknown };
+  const token = typeof candidate.token === 'string' ? candidate.token.trim() : '';
+  const user = normalizeUserProfile(candidate.user);
+  if (!token || !user) {
+    throw new ApiError(`${fallback}：${AUTH_RESPONSE_FORMAT_ERROR}`, 502);
+  }
+  return { token, user };
+}
+
+async function readUserResponse(res: Response, fallback: string): Promise<UserProfile> {
+  const data = await readApiResponse<unknown>(res, fallback);
+  const user =
+    data && typeof data === 'object'
+      ? normalizeUserProfile((data as { user?: unknown }).user)
+      : null;
+  if (!user) {
+    throw new ApiError(`${fallback}：${AUTH_RESPONSE_FORMAT_ERROR}`, 502);
+  }
+  return user;
+}
+
 export function wsToHttpUrl(wsUrl: string): string {
   if (!wsUrl) return 'http://127.0.0.1:8787';
   let url = wsUrl.trim();
@@ -47,23 +111,11 @@ export function getStoredAuth(): { token: string | null; user: UserProfile | nul
     const token = localStorage.getItem(TOKEN_KEY);
     const userRaw = localStorage.getItem(USER_KEY);
     if (!token || !userRaw) return { token: null, user: null };
-    const candidate = JSON.parse(userRaw) as Partial<UserProfile> | null;
-    if (!candidate || typeof candidate.userId !== 'string' || typeof candidate.username !== 'string') {
+    const user = normalizeUserProfile(JSON.parse(userRaw));
+    if (!user) {
       saveStoredAuth(null, null);
       return { token: null, user: null };
     }
-    const createdAt = typeof candidate.createdAt === 'number' ? candidate.createdAt : Date.now();
-    const user: UserProfile = {
-      userId: candidate.userId,
-      username: candidate.username,
-      nickname: typeof candidate.nickname === 'string' && candidate.nickname ? candidate.nickname : candidate.username,
-      avatar: sanitizeAvatar(candidate.avatar, DEFAULT_AVATAR),
-      title: typeof candidate.title === 'string' && candidate.title ? candidate.title : '初学雀友',
-      bio: typeof candidate.bio === 'string' ? candidate.bio : '不碰坎不上，单钓不换张！',
-      isGuest: Boolean(candidate.isGuest),
-      createdAt,
-      updatedAt: typeof candidate.updatedAt === 'number' ? candidate.updatedAt : createdAt,
-    };
     return { token, user };
   } catch {
     saveStoredAuth(null, null);
@@ -93,7 +145,7 @@ export async function apiGuestLogin(serverWsUrl: string, nickname?: string): Pro
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ nickname }),
   });
-  const data = await readApiResponse<AuthResponse>(res, '游客登录失败');
+  const data = await readAuthResponse(res, '游客登录失败');
   saveStoredAuth(data.token, data.user);
   return data;
 }
@@ -110,7 +162,7 @@ export async function apiRegister(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password, nickname }),
   });
-  const data = await readApiResponse<AuthResponse>(res, '注册失败');
+  const data = await readAuthResponse(res, '注册失败');
   saveStoredAuth(data.token, data.user);
   return data;
 }
@@ -122,7 +174,7 @@ export async function apiLogin(serverWsUrl: string, username: string, password: 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   });
-  const data = await readApiResponse<AuthResponse>(res, '登录失败');
+  const data = await readAuthResponse(res, '登录失败');
   saveStoredAuth(data.token, data.user);
   return data;
 }
@@ -143,7 +195,7 @@ export async function apiUpgradeGuest(
     },
     body: JSON.stringify({ username, password, nickname }),
   });
-  const data = await readApiResponse<AuthResponse>(res, '升级正式账号失败');
+  const data = await readAuthResponse(res, '升级正式账号失败');
   saveStoredAuth(data.token, data.user);
   return data;
 }
@@ -163,7 +215,7 @@ export async function apiChangePassword(
     },
     body: JSON.stringify({ currentPassword, newPassword }),
   });
-  const data = await readApiResponse<AuthResponse>(res, '修改密码失败');
+  const data = await readAuthResponse(res, '修改密码失败');
   saveStoredAuth(data.token, data.user);
   return data;
 }
@@ -187,9 +239,9 @@ export async function apiGetProfile(serverWsUrl: string, token: string): Promise
       Authorization: `Bearer ${token}`,
     },
   });
-  const data = await readApiResponse<{ user: UserProfile }>(res, '获取个人资料失败');
-  saveStoredAuth(token, data.user);
-  return data.user;
+  const user = await readUserResponse(res, '获取个人资料失败');
+  saveStoredAuth(token, user);
+  return user;
 }
 
 export async function apiUpdateProfile(
@@ -206,9 +258,9 @@ export async function apiUpdateProfile(
     },
     body: JSON.stringify(payload),
   });
-  const data = await readApiResponse<{ user: UserProfile }>(res, '更新个人资料失败');
-  saveStoredAuth(token, data.user);
-  return data.user;
+  const user = await readUserResponse(res, '更新个人资料失败');
+  saveStoredAuth(token, user);
+  return user;
 }
 
 export async function apiGetMatches(

@@ -5,12 +5,14 @@ import {
   tileLabel,
   type AvailableAction,
   type ClientView,
+  type GameChatMessage,
   type GameAction,
   type Meld,
 } from '@pizhou/shared';
 import { getDiscardTenpaiOptions, type DiscardTenpaiOption } from '@pizhou/rules';
 import { ActionBar } from '../components/ActionBar';
 import { ActionSplash } from '../components/ActionSplash';
+import { AvatarView } from '../components/AvatarView';
 import { Melds } from '../components/Melds';
 import { faceSrc, TileView } from '../components/TileView';
 import { QuickChat } from '../components/QuickChat';
@@ -28,6 +30,9 @@ interface TableProps {
   onAction: (action: GameAction) => void;
   onRules?: () => void;
   onLeave?: () => void;
+  onOpenProfile?: () => void;
+  onSendChat?: (message: string, isEmote?: boolean) => void;
+  incomingChat?: GameChatMessage | null;
   networkStatus?: 'connecting' | 'open' | 'closed';
   practice?: boolean;
 }
@@ -84,9 +89,24 @@ function BoardIcon({ name }: { name: BoardIconName }) {
   );
 }
 
+function chatPosition(seat: number, mySeat: number): ActiveChatBubble['position'] {
+  const relative = relativeSeat(seat, mySeat);
+  return relative === 0 ? 'bottom' : relative === 1 ? 'right' : relative === 2 ? 'top' : 'left';
+}
+
 /* ─── Main Table Component ─────────────────────────────────── */
 
-export function Table({ view, onAction, onRules, onLeave, networkStatus, practice = false }: TableProps) {
+export function Table({
+  view,
+  onAction,
+  onRules,
+  onLeave,
+  onOpenProfile,
+  onSendChat,
+  incomingChat,
+  networkStatus,
+  practice = false,
+}: TableProps) {
   const boardRef = useRef<HTMLDivElement | null>(null);
   const pendingDiscardRef = useRef<{
     tileId: string;
@@ -105,48 +125,56 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
   const [flyingDiscardId, setFlyingDiscardId] = useState<string | null>(null);
   const seenDiscardIdRef = useRef<string | null>(null);
   const hasSeenDiscardRef = useRef(false);
+  const seenIncomingChatRef = useRef<string | null>(null);
 
-  const handleSendChat = (message: string, isEmote = false) => {
+  const addChatBubble = useCallback((
+    seat: number,
+    message: string,
+    isEmote = false,
+    identity?: { nickname: string; avatar: string },
+  ) => {
     const bubbleId = Date.now() + Math.random();
+    const sender = identity ?? view.players.find((player) => player.seat === seat);
     const newBubble: ActiveChatBubble = {
       id: bubbleId,
-      seat: view.mySeat,
-      position: 'bottom',
+      seat,
+      position: chatPosition(seat, view.mySeat),
       message,
       isEmote,
+      senderNickname: sender?.nickname,
+      senderAvatar: sender?.avatar,
     };
     setChatBubbles((prev) => [...prev, newBubble]);
-    setTimeout(() => {
-      setChatBubbles((prev) => prev.filter((b) => b.id !== bubbleId));
-    }, 3200);
+      setTimeout(() => {
+        setChatBubbles((prev) => prev.filter((b) => b.id !== bubbleId));
+      }, 3200);
+  }, [view.mySeat, view.players]);
+
+  useEffect(() => {
+    if (!incomingChat || incomingChat.id === seenIncomingChatRef.current) return;
+    seenIncomingChatRef.current = incomingChat.id;
+    addChatBubble(
+      incomingChat.seat,
+      incomingChat.message,
+      Boolean(incomingChat.isEmote),
+      { nickname: incomingChat.nickname, avatar: incomingChat.avatar },
+    );
+  }, [addChatBubble, incomingChat]);
+
+  const handleSendChat = (message: string, isEmote = false) => {
+    if (onSendChat) {
+      onSendChat(message, isEmote);
+    } else {
+      addChatBubble(view.mySeat, message, isEmote);
+    }
 
     // In companion / practice mode: simulate occasional AI companion response
     if (practice) {
       setTimeout(() => {
         const randSeat = (view.mySeat + 1 + Math.floor(Math.random() * 3)) % 4;
-        const rel = relativeSeat(randSeat, view.mySeat);
-        const posMap: Record<number, 'bottom' | 'top' | 'left' | 'right'> = {
-          0: 'bottom',
-          1: 'right',
-          2: 'top',
-          3: 'left',
-        };
         const aiQuotes = ['碰得好！', '别急别急，慢慢来', '这把看谁先胡', '🍵 喝口水压压惊', '手气挺旺啊'];
         const aiMsg = aiQuotes[Math.floor(Math.random() * aiQuotes.length)]!;
-        const aiBubbleId = Date.now() + Math.random();
-        setChatBubbles((prev) => [
-          ...prev,
-          {
-            id: aiBubbleId,
-            seat: randSeat,
-            position: posMap[rel] || 'top',
-            message: aiMsg,
-            isEmote: aiMsg.startsWith('🍵'),
-          },
-        ]);
-        setTimeout(() => {
-          setChatBubbles((prev) => prev.filter((b) => b.id !== aiBubbleId));
-        }, 3200);
+        addChatBubble(randSeat, aiMsg, aiMsg.startsWith('🍵'));
       }, 1200);
     }
   };
@@ -583,6 +611,22 @@ export function Table({ view, onAction, onRules, onLeave, networkStatus, practic
         </div>
         <div className="board-top-tools">
           <GameClock />
+          {onOpenProfile ? (
+            <button
+              type="button"
+              className="board-profile-button"
+              onClick={onOpenProfile}
+              title="打开我的账号资料"
+              aria-label="打开我的账号资料"
+            >
+              <AvatarView
+                avatar={me?.isBot ? '陪' : me?.avatar}
+                className="board-profile-avatar"
+                alt="我的头像"
+              />
+              <span className="board-profile-label">{me?.nickname ?? '我的资料'}</span>
+            </button>
+          ) : null}
           <button
             type="button"
             className="board-icon-button"

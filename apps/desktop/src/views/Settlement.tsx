@@ -54,6 +54,7 @@ function ReplayHands({ view, settlement }: { view: ClientView; settlement: Settl
                   <AvatarView avatar={player.avatar} className="replay-player-avatar" alt={`${player.nickname}头像`} />
                   <span className="seat-badge">{SEAT_NAMES[player.seat]}</span>
                   <b className="replay-player-name">{player.nickname}</b>
+                  {player.title ? <span className="replay-player-title">{player.title}</span> : null}
                   {player.isDealer ? <span className="tag-dealer">庄</span> : null}
                   {winner ? <span className="tag-winner">胡牌</span> : null}
                   {player.closed ? <span className="tag-closed">关门</span> : null}
@@ -121,6 +122,7 @@ export function SettlementModal({
   gameMode = 'online',
   serverUrl,
   token,
+  onOpenProfile,
 }: {
   view: ClientView;
   settlement: Settlement;
@@ -131,6 +133,7 @@ export function SettlementModal({
   gameMode?: 'online' | 'local';
   serverUrl?: string;
   token?: string | null;
+  onOpenProfile?: () => void;
 }) {
   const roomRate = view.pointRate ?? 0.1;
   const [activeTab, setActiveTab] = useState<'summary' | 'ledger' | 'breakdown' | 'replay'>('summary');
@@ -238,6 +241,24 @@ export function SettlementModal({
         <div className="gold-line" />
         
         <header className="settlement-header">
+          {onOpenProfile ? (
+            <button
+              type="button"
+              className="settlement-profile-button"
+              onClick={onOpenProfile}
+              title="打开我的账号资料"
+            >
+              <AvatarView
+                avatar={view.players[view.mySeat]?.avatar}
+                className="settlement-profile-avatar"
+                alt="我的头像"
+              />
+              <span>
+                <strong>{view.players[view.mySeat]?.nickname ?? '我的资料'}</strong>
+                <small>{view.players[view.mySeat]?.title ?? '账号资料'}</small>
+              </span>
+            </button>
+          ) : null}
           <h2>{settlement.liuju ? '流局' : `${settlement.winnerNickname ?? '玩家'} 胡牌`}</h2>
           <p className="sub">
             {WIN_LABEL[settlement.winType] ?? settlement.winType}
