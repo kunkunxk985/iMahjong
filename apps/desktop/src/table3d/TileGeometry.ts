@@ -24,27 +24,28 @@ export function loadTileTexture(path: string): THREE.Texture {
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
   texture.generateMipmaps = true;
+  texture.anisotropy = 16; // Extreme crispness at perspective angles
   textureCache.set(path, texture);
   return texture;
 }
 
-// Reusable base materials
+// Reusable base materials - Luxury Ivory Bone & Emerald Jadeite
 const sideMaterial = new THREE.MeshPhysicalMaterial({
-  color: 0xfaf6ec, // Ivory bone side
-  roughness: 0.3,
-  metalness: 0.04,
-  clearcoat: 0.4,
-  clearcoatRoughness: 0.2,
+  color: 0xfbf7ed, // Polished ivory bone side
+  roughness: 0.22,
+  metalness: 0.02,
+  clearcoat: 0.6,
+  clearcoatRoughness: 0.15,
 });
 
 const backTexture = loadTileTexture('./assets/tile-back.png');
 const backMaterial = new THREE.MeshPhysicalMaterial({
-  color: 0x0f4837, // Jade green backing
+  color: 0x0a4230, // Royal emerald jadeite backing
   map: backTexture,
-  roughness: 0.2,
-  metalness: 0.05,
-  clearcoat: 0.7,
-  clearcoatRoughness: 0.15,
+  roughness: 0.18,
+  metalness: 0.04,
+  clearcoat: 0.85,
+  clearcoatRoughness: 0.12,
 });
 
 // Single shared box geometry for all tiles
@@ -61,10 +62,10 @@ export function createTileMesh(tile?: Tile | null, isBack = false): THREE.Mesh {
     frontMat = new THREE.MeshPhysicalMaterial({
       color: 0xffffff,
       map: texture,
-      roughness: 0.22,
-      metalness: 0.02,
-      clearcoat: 0.5,
-      clearcoatRoughness: 0.2,
+      roughness: 0.16,
+      metalness: 0.01,
+      clearcoat: 0.85,
+      clearcoatRoughness: 0.12,
     });
   }
 

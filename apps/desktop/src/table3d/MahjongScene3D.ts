@@ -47,8 +47,8 @@ export class MahjongScene3D {
     // Camera: ergonomic mahjong perspective looking down at table center
     const aspect = container.clientWidth / container.clientHeight || 16 / 9;
     this.camera = new THREE.PerspectiveCamera(38, aspect, 0.1, 1000);
-    this.camera.position.set(0, 42, 34);
-    this.camera.lookAt(0, 0, 0);
+    this.camera.position.set(0, 36, 29);
+    this.camera.lookAt(0, -1, 3.5);
 
     // Renderer with soft shadow maps & PBR tone mapping
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
@@ -57,7 +57,7 @@ export class MahjongScene3D {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.toneMappingExposure = 1.18;
 
     container.appendChild(this.renderer.domElement);
 
@@ -77,12 +77,12 @@ export class MahjongScene3D {
 
   private setupLighting(): void {
     // Warm gentle ambient
-    const ambient = new THREE.AmbientLight(0xfff8ee, 1.3);
+    const ambient = new THREE.AmbientLight(0xfff8ee, 1.4);
     this.scene.add(ambient);
 
     // Main downward spotlight with soft shadow
-    const mainSpot = new THREE.DirectionalLight(0xfff6e5, 2.4);
-    mainSpot.position.set(0, 40, 15);
+    const mainSpot = new THREE.DirectionalLight(0xfff6e5, 2.6);
+    mainSpot.position.set(0, 38, 14);
     mainSpot.castShadow = true;
     mainSpot.shadow.mapSize.width = 2048;
     mainSpot.shadow.mapSize.height = 2048;
@@ -96,23 +96,23 @@ export class MahjongScene3D {
     mainSpot.shadow.bias = -0.0005;
     this.scene.add(mainSpot);
 
-    // Front fill light (lights up player's standing tile front faces)
-    const frontFill = new THREE.DirectionalLight(0xbbf7d0, 1.2);
-    frontFill.position.set(0, 12, 35);
+    // Front fill light (illuminates player's standing tile faces directly)
+    const frontFill = new THREE.DirectionalLight(0xfef9c3, 1.4);
+    frontFill.position.set(0, 16, 32);
     this.scene.add(frontFill);
 
-    // Back rim light
-    const rimLight = new THREE.DirectionalLight(0xfef08a, 0.6);
-    rimLight.position.set(0, 20, -30);
+    // Back rim light (creates beautiful golden edge rim on tiles)
+    const rimLight = new THREE.DirectionalLight(0xa7f3d0, 0.8);
+    rimLight.position.set(0, 22, -28);
     this.scene.add(rimLight);
   }
 
   private setupTable(): void {
     // 3D Emerald Felt Playing Surface
-    const feltGeo = new THREE.CylinderGeometry(28, 28, 0.5, 64);
+    const feltGeo = new THREE.CylinderGeometry(27.5, 27.5, 0.5, 64);
     const feltMat = new THREE.MeshStandardMaterial({
-      color: 0x0c3725, // Deep emerald felt
-      roughness: 0.85,
+      color: 0x0c3b28, // Deep royal emerald felt
+      roughness: 0.88,
       metalness: 0.02,
     });
     const felt = new THREE.Mesh(feltGeo, feltMat);
@@ -121,23 +121,23 @@ export class MahjongScene3D {
     this.tableGroup.add(felt);
 
     // Walnut Wooden Beveled Rail
-    const railGeo = new THREE.CylinderGeometry(29.5, 29.8, 1.2, 64);
+    const railGeo = new THREE.CylinderGeometry(29.2, 29.6, 1.3, 64);
     const railMat = new THREE.MeshStandardMaterial({
-      color: 0x22130a, // Dark walnut
-      roughness: 0.45,
-      metalness: 0.15,
+      color: 0x1f1008, // Dark imperial walnut
+      roughness: 0.42,
+      metalness: 0.12,
     });
     const rail = new THREE.Mesh(railGeo, railMat);
-    rail.position.y = -0.6;
+    rail.position.y = -0.65;
     rail.receiveShadow = true;
     this.tableGroup.add(rail);
 
     // Brass Inlay Ring
-    const brassGeo = new THREE.RingGeometry(27.8, 28.1, 64);
+    const brassGeo = new THREE.RingGeometry(27.2, 27.6, 64);
     const brassMat = new THREE.MeshStandardMaterial({
       color: 0xdfb15b,
       metalness: 0.85,
-      roughness: 0.25,
+      roughness: 0.22,
     });
     const brassRing = new THREE.Mesh(brassGeo, brassMat);
     brassRing.rotation.x = -Math.PI / 2;
@@ -167,7 +167,7 @@ export class MahjongScene3D {
         const tileId = hit.userData.tileId as string;
         if (tileId) {
           if (this.selectedTileId === tileId) {
-            // Second click on already selected tile = discard intent
+            // Second click on already selected tile = discard
             this.callbacks.onDiscardTile?.(tileId);
           } else {
             this.callbacks.onSelectTile?.(tileId);
@@ -225,7 +225,7 @@ export class MahjongScene3D {
       this.renderPlayerHand(me.hand, selectedId);
     }
 
-    // 2. Render Opponents' Hands (Standing Tile Backs)
+    // 2. Render Opponents' Hands (Standing Tile Backs, Scaled Proportionately)
     view.players.forEach((player) => {
       if (player.seat === mySeat) return;
       const rel = relativeSeat(player.seat, mySeat);
@@ -258,16 +258,17 @@ export class MahjongScene3D {
       const mesh = createTileMesh(tile);
       const isSelected = selectedId === tile.id;
 
-      // Base standing position: tilted backward 20 degrees facing player directly
+      // Base standing position: tilted backward 18 degrees, perpendicular to camera
       let posX = startX + index * spacing;
       if (index === count - 1 && count % 3 === 2) {
         // Newly drawn 14th tile is separated by gap
-        posX += 0.6;
+        posX += 0.65;
       }
 
-      const baseY = 1.5 + (isSelected ? 1.0 : 0.0);
-      mesh.position.set(posX, baseY, 13.5);
-      mesh.rotation.set(-0.35, 0, 0); // Backward tilt facing camera
+      const baseY = 1.5; // Exactly resting on table surface
+      const posZ = 13.6;
+      mesh.position.set(posX, baseY + (isSelected ? 1.4 : 0.0), posZ);
+      mesh.rotation.set(-0.32, 0, 0); // Backward tilt facing camera sightline
 
       mesh.userData.baseY = baseY;
       mesh.userData.tileId = tile.id;
@@ -280,26 +281,28 @@ export class MahjongScene3D {
 
   private renderOpponentHand(rel: number, count: number): void {
     if (count <= 0) return;
-    const spacing = TILE_W + 0.08;
+    const oppScale = 0.76; // Clean, elegant scale that never blocks the field
+    const spacing = (TILE_W + 0.06) * oppScale;
     const totalWidth = (count - 1) * spacing;
     const startOffset = -totalWidth / 2;
 
     for (let i = 0; i < count; i += 1) {
       const mesh = createTileMesh(null, true);
+      mesh.scale.set(oppScale, oppScale, oppScale);
       const offset = startOffset + i * spacing;
 
       if (rel === 2) {
         // Top Player (Opposite)
-        mesh.position.set(-offset, 1.5, -13.5);
-        mesh.rotation.set(0.35, Math.PI, 0); // Facing player with green back
+        mesh.position.set(-offset, 1.15, -14.8);
+        mesh.rotation.set(0.32, Math.PI, 0);
       } else if (rel === 1) {
         // Right Player
-        mesh.position.set(13.5, 1.5, offset);
-        mesh.rotation.set(0, -Math.PI / 2, -0.35);
+        mesh.position.set(14.8, 1.15, offset);
+        mesh.rotation.set(0, -Math.PI / 2, -0.32);
       } else if (rel === 3) {
         // Left Player
-        mesh.position.set(-13.5, 1.5, -offset);
-        mesh.rotation.set(0, Math.PI / 2, 0.35);
+        mesh.position.set(-14.8, 1.15, -offset);
+        mesh.rotation.set(0, Math.PI / 2, 0.32);
       }
 
       this.handsGroup.add(mesh);
@@ -311,14 +314,16 @@ export class MahjongScene3D {
 
     // Discard rivers lie flat on the felt in the center (6 per row)
     const cols = 6;
-    const spacingX = TILE_W + 0.08;
-    const spacingZ = TILE_H + 0.08;
+    const riverScale = 0.82;
+    const spacingX = (TILE_W + 0.08) * riverScale;
+    const spacingZ = (TILE_H + 0.08) * riverScale;
 
     discards.forEach((tile, index) => {
       const row = Math.floor(index / cols);
       const col = index % cols;
 
       const mesh = createTileMesh(tile);
+      mesh.scale.set(riverScale, riverScale, riverScale);
       const isLast = tile.id === lastDiscardId;
 
       // Lay flat: front face points upward (+Y)
@@ -326,23 +331,19 @@ export class MahjongScene3D {
 
       // Local grid position
       const localX = (col - 2.5) * spacingX;
-      const localZ = row * spacingZ + 2.5;
+      const localZ = row * spacingZ + 2.8;
 
       // Transform according to seat orientation
       if (rel === 0) {
-        // Bottom player's river
-        mesh.position.set(localX, isLast ? 0.2 : 0.02, localZ);
+        mesh.position.set(localX, isLast ? 0.18 : 0.04, localZ);
       } else if (rel === 2) {
-        // Top player's river
-        mesh.position.set(-localX, isLast ? 0.2 : 0.02, -localZ);
+        mesh.position.set(-localX, isLast ? 0.18 : 0.04, -localZ);
         mesh.rotation.set(-Math.PI / 2, 0, Math.PI);
       } else if (rel === 1) {
-        // Right player's river
-        mesh.position.set(localZ, isLast ? 0.2 : 0.02, localX);
+        mesh.position.set(localZ, isLast ? 0.18 : 0.04, localX);
         mesh.rotation.set(-Math.PI / 2, 0, -Math.PI / 2);
       } else if (rel === 3) {
-        // Left player's river
-        mesh.position.set(-localZ, isLast ? 0.2 : 0.02, -localX);
+        mesh.position.set(-localZ, isLast ? 0.18 : 0.04, -localX);
         mesh.rotation.set(-Math.PI / 2, 0, Math.PI / 2);
       }
 
@@ -353,29 +354,27 @@ export class MahjongScene3D {
   private renderPlayerMelds(rel: number, melds: any[]): void {
     if (!melds || melds.length === 0) return;
 
+    const meldScale = 0.8;
     let meldOffset = 0;
     melds.forEach((meld) => {
       meld.tiles?.forEach((tile: Tile, tIndex: number) => {
         const mesh = createTileMesh(tile);
+        mesh.scale.set(meldScale, meldScale, meldScale);
         mesh.rotation.set(-Math.PI / 2, 0, 0);
 
-        const spacing = TILE_W + 0.06;
-        const xOffset = -18 + meldOffset * 3.2 + tIndex * spacing;
+        const spacing = (TILE_W + 0.06) * meldScale;
+        const xOffset = -15.5 + meldOffset * 2.8 + tIndex * spacing;
 
         if (rel === 0) {
-          // Own meld: bottom left flat
-          mesh.position.set(xOffset, 0.02, 17.5);
+          mesh.position.set(xOffset, 0.04, 15.2);
         } else if (rel === 2) {
-          // Top meld
-          mesh.position.set(-xOffset, 0.02, -17.5);
+          mesh.position.set(-xOffset, 0.04, -15.2);
           mesh.rotation.set(-Math.PI / 2, 0, Math.PI);
         } else if (rel === 1) {
-          // Right meld
-          mesh.position.set(17.5, 0.02, xOffset);
+          mesh.position.set(15.2, 0.04, xOffset);
           mesh.rotation.set(-Math.PI / 2, 0, -Math.PI / 2);
         } else if (rel === 3) {
-          // Left meld
-          mesh.position.set(-17.5, 0.02, -xOffset);
+          mesh.position.set(-15.2, 0.04, -xOffset);
           mesh.rotation.set(-Math.PI / 2, 0, Math.PI / 2);
         }
 
@@ -408,11 +407,13 @@ export class MahjongScene3D {
       }
     }
 
-    // Smooth hover/select elevation interpolation
+    // Smooth hover/select elevation interpolation based on baseY (CRITICAL FIX!)
     this.handTileMeshes.forEach((mesh) => {
       const isHovered = mesh === this.hoveredMesh;
       const isSelected = mesh.userData.tileId === this.selectedTileId;
-      const targetY = isSelected ? 1.0 : isHovered ? 0.45 : 0.0;
+      const baseY = mesh.userData.baseY ?? 1.5;
+      const lift = isSelected ? 1.4 : isHovered ? 0.7 : 0.0;
+      const targetY = baseY + lift;
       mesh.position.y += (targetY - mesh.position.y) * 0.25;
     });
 
@@ -428,3 +429,4 @@ export class MahjongScene3D {
     }
   }
 }
+
