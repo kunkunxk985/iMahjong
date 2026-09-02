@@ -1,14 +1,14 @@
-import test, { describe } from 'node:test';
+import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { HubDatabase } from '../src/db.js';
 
-describe('Cloudflare DO HubDatabase Friends & Social', () => {
+describe('Cloudflare DO HubDatabase Friends & Social', { concurrency: false }, () => {
   const db = new HubDatabase();
 
   let userA: any = null;
   let userB: any = null;
 
-  test('创建两个测试用户', async () => {
+  before(async () => {
     const resA = await db.register('player_a', '123456', '雀圣A');
     const resB = await db.register('player_b', '123456', '雀友B');
 
@@ -22,7 +22,8 @@ describe('Cloudflare DO HubDatabase Friends & Social', () => {
     assert.equal(userB.nickname, '雀友B');
   });
 
-  test('支持按账号、昵称、ID 检索玩家', async () => {
+  it('支持按账号、昵称、ID 检索玩家', async () => {
+    assert.ok(userA && userB, 'userA 与 userB 必须已初始化');
     const results = await db.searchUsers('player_b', userA.userId);
     assert.equal(results.length, 1);
     assert.equal(results[0].userId, userB.userId);
@@ -30,7 +31,7 @@ describe('Cloudflare DO HubDatabase Friends & Social', () => {
     assert.equal(results[0].hasPendingRequest, false);
   });
 
-  test('不能添加自己为好友，不能重复发送申请', async () => {
+  it('不能添加自己为好友，不能重复发送申请', async () => {
     const selfErr = await db.sendFriendRequest(userA.userId, userA.userId);
     assert.equal(selfErr, '不能添加自己为好友');
 
@@ -41,7 +42,7 @@ describe('Cloudflare DO HubDatabase Friends & Social', () => {
     assert.equal(dupErr, '好友申请已发送，等待对方同意');
   });
 
-  test('被申请人收到好友申请并成功同意', async () => {
+  it('被申请人收到好友申请并成功同意', async () => {
     const requests = await db.getFriendRequests(userB.userId);
     assert.equal(requests.length, 1);
     assert.equal(requests[0].fromUserId, userA.userId);
@@ -60,7 +61,7 @@ describe('Cloudflare DO HubDatabase Friends & Social', () => {
     assert.equal(friendsB[0].userId, userA.userId);
   });
 
-  test('支持删除好友并双向解除关系', async () => {
+  it('支持删除好友并双向解除关系', async () => {
     await db.deleteFriend(userA.userId, userB.userId);
 
     const friendsA = await db.getFriends(userA.userId);
@@ -70,3 +71,4 @@ describe('Cloudflare DO HubDatabase Friends & Social', () => {
     assert.equal(friendsB.length, 0);
   });
 });
+
