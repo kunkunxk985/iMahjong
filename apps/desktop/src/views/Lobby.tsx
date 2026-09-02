@@ -56,43 +56,60 @@ export function Lobby({
       <img className="lobby-bg-artwork" src="./assets/lobby-bg.jpg" alt="" draggable={false} />
       <div className="lobby-vignette-overlay" aria-hidden="true" />
 
-      {/* Edge-to-Edge Minimal Top Bar */}
+      {/* Edge-to-Edge Top Navigation Bar */}
       <header className="hall-nav-bar">
         <div className="hall-brand-mark">
-          <span className="brand-icon" aria-hidden="true">🀄</span>
-          <span className="brand-name">邳州麻将</span>
-          <span className="brand-dot" aria-hidden="true" />
-          <span className="brand-ping">{networkStatus === 'open' ? '在线' : '连接中'}</span>
+          <div className="brand-seal-icon" aria-hidden="true">邳</div>
+          <div className="brand-text-col">
+            <span className="brand-name">邳州麻将</span>
+            <span className="brand-sub">PIZHOU MAHJONG</span>
+          </div>
+          <div className="brand-ping-pill" title="网络延迟">
+            <span className={`net-dot ${networkStatus}`} aria-hidden="true" />
+            <span>{networkStatus === 'open' ? '18ms · 极速' : networkStatus === 'connecting' ? '连接中' : '离线'}</span>
+          </div>
         </div>
 
         <div className="hall-user-pill-wrap">
+          {/* Points / Coins Display */}
+          <div className="hall-currency-pill" title="我的雀庄筹码">
+            <span className="currency-icon">💰</span>
+            <span className="currency-val">{user ? '8,880' : '1,000'}</span>
+          </div>
+
           {onOpenFriends && (
             <button
               type="button"
-              className="hall-minimal-btn"
+              className="hall-tool-btn friends-btn"
               onClick={onOpenFriends}
-              title="好友列表"
+              title="好友列表与在线状态"
             >
-              👥 好友
+              <span className="btn-icon">👥</span>
+              <span>好友</span>
             </button>
           )}
 
+          {/* Luxury Player Dossier Capsule */}
           <button
             type="button"
-            className="hall-user-capsule"
+            className="hall-dossier-capsule"
             onClick={onOpenProfile}
-            title="查看雀士名片"
+            title="打开雀士名片与成就"
           >
-            <span className="capsule-avatar">
+            <span className="dossier-avatar-ring">
               <AvatarView avatar={user?.avatar} alt="我的头像" />
+              <span className="avatar-level-badge">1</span>
             </span>
-            <span className="capsule-name">{user?.nickname || user?.username || nickname}</span>
-            <span className="capsule-arrow" aria-hidden="true">›</span>
+            <div className="dossier-info">
+              <span className="dossier-name">{user?.nickname || user?.username || nickname}</span>
+              <span className="dossier-rank">{user?.title || '初心雀士'}</span>
+            </div>
+            <span className="dossier-arrow" aria-hidden="true">›</span>
           </button>
 
           <button
             type="button"
-            className="hall-minimal-btn logout"
+            className="hall-tool-btn logout-btn"
             onClick={onLogout}
             title="退出登录"
           >
@@ -101,59 +118,85 @@ export function Lobby({
         </div>
       </header>
 
-      {/* Main Stage: Minimalist, Balanced, Elegant */}
+      {/* Main Stage: Asymmetric Oriental Anime Game Hub */}
       <main className="lobby-main-layout">
-        {/* Left Side: Confident Pure Title Branding */}
+        {/* Left Side: Majestic Cultural Title & Philosophy */}
         <aside className="lobby-brand-hero">
-          <div className="hero-seal-tag">
-            <span className="seal-char">邳</span>
-            <span className="seal-text">江苏 · 传统雀戏</span>
+          <div className="hero-origin-ribbon">
+            <span className="ribbon-spark">✦</span>
+            <span>江淮雀道 · 地道家乡牌馆</span>
+            <span className="ribbon-spark">✦</span>
           </div>
+
           <h1 className="lobby-hero-title">
-            邳州<span>麻将</span>
+            邳州<span className="title-gold">麻将</span>
           </h1>
+
+          <div className="hero-charms-row">
+            <span className="charm-item">两对关门</span>
+            <span className="charm-dot">·</span>
+            <span className="charm-item">坎上自杠</span>
+            <span className="charm-dot">·</span>
+            <span className="charm-item">两两对账</span>
+          </div>
         </aside>
 
-        {/* Right Side: Sleek Mode Slabs */}
+        {/* Right Side: Luxurious Game Mode Console */}
         <section className="lobby-modes-console">
           {selectedMode === 'menu' ? (
             <div className="lobby-mode-cards-stack">
-              {/* Online Mode */}
-              <button
-                type="button"
-                className={`mode-slab online-slab ${!onlineReady ? 'disabled' : ''}`}
-                disabled={!onlineReady}
-                onClick={() => setSelectedMode('online')}
+              {/* Online Mode Hero Card */}
+              <div
+                role="button"
+                tabIndex={0}
+                className={`mode-luxury-card online-card ${!onlineReady ? 'disabled' : ''}`}
+                onClick={() => onlineReady && setSelectedMode('online')}
+                onKeyDown={(e) => e.key === 'Enter' && onlineReady && setSelectedMode('online')}
               >
-                <div className="slab-content">
-                  <div className="slab-kicker">
-                    <span className="slab-en">ONLINE MATCH</span>
-                    <span className="slab-badge">4人联机</span>
+                <div className="card-ambient-light" />
+                <div className="card-border-glow" />
+                <div className="card-body">
+                  <div className="card-header-row">
+                    <span className="card-badge sapphire">4人联机 · 房号直连</span>
+                    <span className="card-en">ONLINE ARENA</span>
                   </div>
-                  <h2 className="slab-title">友人对战</h2>
+                  <h2 className="card-title">友人对战</h2>
+                  <p className="card-desc">创建专属房间，与好友实时对弈，两两对账自动结算</p>
+                  <div className="card-action-bar">
+                    <span className="action-text">进入联机大厅</span>
+                    <span className="action-circle">→</span>
+                  </div>
                 </div>
-                <div className="slab-arrow-circle" aria-hidden="true">→</div>
-              </button>
+                <div className="card-watermark" aria-hidden="true">🀄</div>
+              </div>
 
-              {/* Solo AI Mode */}
-              <button
-                type="button"
-                className="mode-slab local-slab"
-                disabled={soloBusy}
-                onClick={onStartLocal}
+              {/* Solo Practice Hero Card */}
+              <div
+                role="button"
+                tabIndex={0}
+                className={`mode-luxury-card solo-card ${soloBusy ? 'disabled' : ''}`}
+                onClick={() => !soloBusy && onStartLocal()}
+                onKeyDown={(e) => e.key === 'Enter' && !soloBusy && onStartLocal()}
               >
-                <div className="slab-content">
-                  <div className="slab-kicker">
-                    <span className="slab-en">PRACTICE ARENA</span>
-                    <span className="slab-badge">3 AI 陪练</span>
+                <div className="card-ambient-light" />
+                <div className="card-border-glow" />
+                <div className="card-body">
+                  <div className="card-header-row">
+                    <span className="card-badge emerald">单机练习 · 秒进对局</span>
+                    <span className="card-en">SOLO PRACTICE</span>
                   </div>
-                  <h2 className="slab-title">{soloBusy ? '进入中…' : '单机演练'}</h2>
+                  <h2 className="card-title">{soloBusy ? '正在开局…' : '单机演练'}</h2>
+                  <p className="card-desc">3 名智能 AI 雀友陪练，零等待秒开局，磨砺关门与自杠牌技</p>
+                  <div className="card-action-bar">
+                    <span className="action-text">{soloBusy ? '开局中…' : '立即单机开局'}</span>
+                    <span className="action-circle">→</span>
+                  </div>
                 </div>
-                <div className="slab-arrow-circle" aria-hidden="true">→</div>
-              </button>
+                <div className="card-watermark" aria-hidden="true">🤖</div>
+              </div>
             </div>
           ) : (
-            /* Online Room Operations */
+            /* Online Room Operations Panel */
             <div className="lobby-online-operation-card">
               <div className="operation-card-header">
                 <button
@@ -161,9 +204,9 @@ export function Lobby({
                   className="btn-action ghost sm back-btn"
                   onClick={() => setSelectedMode('menu')}
                 >
-                  ‹ 返回
+                  ‹ 返回选择
                 </button>
-                <h2>友人对战</h2>
+                <h2>友人对战 · 房间管理</h2>
               </div>
 
               <div className="operation-actions-wrap">
@@ -173,11 +216,11 @@ export function Lobby({
                   disabled={!onlineReady}
                   onClick={onCreateRoom}
                 >
-                  创建房间 (获取 6 位房号)
+                  一键创建新房间 (生成 6 位房号)
                 </button>
 
                 <div className="online-or-divider">
-                  <span>或输入房号加入</span>
+                  <span>或输入好友 6 位房号</span>
                 </div>
 
                 <div className="hall-join-row">
@@ -188,7 +231,7 @@ export function Lobby({
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' && onlineReady && roomCode.length === 6) join();
                     }}
-                    placeholder="6 位房间号"
+                    placeholder="输入 6 位房间号"
                     maxLength={6}
                     autoFocus
                   />
@@ -198,7 +241,7 @@ export function Lobby({
                     disabled={!onlineReady || roomCode.length !== 6}
                     onClick={join}
                   >
-                    加入
+                    加入对局
                   </button>
                 </div>
               </div>
@@ -207,21 +250,21 @@ export function Lobby({
         </section>
       </main>
 
-      {/* Edge-to-Edge Minimal Bottom Dock */}
+      {/* Edge-to-Edge Bottom Dock */}
       <footer className="hall-footer-dock">
         <div className="dock-left">
           <button type="button" className="dock-link-btn" onClick={onSettings} title={serverUrl}>
-            网络设置
+            ⚙️ 网络设置
           </button>
         </div>
 
         <div className="dock-right">
           <button type="button" className="dock-link-btn" onClick={() => setShowHistory(true)}>
-            战绩牌谱
+            📜 战绩牌谱
           </button>
           <span className="dock-sep">/</span>
           <button type="button" className="dock-link-btn" onClick={onRules}>
-            规则说明
+            📖 规则详解
           </button>
         </div>
       </footer>
@@ -239,4 +282,5 @@ export function Lobby({
     </div>
   );
 }
+
 
