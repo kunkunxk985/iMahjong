@@ -1844,3 +1844,46 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
+
+/* ─── True 3D Physical Table Mode (Three.js PBR) ────────────── */
+
+.table-3d-canvas-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+.table-3d-canvas-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  outline: none;
+}
+
+.mahjong-board.is-3d-mode .board-wood-texture,
+.mahjong-board.is-3d-mode .board-felt,
+.mahjong-board.is-3d-mode .board-atmosphere,
+.mahjong-board.is-3d-mode .board-table-geometry,
+.mahjong-board.is-3d-mode .board-corner,
+.mahjong-board.is-3d-mode .board-discard-layer,
+.mahjong-board.is-3d-mode .board-hand-area,
+.mahjong-board.is-3d-mode .board-opponent-melds,
+.mahjong-board.is-3d-mode .board-seat-top .concealed-hand,
+.mahjong-board.is-3d-mode .board-seat-left .concealed-hand,
+.mahjong-board.is-3d-mode .board-seat-right .concealed-hand {
+  display: none !important;
+}
+
+.board-icon-button.board-3d-btn {
+  border-color: rgba(254, 240, 138, 0.4);
+}
+
+.board-icon-button.board-3d-btn.active {
+  background: rgba(250, 204, 21, 0.2);
+  border-color: #fde047;
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.35);
+}
+
