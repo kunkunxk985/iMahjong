@@ -118,11 +118,23 @@ export function Table({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [is3DMode, setIs3DMode] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('pizhou_render_mode') !== '2d';
+      // 默认使用清晰、地道、稳定且具备 2.5D 实体玉石质感的竞技牌桌
+      return localStorage.getItem('pizhou_render_mode') === '3d';
     } catch {
-      return true;
+      return false;
     }
   });
+
+  // 确保首次加载或异常状态下自动恢复到 100% 可玩的经典 2.5D 高清质感视界
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('pizhou_render_mode') !== '2d') {
+        localStorage.setItem('pizhou_render_mode', '2d');
+        setIs3DMode(false);
+      }
+    } catch {}
+  }, []);
+
   const [hoveredTileKey, setHoveredTileKey] = useState<string | null>(null);
   const [hoveredTileId, setHoveredTileId] = useState<string | null>(null);
   const [enteringId, setEnteringId] = useState<string | undefined>(undefined);
