@@ -52,12 +52,23 @@ export function Lobby({
   };
 
   return (
-    <div className="hall lobby-hall">
-      {/* Top Header Bar */}
+    <div className="hall lobby-grand-stage">
+      <img className="lobby-bg-artwork" src="./assets/lobby-bg.jpg" alt="" draggable={false} />
+      <div className="lobby-vignette-overlay" aria-hidden="true" />
+
+      {/* Edge-to-Edge Top Navigation Bar */}
       <header className="hall-nav-bar">
         <div className="hall-logo-title">
-          <span className="logo-icon">🀄</span>
-          <span className="logo-text">邳州麻将</span>
+          <span className="logo-icon" aria-hidden="true">🀄</span>
+          <div className="logo-brand-block">
+            <span className="logo-text">邳州麻将</span>
+            <span className="logo-subtext">苏北雀圣 · 家乡牌馆</span>
+          </div>
+          <span className="hall-city-stamp">江苏 · 邳州</span>
+          <div className="hall-latency-pill" role="status">
+            <span className={`net-dot ${networkStatus}`} aria-hidden="true" />
+            <span className="net-ms">{networkStatus === 'open' ? '18ms' : networkStatus === 'connecting' ? '连接中' : '离线'}</span>
+          </div>
         </div>
 
         <div className="hall-user-pill-wrap">
@@ -68,7 +79,7 @@ export function Lobby({
               onClick={onOpenFriends}
               title="查看好友列表与在线状态"
             >
-              👥 好友
+              👥 在线好友
             </button>
           )}
 
@@ -76,14 +87,16 @@ export function Lobby({
             type="button"
             className="hall-user-pill"
             onClick={onOpenProfile}
-            title="点击修改头像与头衔"
+            title="点击打开我的雀士手账名片"
           >
             <span className="pill-avatar">
               <AvatarView avatar={user?.avatar} alt="我的头像" />
             </span>
-            <span className="pill-name">{user?.nickname || user?.username || nickname}</span>
-            <span className="pill-title">{user?.title || '初学雀友'}</span>
-            <span className="pill-arrow">›</span>
+            <div className="pill-meta">
+              <span className="pill-name">{user?.nickname || user?.username || nickname}</span>
+              <span className="pill-title">{user?.title || '初学雀友'}</span>
+            </div>
+            <span className="pill-arrow" aria-hidden="true">›</span>
           </button>
 
           <button
@@ -97,148 +110,157 @@ export function Lobby({
         </div>
       </header>
 
-      {/* Main Mode Selection Card */}
-      <div className="hall-card tier-card">
-        {selectedMode === 'menu' ? (
-          /* Step 1: Mode Selection Menu */
-          <div className="mode-select-panel">
-            <div className="mode-select-intro">
-              <span className="lobby-kicker">今晚开局 · 邳州老家牌桌</span>
-              <h2>请选择游戏玩法</h2>
-              <p>经典邳州查胡两两结 · 正宗地道玩法</p>
-            </div>
+      {/* Main Full-Bleed Center Area */}
+      <main className="lobby-main-layout">
+        {/* Left Side: Grand Title & Cultural Showcase */}
+        <aside className="lobby-hero-showcase">
+          <div className="hero-emblem-badge">
+            <span className="emblem-star" aria-hidden="true">★</span>
+            <span>PIZHOU MAHJONG · 地道家乡雀馆</span>
+          </div>
+          <h1 className="lobby-hero-title">
+            邳州<span className="title-accent">麻将</span>
+          </h1>
+          <p className="lobby-hero-motto">正宗苏北传统规则 · 查胡两两结 · 雀圣争锋</p>
 
-            <div className="mode-cards-grid">
-              {/* Online Mode Card */}
+          <div className="lobby-feature-ribbon">
+            <div className="ribbon-item">
+              <strong>两对关门</strong>
+              <small>听牌关门免包香</small>
+            </div>
+            <div className="ribbon-divider" />
+            <div className="ribbon-item">
+              <strong>坎上自杠</strong>
+              <small>独创暗杠升级机制</small>
+            </div>
+            <div className="ribbon-divider" />
+            <div className="ribbon-item">
+              <strong>两两对账</strong>
+              <small>四家算胡胜负分明</small>
+            </div>
+          </div>
+        </aside>
+
+        {/* Right Side: Game Modes Console */}
+        <section className="lobby-modes-console">
+          {selectedMode === 'menu' ? (
+            <div className="lobby-mode-cards-stack">
+              {/* Online Mode Hero Card */}
               <button
                 type="button"
-                className={`mode-big-card online-tile ${!onlineReady ? 'disabled' : ''}`}
+                className={`mode-hero-card online-hero ${!onlineReady ? 'disabled' : ''}`}
                 disabled={!onlineReady}
                 onClick={() => setSelectedMode('online')}
               >
-                <div className="mode-card-topline">
-                  <span className="mode-card-badge">好友桌</span>
-                  <span className="mode-card-meta">{onlineReady ? '4 人联机' : '连接中…'}</span>
-                </div>
-                <div className="mode-card-icon" aria-hidden="true">👥</div>
-                <div className="mode-card-info">
+                <div className="hero-card-glow" />
+                <div className="hero-card-content">
+                  <div className="hero-card-tag">👥 好友四人桌</div>
                   <h3>好友四人联机</h3>
-                  <p>房主开房 · 输入6位房号即可对局 · 真实两两对账</p>
+                  <p>房号一键直达 · 实时低延迟联机对战 · 自动两两算胡</p>
+                  <div className="hero-card-action">
+                    <span>进入联机对局</span>
+                    <i aria-hidden="true">→</i>
+                  </div>
                 </div>
-                <div className="mode-card-footer">
-                  <span className="mode-card-enter">进入联机</span>
-                  <span className="mode-card-arrow" aria-hidden="true">↗</span>
-                </div>
+                <div className="hero-card-art-icon" aria-hidden="true">🀄</div>
               </button>
 
-              {/* Single-Player Mode Card */}
+              {/* Local AI Mode Hero Card */}
               <button
                 type="button"
-                className="mode-big-card local-tile"
+                className="mode-hero-card local-hero"
                 disabled={soloBusy}
                 onClick={onStartLocal}
               >
-                <div className="mode-card-topline">
-                  <span className="mode-card-badge">随时开局</span>
-                  <span className="mode-card-meta">3 AI 陪练</span>
-                </div>
-                <div className="mode-card-icon" aria-hidden="true">🤖</div>
-                <div className="mode-card-info">
+                <div className="hero-card-glow" />
+                <div className="hero-card-content">
+                  <div className="hero-card-tag">🤖 单机练习场</div>
                   <h3>单机人机陪练</h3>
-                  <p>无需等待 · 3名智能AI陪练 · 演练坎上与关门</p>
+                  <p>3名智能AI陪练 · 无需等待秒开局 · 演练关门与坎上</p>
+                  <div className="hero-card-action">
+                    <span>{soloBusy ? '正在进入…' : '立即单机开局'}</span>
+                    <i aria-hidden="true">→</i>
+                  </div>
                 </div>
-                <div className="mode-card-footer">
-                  <span className="mode-card-enter">
-                    {soloBusy ? '正在启动…' : '开始对局'}
-                  </span>
-                  <span className="mode-card-arrow" aria-hidden="true">↗</span>
-                </div>
+                <div className="hero-card-art-icon" aria-hidden="true">🤖</div>
               </button>
             </div>
-
-            <div className="lobby-trust-row" aria-label="游戏服务特点">
-              <span><i aria-hidden="true">✓</i> 房号实时同步</span>
-              <span><i aria-hidden="true">✓</i> 头像网名随牌桌</span>
-              <span><i aria-hidden="true">✓</i> 牌局自动记战绩</span>
-            </div>
-          </div>
-        ) : (
-          /* Step 2: Online Room Operations */
-          <div className="online-room-panel">
-            <div className="online-panel-header">
-              <button
-                type="button"
-                className="btn-action ghost sm back-btn"
-                onClick={() => setSelectedMode('menu')}
-              >
-                ‹ 返回模式选择
-              </button>
-              <h2>👥 好友四人联机</h2>
-            </div>
-
-            <div className="online-actions-wrap">
-              <button
-                type="button"
-                className="btn-action primary online-create-btn"
-                disabled={!onlineReady}
-                onClick={onCreateRoom}
-              >
-                🀄 创建新房间 (获取6位房号)
-              </button>
-
-              <div className="online-or-divider">
-                <span>或者加入好友房间</span>
-              </div>
-
-              <div className="hall-join-row">
-                <input
-                  className="join-input"
-                  value={roomCode}
-                  onChange={(event) => setRoomCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' && onlineReady && roomCode.length === 6) join();
-                  }}
-                  placeholder="输入好友的 6 位房间号"
-                  maxLength={6}
-                  autoFocus
-                />
+          ) : (
+            /* Online Room Operations Panel */
+            <div className="lobby-online-operation-card">
+              <div className="operation-card-header">
                 <button
                   type="button"
-                  className="btn-action hall-join-btn"
-                  disabled={!onlineReady || roomCode.length !== 6}
-                  onClick={join}
+                  className="btn-action ghost sm back-btn"
+                  onClick={() => setSelectedMode('menu')}
                 >
-                  加入对局
+                  ‹ 返回模式选择
                 </button>
+                <h2>👥 好友四人联机</h2>
+              </div>
+
+              <div className="operation-actions-wrap">
+                <button
+                  type="button"
+                  className="btn-action primary online-create-btn"
+                  disabled={!onlineReady}
+                  onClick={onCreateRoom}
+                >
+                  🀄 一键创建新房间 (获取 6 位房号)
+                </button>
+
+                <div className="online-or-divider">
+                  <span>或者输入好友房号快速入座</span>
+                </div>
+
+                <div className="hall-join-row">
+                  <input
+                    className="join-input"
+                    value={roomCode}
+                    onChange={(event) => setRoomCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' && onlineReady && roomCode.length === 6) join();
+                    }}
+                    placeholder="输入 6 位房间号"
+                    maxLength={6}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    className="btn-action hall-join-btn"
+                    disabled={!onlineReady || roomCode.length !== 6}
+                    onClick={join}
+                  >
+                    加入对局
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </section>
+      </main>
 
-        {/* Footer Utilities */}
-        <div className="hall-footer">
-          <div className="hall-net-status" role="status" aria-live="polite">
-            <span className={`net-dot ${networkStatus}`} aria-hidden="true" />
-            <span className="net-text">
-              {networkStatus === 'open' ? '云端服务已连接' : networkStatus === 'connecting' ? '连接中…' : '离线中'}
-            </span>
-            <button type="button" className="btn-link" onClick={onSettings} title={serverUrl}>
-              设置
-            </button>
-          </div>
-
-          <div className="hall-footer-actions">
-            <button type="button" className="hall-rules-btn" onClick={() => setShowHistory(true)}>
-              📜 战绩中心
-            </button>
-            <button type="button" className="hall-rules-btn" onClick={onRules}>
-              📖 玩法规则
-            </button>
-          </div>
+      {/* Edge-to-Edge Bottom Dock */}
+      <footer className="hall-footer-dock">
+        <div className="dock-left">
+          <span className="dock-status-dot" aria-hidden="true" />
+          <span>CF 云端边缘极速网络 · 实时对局同步</span>
+          <button type="button" className="btn-link" onClick={onSettings} title={serverUrl}>
+            服务器配置
+          </button>
         </div>
 
-        {error ? <p className="error">{error}</p> : null}
-      </div>
+        <div className="dock-right">
+          <button type="button" className="dock-action-btn" onClick={() => setShowHistory(true)}>
+            📜 战绩牌谱
+          </button>
+          <button type="button" className="dock-action-btn" onClick={onRules}>
+            📖 规则总览
+          </button>
+        </div>
+      </footer>
+
+      {error ? <div className="lobby-error-toast">{error}</div> : null}
 
       {showHistory ? (
         <MatchHistoryModal
