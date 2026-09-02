@@ -44,11 +44,11 @@ export class MahjongScene3D {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x061811); // Deep night jade
 
-    // Camera: high perspective angled down at ~50 degrees
+    // Camera: ergonomic mahjong perspective looking down at table center
     const aspect = container.clientWidth / container.clientHeight || 16 / 9;
-    this.camera = new THREE.PerspectiveCamera(40, aspect, 0.1, 1000);
-    this.camera.position.set(0, 32, 28);
-    this.camera.lookAt(0, -2, 0);
+    this.camera = new THREE.PerspectiveCamera(38, aspect, 0.1, 1000);
+    this.camera.position.set(0, 42, 34);
+    this.camera.lookAt(0, 0, 0);
 
     // Renderer with soft shadow maps & PBR tone mapping
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
@@ -258,17 +258,18 @@ export class MahjongScene3D {
       const mesh = createTileMesh(tile);
       const isSelected = selectedId === tile.id;
 
-      // Base standing position: tilted backward 12 degrees facing player
+      // Base standing position: tilted backward 20 degrees facing player directly
       let posX = startX + index * spacing;
       if (index === count - 1 && count % 3 === 2) {
         // Newly drawn 14th tile is separated by gap
         posX += 0.6;
       }
 
-      mesh.position.set(posX, isSelected ? 1.0 : 0.0, 16.5);
-      mesh.rotation.set(-0.21, 0, 0); // Slight backward tilt
+      const baseY = 1.5 + (isSelected ? 1.0 : 0.0);
+      mesh.position.set(posX, baseY, 13.5);
+      mesh.rotation.set(-0.35, 0, 0); // Backward tilt facing camera
 
-      mesh.userData.baseY = isSelected ? 1.0 : 0.0;
+      mesh.userData.baseY = baseY;
       mesh.userData.tileId = tile.id;
       mesh.userData.tileKey = tile.key;
 
@@ -289,16 +290,16 @@ export class MahjongScene3D {
 
       if (rel === 2) {
         // Top Player (Opposite)
-        mesh.position.set(-offset, 0, -16.5);
-        mesh.rotation.set(0.21, Math.PI, 0); // Facing player with green back
+        mesh.position.set(-offset, 1.5, -13.5);
+        mesh.rotation.set(0.35, Math.PI, 0); // Facing player with green back
       } else if (rel === 1) {
         // Right Player
-        mesh.position.set(16.5, 0, offset);
-        mesh.rotation.set(0, -Math.PI / 2, -0.21);
+        mesh.position.set(13.5, 1.5, offset);
+        mesh.rotation.set(0, -Math.PI / 2, -0.35);
       } else if (rel === 3) {
         // Left Player
-        mesh.position.set(-16.5, 0, -offset);
-        mesh.rotation.set(0, Math.PI / 2, 0.21);
+        mesh.position.set(-13.5, 1.5, -offset);
+        mesh.rotation.set(0, Math.PI / 2, 0.35);
       }
 
       this.handsGroup.add(mesh);
