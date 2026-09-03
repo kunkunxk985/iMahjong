@@ -663,7 +663,7 @@ export function Table({
             title={is3DMode ? '当前：真 3D 物理视角 (点击切换 2D)' : '当前：经典 2D 视角 (点击切换 3D)'}
             aria-label="切换 3D/2D 渲染模式"
           >
-            <span style={{ fontSize: '11px', fontWeight: 800, color: is3DMode ? '#fde047' : '#94a3b8' }}>
+            <span style={{ fontSize: '11px', fontWeight: 800, color: is3DMode ? 'var(--table-brass-bright, #e2c27c)' : '#94a3b8' }}>
               {is3DMode ? '3D' : '2D'}
             </span>
           </button>

@@ -1,4 +1,15 @@
-/* ─── Night-table art direction: walnut, jade felt, aged brass ─ */
+/* ─── Imperial Teahouse Art Direction: Dark Walnut, Deep Jade Felt, Antique Brass ─ */
+
+:root {
+  --table-walnut: #180d08;
+  --table-rosewood: #26120a;
+  --table-felt-jade: #081d15;
+  --table-felt-center: #103828;
+  --table-brass: #c5a059;
+  --table-brass-bright: #e2c27c;
+  --table-brass-dark: #7a5824;
+  --table-shadow-ao: rgba(0, 8, 5, 0.72);
+}
 
 .mahjong-board {
   --table-center-y: 48%;
@@ -9,7 +20,7 @@
   overflow: hidden;
   isolation: isolate;
   color: var(--cream);
-  background: #150d08;
+  background: var(--table-walnut);
   perspective: 1280px;
   perspective-origin: 50% 82%;
 }
@@ -21,25 +32,29 @@
   pointer-events: none;
 }
 
+/* Substantial Solid-Wood Outer Rim with Double-Beveled Relief & Inlaid Brass Stringing */
 .mahjong-board::before {
   z-index: 3;
-  inset: 7px;
-  border: 1px solid rgba(239, 202, 107, 0.5);
-  border-radius: 19px;
+  inset: 6px;
+  border: 1.5px solid rgba(212, 175, 55, 0.45);
+  border-radius: 18px;
   box-shadow:
-    inset 0 0 0 2px rgba(37, 18, 8, 0.74),
-    inset 0 0 0 4px rgba(238, 195, 92, 0.1),
-    0 0 18px rgba(0, 0, 0, 0.75);
+    inset 0 0 0 2px rgba(28, 14, 8, 0.9),
+    inset 0 0 0 6px rgba(212, 175, 55, 0.1),
+    inset 0 4px 16px rgba(0, 0, 0, 0.8),
+    0 0 24px rgba(0, 0, 0, 0.85);
 }
 
+/* Deep Ambient Occlusion (AO) Vignette Simulating Soft Lantern Illumination Falling on Center Felt */
 .mahjong-board::after {
   z-index: 4;
-  inset: 14px 16px;
+  inset: 16px 18px;
   border-radius: 14px;
-  background: radial-gradient(ellipse at 50% 44%, transparent 38%, rgba(1, 12, 8, 0.34) 100%);
-  box-shadow: inset 0 0 70px rgba(0, 10, 6, 0.42);
+  background: radial-gradient(ellipse at 50% 46%, transparent 34%, rgba(2, 10, 7, 0.45) 80%, rgba(0, 6, 4, 0.82) 100%);
+  box-shadow: inset 0 0 85px rgba(0, 8, 5, 0.65);
 }
 
+/* Rich Dark Walnut Wood Surface Grain */
 .board-wood-texture {
   position: absolute;
   z-index: 0;
@@ -47,102 +62,87 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: brightness(0.58) saturate(0.9) contrast(1.12);
-  transform: scale(1.04);
+  filter: brightness(0.62) saturate(0.85) contrast(1.18);
+  transform: scale(1.02);
   pointer-events: none;
   user-select: none;
 }
 
+/* Deep Imperial Forest Jade Felt with Solid-Wood Rim Frame & Soft Radial Vignette */
 .board-felt {
   position: absolute;
   z-index: 1;
-  inset: 15px 17px;
+  inset: 20px 22px;
   overflow: hidden;
-  border-radius: 13px;
+  border-radius: 12px;
   background:
-    radial-gradient(ellipse at 50% 42%, rgba(47, 133, 92, 0.45), transparent 56%),
-    linear-gradient(145deg, #164f38 0%, #0b3727 58%, #082b1f 100%);
+    radial-gradient(ellipse 72% 66% at 50% 48%, rgba(26, 78, 54, 0.95) 0%, rgba(13, 44, 30, 0.96) 52%, rgba(6, 22, 15, 0.98) 82%, #020b07 100%),
+    linear-gradient(150deg, #0d3123 0%, #082319 50%, #04140d 100%);
   box-shadow:
-    inset 0 0 0 1px rgba(255, 231, 158, 0.28),
-    inset 0 0 0 5px rgba(4, 26, 17, 0.72),
-    inset 0 8px 28px rgba(0, 0, 0, 0.42),
-    0 0 0 2px rgba(4, 13, 8, 0.84),
-    0 8px 18px rgba(0, 0, 0, 0.72);
+    inset 0 0 0 1px rgba(212, 175, 55, 0.22),
+    inset 0 0 0 4px rgba(2, 14, 9, 0.9),
+    inset 0 12px 48px rgba(0, 0, 0, 0.75),
+    0 0 0 2px rgba(2, 8, 5, 0.9),
+    0 10px 24px rgba(0, 0, 0, 0.85);
   pointer-events: none;
 }
 
+/* Micro-Woven Textile Fiber Texture */
 .board-felt-texture {
   position: absolute;
   inset: -2%;
   width: 104%;
   height: 104%;
   object-fit: cover;
-  opacity: 0.3;
-  filter: saturate(0.72) contrast(1.1) brightness(0.86);
+  opacity: 0.26;
+  filter: saturate(0.7) contrast(1.15) brightness(0.85);
   mix-blend-mode: soft-light;
   pointer-events: none;
   user-select: none;
 }
 
+/* Natural Warm Lantern Atmosphere */
 .board-atmosphere {
   position: absolute;
   z-index: 2;
-  inset: 16px 18px;
+  inset: 20px 22px;
   border-radius: 12px;
   background:
-    radial-gradient(ellipse at 50% -8%, rgba(255, 226, 142, 0.12), transparent 40%),
-    radial-gradient(circle at 12% 78%, rgba(18, 111, 75, 0.18), transparent 28%),
-    radial-gradient(circle at 88% 74%, rgba(18, 111, 75, 0.14), transparent 28%);
+    radial-gradient(ellipse at 50% -12%, rgba(245, 215, 130, 0.08), transparent 45%),
+    radial-gradient(circle at 12% 82%, rgba(14, 85, 58, 0.12), transparent 30%),
+    radial-gradient(circle at 88% 78%, rgba(14, 85, 58, 0.1), transparent 30%);
   transform: translateZ(0);
   will-change: opacity;
   pointer-events: none;
 }
 
+/* Sunken Central Mahjong Well - Hidden to eliminate the raw patch cutout and preserve seamless table felt */
 .board-table-geometry {
-  position: absolute;
-  z-index: 3;
-  top: var(--table-center-y, 48%);
-  left: 50%;
-  width: clamp(204px, 17.5vw, 236px);
-  height: clamp(204px, 17.5vw, 236px);
-  transform: translate(-50%, -50%);
-  opacity: 0.85;
-  border: 1px solid rgba(239, 208, 128, 0.2);
-  border-radius: 50%;
-  box-shadow:
-    0 0 0 4px rgba(6, 26, 17, 0.75),
-    0 0 0 5px rgba(239, 208, 128, 0.12),
-    inset 0 0 28px rgba(3, 20, 13, 0.5),
-    0 8px 24px rgba(0, 0, 0, 0.45);
-  pointer-events: none;
+  display: none !important;
 }
 
-.board-table-geometry::before,
-.board-table-geometry::after,
-.board-table-geometry > span {
-  display: none;
-}
-
+/* Corner Antique Brass Filigree Brackets */
 .board-corner {
   position: absolute;
   z-index: 4;
-  width: clamp(62px, 7.6vw, 112px);
+  width: clamp(68px, 8vw, 118px);
   height: auto;
-  opacity: 0.34;
-  filter: sepia(0.15) saturate(0.9) brightness(0.92) drop-shadow(0 3px 5px rgba(0, 0, 0, 0.62));
+  opacity: 0.65;
+  filter: sepia(0.3) saturate(1.1) brightness(0.82) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.75));
   pointer-events: none;
   user-select: none;
 }
 
-.board-corner-top-right { top: 14px; right: 16px; }
-.board-corner-top-left { top: 14px; left: 16px; transform: scaleX(-1); }
-.board-corner-bottom-right { right: 16px; bottom: 14px; transform: scaleY(-1); }
-.board-corner-bottom-left { bottom: 14px; left: 16px; transform: scale(-1); }
+.board-corner-top-right { top: 16px; right: 18px; }
+.board-corner-top-left { top: 16px; left: 18px; transform: scaleX(-1); }
+.board-corner-bottom-right { right: 18px; bottom: 16px; transform: scaleY(-1); }
+.board-corner-bottom-left { bottom: 16px; left: 18px; transform: scale(-1); }
 
+/* Warm Amber Lantern Turn Ambiance */
 .board-turn-glow {
   position: absolute;
   z-index: 4;
-  inset: 16px 18px;
+  inset: 20px 22px;
   border-radius: 12px;
   opacity: 0;
   pointer-events: none;
@@ -150,16 +150,16 @@
 }
 
 .board-turn-glow.is-top {
-  background: radial-gradient(ellipse at 50% 0%, rgba(251, 211, 111, 0.28), transparent 38%);
+  background: radial-gradient(ellipse at 50% 0%, rgba(212, 175, 55, 0.18), transparent 42%);
 }
 .board-turn-glow.is-right {
-  background: radial-gradient(ellipse at 100% 45%, rgba(251, 211, 111, 0.25), transparent 38%);
+  background: radial-gradient(ellipse at 100% 45%, rgba(212, 175, 55, 0.16), transparent 42%);
 }
 .board-turn-glow.is-bottom {
-  background: radial-gradient(ellipse at 50% 100%, rgba(251, 211, 111, 0.3), transparent 40%);
+  background: radial-gradient(ellipse at 50% 100%, rgba(212, 175, 55, 0.2), transparent 44%);
 }
 .board-turn-glow.is-left {
-  background: radial-gradient(ellipse at 0% 45%, rgba(251, 211, 111, 0.25), transparent 38%);
+  background: radial-gradient(ellipse at 0% 45%, rgba(212, 175, 55, 0.16), transparent 42%);
 }
 
 .board-turn-glow::after {
@@ -173,41 +173,38 @@
 }
 
 .board-turn-glow.is-top::after {
-  background: linear-gradient(180deg, rgba(255, 230, 150, 0.18), transparent 38%);
+  background: linear-gradient(180deg, rgba(245, 215, 130, 0.12), transparent 40%);
 }
-
 .board-turn-glow.is-right::after {
-  background: linear-gradient(270deg, rgba(255, 230, 150, 0.16), transparent 36%);
+  background: linear-gradient(270deg, rgba(245, 215, 130, 0.1), transparent 38%);
 }
-
 .board-turn-glow.is-bottom::after {
-  background: linear-gradient(0deg, rgba(255, 230, 150, 0.2), transparent 38%);
+  background: linear-gradient(0deg, rgba(245, 215, 130, 0.14), transparent 40%);
 }
-
 .board-turn-glow.is-left::after {
-  background: linear-gradient(90deg, rgba(255, 230, 150, 0.16), transparent 36%);
+  background: linear-gradient(90deg, rgba(245, 215, 130, 0.1), transparent 38%);
 }
 
 @keyframes board-turn-sweep {
   0% { opacity: 0; transform: scale(0.96); }
-  30% { opacity: 0.9; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.04); }
+  30% { opacity: 0.85; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.03); }
 }
 
-/* Keep the same turn language on the avatar, rack and center compass. */
+/* Warm Golden Ring on Active Avatar */
 .board-player.is-current .board-avatar::after {
   content: '';
   position: absolute;
-  inset: 3px;
-  border: 1px solid rgba(255, 236, 180, 0.72);
+  inset: 2px;
+  border: 1.5px solid rgba(235, 195, 95, 0.85);
   border-radius: 50%;
   pointer-events: none;
-  animation: avatar-current-ring 1.6s ease-in-out infinite alternate;
+  animation: avatar-current-ring 1.8s ease-in-out infinite alternate;
 }
 
 @keyframes avatar-current-ring {
-  from { opacity: 0.35; transform: scale(0.94); }
-  to { opacity: 0.95; transform: scale(1.04); }
+  from { opacity: 0.4; transform: scale(0.95); }
+  to { opacity: 0.95; transform: scale(1.03); }
 }
 
 /* Turn racks receive a subtle static elevation without GPU filter re-rendering */
@@ -216,8 +213,8 @@
 }
 
 @keyframes board-turn-arrive {
-  0% { opacity: 0; filter: brightness(0.8); }
-  34% { opacity: 1; filter: brightness(1.16); }
+  0% { opacity: 0; filter: brightness(0.85); }
+  34% { opacity: 1; filter: brightness(1.12); }
   100% { opacity: 0.2; filter: brightness(1); }
 }
 
@@ -240,18 +237,19 @@
   display: flex;
   align-items: center;
   min-height: 34px;
-  gap: 6px;
-  padding: 3px 6px;
+  gap: 8px;
+  padding: 3px 10px;
   color: var(--cream);
   font-size: clamp(12px, 1.05vw, 15px);
-  background: linear-gradient(180deg, rgba(12, 37, 27, 0.86), rgba(5, 23, 16, 0.9));
-  border: 1px solid rgba(238, 207, 126, 0.34);
-  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(26, 16, 11, 0.94), rgba(14, 8, 5, 0.97));
+  border: 1px solid rgba(212, 175, 55, 0.38);
+  border-radius: 8px;
   box-shadow:
-    0 5px 16px rgba(0, 0, 0, 0.36),
-    inset 0 1px 0 rgba(255, 239, 190, 0.12);
-  text-shadow: 0 2px 8px rgba(0, 15, 10, 0.7);
-  backdrop-filter: blur(8px);
+    0 4px 14px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 235, 175, 0.16);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   pointer-events: auto;
 }
 
@@ -260,15 +258,17 @@
 }
 
 .board-room-label {
-  color: rgba(226, 215, 182, 0.64);
+  color: rgba(212, 185, 125, 0.65);
   font-size: 10px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
+  font-family: var(--serif);
 }
 
 .board-room-info strong {
-  color: #ffe8a3;
+  color: #fae7ba;
   font-weight: 700;
   letter-spacing: 0.08em;
+  font-family: var(--serif);
 }
 
 .board-top-tools {
@@ -277,9 +277,10 @@
 
 .board-clock {
   padding: 0 6px 0 8px;
-  color: rgba(255, 251, 235, 0.82);
+  color: rgba(255, 245, 220, 0.85);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+  font-family: var(--serif);
 }
 
 .board-icon-button,
@@ -288,9 +289,9 @@
   display: grid;
   place-items: center;
   border: 1px solid transparent;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.025);
-  color: rgba(255, 251, 235, 0.82);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(245, 230, 200, 0.82);
   cursor: pointer;
   transition: transform 0.16s ease, color 0.16s ease, border-color 0.16s ease, background 0.16s ease;
   pointer-events: auto;
@@ -309,19 +310,19 @@
   max-width: 142px;
   height: 29px;
   padding: 2px 8px 2px 3px;
-  border: 1px solid rgba(109, 224, 190, 0.34);
-  border-radius: 999px;
-  background: rgba(52, 211, 153, 0.08);
-  color: #eafff6;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 6px;
+  background: rgba(212, 175, 55, 0.08);
+  color: #f7eed8;
   cursor: pointer;
   transition: transform 0.16s ease, color 0.16s ease, border-color 0.16s ease, background 0.16s ease;
   pointer-events: auto;
 }
 
 .board-profile-button:hover {
-  color: #fff4c2;
-  border-color: rgba(250, 218, 130, 0.7);
-  background: rgba(250, 204, 21, 0.14);
+  color: #fffbf0;
+  border-color: rgba(235, 195, 95, 0.7);
+  background: rgba(212, 175, 55, 0.18);
   transform: translateY(-1px);
 }
 
@@ -332,9 +333,9 @@
   place-items: center;
   flex: 0 0 23px;
   overflow: hidden;
-  border: 1px solid rgba(245, 214, 120, 0.66);
+  border: 1px solid rgba(212, 175, 55, 0.6);
   border-radius: 50%;
-  background: rgba(245, 214, 120, 0.14);
+  background: rgba(212, 175, 55, 0.15);
   font-size: 13px;
 }
 
@@ -349,15 +350,16 @@
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: var(--serif);
 }
 
 .board-exit-button {
   width: 29px;
   height: 29px;
   margin-left: 2px;
-  color: #f9c7a3;
-  background: rgba(127, 29, 29, 0.18);
-  border-color: rgba(248, 113, 113, 0.22);
+  color: #fca5a5;
+  background: rgba(120, 20, 20, 0.2);
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 .board-tool-icon {
@@ -366,12 +368,18 @@
   display: block;
 }
 
-.board-icon-button:hover,
+.board-icon-button:hover {
+  color: #fff4d0;
+  border-color: rgba(212, 175, 55, 0.5);
+  background: rgba(212, 175, 55, 0.15);
+  transform: translateY(-1px);
+}
+
 .board-exit-button:hover {
-  color: #ffe38b;
-  border-color: rgba(250, 218, 130, 0.5);
-  background: rgba(250, 204, 21, 0.1);
-  transform: translateY(-1px) scale(1.05);
+  color: #fee2e2;
+  border-color: rgba(239, 68, 68, 0.6);
+  background: rgba(185, 28, 28, 0.3);
+  transform: translateY(-1px);
 }
 
 /* ─── Discard Rivers (Non-overlapping Box) ──────────────────── */
@@ -480,30 +488,30 @@
 }
 
 .board-discard-cell.is-last::before {
-  inset: -7px;
-  border-radius: 10px;
-  background: radial-gradient(ellipse, rgba(250, 204, 21, 0.36), transparent 70%);
+  inset: -6px;
+  border-radius: 8px;
+  background: radial-gradient(ellipse, rgba(212, 175, 55, 0.24), transparent 70%);
   transform: translateZ(0);
   animation: last-discard-beacon 1.5s ease-in-out infinite alternate;
 }
 
 .board-discard-cell.is-last::after {
-  inset: -4px;
-  border: 1px solid rgba(255, 226, 122, 0.62);
-  border-radius: 8px;
-  opacity: 0.3;
+  inset: -3px;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  border-radius: 6px;
+  opacity: 0.4;
   transform: translateZ(0);
   animation: last-discard-ring 1.5s ease-out infinite;
 }
 
 @keyframes last-discard-beacon {
-  from { opacity: 0.3; transform: scale(0.88); }
-  to { opacity: 0.82; transform: scale(1.08); }
+  from { opacity: 0.3; transform: scale(0.9); }
+  to { opacity: 0.8; transform: scale(1.06); }
 }
 
 @keyframes last-discard-ring {
-  0% { opacity: 0.72; transform: scale(0.92); }
-  100% { opacity: 0; transform: scale(1.24); }
+  0% { opacity: 0.7; transform: scale(0.92); }
+  100% { opacity: 0; transform: scale(1.2); }
 }
 
 .board-discard-cell.is-flight-target {
@@ -520,13 +528,13 @@
 }
 
 .board-discard-tile.last-out {
-  border-color: #fde047 !important;
+  border-color: rgba(225, 185, 90, 0.95) !important;
   box-shadow:
-    inset 0 0 0 2px rgba(254, 240, 138, 0.98),
-    0 1px 0 #fff7cc,
-    0 2.5px 0 #18683b,
-    0 4px 0 #0d4a25,
-    0 8px 18px rgba(250, 204, 21, 0.55) !important;
+    inset 0 0 0 1.5px rgba(255, 235, 175, 0.9),
+    0 1px 0 #fff3cc,
+    0 2.5px 0 #185c3b,
+    0 4px 0 #0c3b24,
+    0 6px 14px rgba(212, 175, 55, 0.35) !important;
   animation: tile-land-settle 0.12s cubic-bezier(0.2, 0.9, 0.25, 1) both;
   z-index: 5;
   transform: translateZ(0);
@@ -535,20 +543,20 @@
 .last-discard-marker {
   position: absolute;
   z-index: 10;
-  top: -18px;
+  top: -16px;
   left: 50%;
-  color: #fef08a;
-  font-size: 13px;
+  color: #fae7ba;
+  font-size: 11px;
   line-height: 1;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.95), 0 0 12px rgba(250, 204, 21, 0.9);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 10px rgba(212, 175, 55, 0.6);
   transform: translateX(-50%);
   animation: last-marker-hover 0.72s ease-in-out infinite alternate;
   pointer-events: none;
 }
 
 @keyframes last-marker-hover {
-  from { transform: translate(-50%, -2px) scale(0.95); }
-  to { transform: translate(-50%, 4px) scale(1.1); }
+  from { transform: translate(-50%, -1px) scale(0.95); }
+  to { transform: translate(-50%, 3px) scale(1.08); }
 }
 
 @keyframes tile-land-settle {
@@ -561,64 +569,76 @@
 }
 
 .tile.highlight-same {
-  border-color: #38bdf8 !important;
+  border-color: rgba(225, 185, 90, 0.95) !important;
   box-shadow:
-    inset 0 0 0 2px rgba(125, 211, 252, 0.98),
-    0 1px 0 #bae6fd,
-    0 3px 0 #0284c7,
-    0 5px 0 #0369a1,
-    0 8px 16px rgba(56, 189, 248, 0.5) !important;
+    inset 0 0 0 2px rgba(255, 235, 175, 0.95),
+    0 1px 0 #fff8d6,
+    0 3px 0 #1b6842,
+    0 5px 0 #0e442a,
+    0 8px 18px rgba(212, 175, 55, 0.45) !important;
   transform: translate3d(0, -8px, 0) scale(1.05);
   will-change: transform;
 }
 
 .board-discard-tile.highlight-same {
   transform: translate3d(0, -3px, 0) scale(1.12) !important;
+  border-color: rgba(225, 185, 90, 0.98) !important;
   box-shadow:
-    inset 0 0 0 2px rgba(125, 211, 252, 0.98),
-    0 4px 12px rgba(56, 189, 248, 0.6) !important;
+    inset 0 0 0 2px rgba(255, 235, 175, 0.95),
+    0 4px 14px rgba(212, 175, 55, 0.5) !important;
   z-index: 8;
   will-change: transform;
 }
 
-/* ─── Player Avatars ────────────────────────────────────────── */
+/* ─── Solid Rosewood & Antique Brass Player Plaques ─────────── */
 
 .board-player {
   position: absolute;
   z-index: 15;
   display: flex;
   align-items: center;
-  gap: 9px;
-  min-width: clamp(130px, 11vw, 172px);
-  padding: 4px 14px 4px 5px;
-  border-radius: 999px;
-  background: rgba(8, 24, 18, 0.9);
+  gap: 10px;
+  min-width: clamp(134px, 11.5vw, 172px);
+  padding: 5px 12px 5px 6px;
+  border-radius: 8px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(212, 175, 55, 0.08), transparent 70%),
+    linear-gradient(150deg, #1d1109 0%, #130a05 55%, #0a0402 100%);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1.5px solid rgba(250, 204, 21, 0.38);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.65);
-  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.25, 1);
+  border: 1px solid rgba(212, 175, 55, 0.48);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.75),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 235, 175, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.95);
+  transition: all 0.28s cubic-bezier(0.2, 0.8, 0.25, 1);
   user-select: none;
 }
 
 .board-player.is-current {
-  border-color: #fde047;
-  background: rgba(16, 42, 30, 0.96);
+  border-color: rgba(245, 215, 130, 0.95);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 225, 130, 0.16), transparent 70%),
+    linear-gradient(150deg, #2a190e 0%, #1a0f07 60%, #0e0703 100%);
   box-shadow:
-    0 0 0 1px rgba(253, 224, 71, 0.5),
-    0 0 26px rgba(250, 204, 21, 0.6),
-    0 8px 24px rgba(0, 0, 0, 0.7);
-  transform: scale(1.04);
+    0 0 0 1px rgba(212, 175, 55, 0.65),
+    0 0 20px rgba(212, 175, 55, 0.35),
+    0 10px 28px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 240, 190, 0.35);
 }
 
 .board-player.is-you {
-  border-color: rgba(52, 211, 153, 0.85);
+  border-color: rgba(212, 175, 55, 0.65);
   box-shadow:
-    0 0 18px rgba(16, 185, 129, 0.35),
-    0 6px 20px rgba(0, 0, 0, 0.65);
+    0 8px 24px rgba(0, 0, 0, 0.75),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 235, 175, 0.32),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.95),
+    0 0 16px rgba(212, 175, 55, 0.2);
 }
 
-/* 1. Top Player: Positioned to the left of top concealed hand, parallel with tiles */
+/* 1. Top Player: Positioned to the left of top hand tiles, horizontal and parallel to hand tiles */
 .board-player-top {
   top: clamp(66px, 8.2vh, 84px);
   right: calc(50% + clamp(210px, 20vw, 275px));
@@ -628,7 +648,7 @@
 }
 
 .board-player-top.is-current {
-  transform: scale(1.04);
+  transform: scale(1.03);
 }
 
 /* 2. Bottom Player: Cleanly anchored at bottom left corner, spacious and never overlapping hand */
@@ -639,28 +659,115 @@
   transform: none;
 }
 
-/* 3. Left Player: Exactly mirrored with Right Player, positioned comfortably above left hand rack */
-.board-player-left {
-  top: clamp(72px, 11vh, 120px);
-  left: clamp(18px, 2vw, 36px);
-  right: auto;
-  transform: none;
+.board-player-bottom.is-current {
+  transform: translateY(-2px) scale(1.03);
 }
 
-/* 4. Right Player: Exact bilateral mirror of Left Player, positioned comfortably above right hand rack */
-.board-player-right {
-  top: clamp(72px, 11vh, 120px);
-  right: clamp(18px, 2vw, 36px);
-  left: auto;
+/* 3. Left Player: Vertical plaque, long edge hugging left screen edge, parallel to left hand rack */
+.board-player-left {
+  top: clamp(80px, 14vh, 130px);
+  left: clamp(14px, 1.4vw, 22px);
+  right: auto;
+  bottom: auto;
   transform: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: clamp(58px, 4.4vw, 68px);
+  min-width: 0 !important;
+  padding: 8px 6px 10px;
+  gap: 6px;
+  border-radius: 10px;
+}
+
+.board-player-left.is-current {
+  transform: scale(1.03);
+}
+
+/* 4. Right Player: Vertical plaque, long edge hugging right screen edge, parallel to right hand rack */
+.board-player-right {
+  bottom: clamp(90px, 16vh, 145px);
+  right: clamp(14px, 1.4vw, 22px);
+  left: auto;
+  top: auto;
+  transform: none;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  width: clamp(58px, 4.4vw, 68px);
+  min-width: 0 !important;
+  padding: 8px 6px 10px;
+  gap: 6px;
+  border-radius: 10px;
+}
+
+.board-player-right.is-current {
+  transform: scale(1.03);
+}
+
+/* Vertical Plaque internal layouts for Left & Right */
+.board-player-left .player-meta-wrap,
+.board-player-right .player-meta-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 3px;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.board-player-left .player-name-row,
+.board-player-right .player-name-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.board-player-left .player-name,
+.board-player-right .player-name {
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  max-width: 58px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #fffaf0;
+  font-family: var(--serif);
+}
+
+.board-player-left .player-score-row,
+.board-player-right .player-score-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.board-player-left .player-score,
+.board-player-right .player-score {
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  color: #f7e6be;
+  font-family: "Cinzel", var(--serif);
+}
+
+/* Turn badges for plaques */
+.board-player-top .board-turn-pill {
+  top: auto;
+  bottom: -9px;
 }
 
 /* ─── Streamlined Avatar & Meta inside Plaque ───────────────── */
 
 .player-avatar-wrap {
   position: relative;
-  width: clamp(34px, 2.6vw, 42px);
-  height: clamp(34px, 2.6vw, 42px);
+  width: clamp(38px, 2.9vw, 46px);
+  height: clamp(38px, 2.9vw, 46px);
   flex-shrink: 0;
 }
 
@@ -668,60 +775,88 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  border: 1.5px solid #fde047;
-  box-shadow: 0 0 10px rgba(250, 204, 21, 0.45);
+  border: 2px solid rgba(235, 195, 95, 0.9);
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.8),
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.35),
+    inset 0 2px 5px rgba(0, 0, 0, 0.65),
+    0 0 10px rgba(212, 175, 55, 0.3);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 35% 25%, #1f5039 0%, #0a251a 100%);
+  background: radial-gradient(circle at 35% 25%, #183d2c 0%, #071911 100%);
 }
 
 .board-avatar-content {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: clamp(14px, 1.2vw, 18px);
+  font-weight: 800;
+  color: #fffaf0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
 .player-seat-badge {
   position: absolute;
   bottom: -2px;
   right: -3px;
-  width: 16px;
-  height: 16px;
+  width: 17px;
+  height: 17px;
   border-radius: 50%;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid #fde047;
-  color: #fef08a;
-  font-size: 9px;
+  background: #160e08;
+  border: 1px solid rgba(212, 175, 55, 0.8);
+  color: #f6e8cd;
+  font-family: var(--serif);
+  font-size: 9.5px;
   font-weight: 800;
   display: grid;
   place-items: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.65);
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 235, 175, 0.3);
 }
 
 .player-dealer-badge {
   position: absolute;
   top: -3px;
   left: -3px;
-  padding: 1px 4px;
+  padding: 1.5px 4.5px;
   border-radius: 3px;
-  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-  border: 1px solid #fff;
-  color: #fff;
-  font-size: 9px;
+  background: linear-gradient(135deg, #a82424 0%, #7d1717 60%, #4a0c0c 100%);
+  border: 1px solid rgba(255, 225, 130, 0.9);
+  color: #fff9ed;
+  font-family: var(--serif);
+  font-size: 9.5px;
   font-weight: 900;
   line-height: 1;
-  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.7);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.8),
+    0 0 8px rgba(185, 28, 28, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .board-player.is-current .board-avatar {
-  animation: current-pulse 1.6s ease-in-out infinite;
+  border-color: rgba(255, 235, 175, 1);
+  box-shadow:
+    0 0 16px rgba(245, 215, 130, 0.7),
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.5),
+    inset 0 2px 5px rgba(0, 0, 0, 0.65);
+  animation: current-pulse 1.8s ease-in-out infinite;
 }
 
 @keyframes current-pulse {
-  0%, 100% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.4), inset 0 0 0 2px rgba(255, 255, 255, 0.2); }
-  50% { box-shadow: 0 0 26px rgba(250, 204, 21, 0.9), inset 0 0 0 2px rgba(255, 236, 180, 0.5); }
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(212, 175, 55, 0.75), inset 0 0 0 1px rgba(255, 235, 175, 0.5);
+  }
 }
 
 .player-meta-wrap {
@@ -741,22 +876,25 @@
 
 .player-name {
   font-size: 12px;
-  font-weight: 800;
-  color: #fffbeb;
+  font-weight: 700;
+  color: #fffaf0;
+  letter-spacing: 0.04em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+  font-family: var(--serif);
 }
 
 .player-you-tag {
   font-size: 9px;
-  color: #34d399;
+  color: #a7f3d0;
   font-weight: 800;
-  padding: 0 3px;
+  padding: 1px 4px;
   border-radius: 3px;
-  background: rgba(52, 211, 153, 0.2);
-  border: 1px solid rgba(52, 211, 153, 0.4);
+  background: linear-gradient(135deg, rgba(16, 75, 53, 0.85), rgba(7, 39, 27, 0.9));
+  border: 1px solid rgba(52, 211, 153, 0.5);
+  font-family: var(--serif);
 }
 
 .player-score-row {
@@ -765,23 +903,27 @@
 }
 
 .player-score {
-  font-size: 12px;
-  font-weight: 800;
-  color: #fef08a;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  letter-spacing: 0.5px;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  font-size: 13px;
+  font-weight: 700;
+  color: #f7e6be;
+  font-family: "Cinzel", "Source Han Serif SC", "Songti SC", "Courier New", ui-monospace, monospace;
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 8px rgba(212, 175, 55, 0.25);
 }
 
 .board-player em {
-  color: #fef08a;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #f7e6be;
+  font-family: "Cinzel", "Source Han Serif SC", "Songti SC", "Courier New", ui-monospace, monospace;
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
   font-size: clamp(12px, 1.0vw, 15px);
-  font-weight: 600;
+  font-weight: 700;
   font-style: normal;
   margin-left: auto;
   padding-left: 6px;
-  border-left: 1px solid rgba(245, 214, 120, 0.16);
+  border-left: 1px solid rgba(212, 175, 55, 0.25);
 }
 
 .board-player em small {
@@ -908,7 +1050,7 @@
 /* Left melds: upper left area */
 .board-melds-left {
   top: 26%;
-  left: 160px;
+  left: clamp(190px, 16vw, 226px);
   right: auto;
   transform: translateY(-50%);
   flex-direction: row;
@@ -918,7 +1060,7 @@
 /* Right melds: lower right area (Rotational symmetry) */
 .board-melds-right {
   top: 68%;
-  right: 160px;
+  right: clamp(190px, 16vw, 226px);
   left: auto;
   transform: translateY(-50%);
   flex-direction: row;
@@ -960,7 +1102,7 @@
   font-size: 9px;
 }
 
-/* ─── Grand Mahjong Compass Console ─────────────────────────── */
+/* ─── Celestial Mahjong Compass (古典鎏金水墨罗盘) ──────────── */
 
 .board-controller {
   position: absolute;
@@ -970,59 +1112,60 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
 
-/* Top Meta Bar: 剩余 64 张 · 第 1 局 */
+/* Top Meta Tablet: 剩余 64 张 · 第 1 局 */
 .compass-meta-bar {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 12px;
-  background: linear-gradient(180deg, rgba(13, 40, 29, 0.9), rgba(4, 23, 16, 0.92));
-  border: 1px solid rgba(245, 214, 120, 0.42);
-  border-radius: 12px;
-  color: rgba(245, 214, 120, 0.85);
+  padding: 3px 14px;
+  background: linear-gradient(180deg, rgba(26, 16, 10, 0.95), rgba(15, 9, 6, 0.98));
+  border: 1px solid rgba(212, 175, 55, 0.38);
+  border-radius: 6px;
+  color: rgba(235, 210, 150, 0.9);
   font-size: clamp(10px, 0.9vw, 12px);
-  letter-spacing: 0.04em;
-  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.38), inset 0 1px rgba(255, 239, 186, 0.08);
+  letter-spacing: 0.06em;
+  font-family: var(--serif);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 235, 175, 0.15);
 }
 
 .compass-meta-bar b {
-  color: #fffbeb;
-  font-weight: 600;
+  color: #fff9ed;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  font-family: var(--serif);
 }
 
 .meta-dot {
-  color: rgba(245, 214, 120, 0.4);
+  color: rgba(212, 175, 55, 0.45);
 }
 
-/* Grand Compass Disc */
+/* Grand Celestial Compass Disc (Aged Bronze & Hammered Brass Bezel) */
 .board-compass-disc {
   position: relative;
   width: clamp(114px, 8.8vw, 136px);
   height: clamp(114px, 8.8vw, 136px);
   display: grid;
   padding: 4px;
-  border: 2px solid rgba(255, 221, 126, 0.8);
+  border: 2px solid rgba(212, 175, 55, 0.75);
   border-radius: 50%;
-  background: linear-gradient(145deg, rgba(20, 56, 38, 0.95), rgba(9, 28, 19, 0.98));
+  background: linear-gradient(145deg, #2b1f13 0%, #1a1209 50%, #0d0804 100%);
   box-shadow:
-    0 0 0 2px rgba(4, 18, 12, 0.94),
-    0 0 0 5px rgba(245, 214, 120, 0.16),
-    0 13px 30px rgba(0, 0, 0, 0.68),
-    0 0 22px rgba(245, 214, 120, 0.16),
-    inset 0 1px rgba(255, 242, 188, 0.34);
+    0 0 0 2px rgba(18, 11, 6, 0.95),
+    0 0 0 5px rgba(212, 175, 55, 0.14),
+    0 16px 36px rgba(0, 0, 0, 0.85),
+    inset 0 1px 2px rgba(255, 235, 175, 0.35);
 }
 
 .board-compass-disc::before {
   content: '';
   position: absolute;
-  inset: -8px;
-  border: 1px solid rgba(239, 208, 128, 0.12);
+  inset: -7px;
+  border: 1px solid rgba(212, 175, 55, 0.18);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -1030,8 +1173,8 @@
 .board-compass-disc::after {
   content: '';
   position: absolute;
-  inset: -5px;
-  border: 1px solid rgba(255, 230, 150, 0.45);
+  inset: -4px;
+  border: 1.5px solid rgba(235, 195, 95, 0.55);
   border-top-color: transparent;
   border-left-color: transparent;
   border-radius: 50%;
@@ -1040,28 +1183,29 @@
 }
 
 .board-controller.is-active .board-compass-disc::after {
-  opacity: 0.78;
-  animation: compass-ring-sweep 2.4s linear infinite;
+  opacity: 0.75;
+  animation: compass-ring-sweep 2.8s linear infinite;
 }
 
 @keyframes compass-ring-sweep {
   to { transform: rotate(360deg); }
 }
 
+/* Sunken Obsidian & Dark Jade Lacquer Center Plate */
 .compass-disc-inner {
   position: relative;
   width: 100%;
   height: 100%;
   display: grid;
   place-items: center;
-  border: 1.5px solid rgba(245, 214, 120, 0.35);
+  border: 1.5px solid rgba(212, 175, 55, 0.35);
   border-radius: 50%;
   background:
-    radial-gradient(circle at 50% 50%, rgba(245, 214, 120, 0.14) 0%, transparent 68%),
-    linear-gradient(160deg, #163f2c, #0a2419 75%, #05130d);
+    radial-gradient(circle at 50% 50%, rgba(20, 36, 27, 0.35) 0%, rgba(9, 18, 13, 0.8) 60%, #040806 100%),
+    linear-gradient(160deg, #141f17, #09120d 75%, #030604);
   box-shadow:
-    inset 0 2px 0 rgba(255, 240, 180, 0.2),
-    inset 0 0 24px rgba(0, 0, 0, 0.7);
+    inset 0 2px 4px rgba(255, 235, 175, 0.12),
+    inset 0 0 24px rgba(0, 0, 0, 0.85);
 }
 
 .compass-disc-inner::before,
@@ -1072,22 +1216,22 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #c99d42;
-  box-shadow: 0 0 0 1px rgba(55, 27, 7, 0.7), 0 0 5px rgba(250, 204, 21, 0.32);
+  background: #c5a059;
+  box-shadow: 0 0 0 1px rgba(28, 14, 5, 0.8), 0 0 4px rgba(212, 175, 55, 0.3);
 }
 
 .compass-disc-inner::before { top: 11px; left: 11px; }
 .compass-disc-inner::after { right: 11px; bottom: 11px; }
 
-/* 4 Directional Wind Nodes */
+/* 4 Directional Wind Nodes (Classical Oriental Calligraphy) */
 .compass-wind-node {
   position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 2px;
-  color: rgba(245, 214, 120, 0.35);
-  transition: all 0.22s ease;
+  color: rgba(212, 185, 120, 0.38);
+  transition: all 0.25s ease;
 }
 
 .compass-wind-node.wind-top {
@@ -1126,17 +1270,22 @@
 }
 
 .wind-pointer {
-  font-size: 8px;
+  font-size: 7px;
   font-style: normal;
   line-height: 1;
+  color: rgba(212, 175, 55, 0.5);
 }
 
-/* Active Player Turn Wind Glow & Directional Spotlight Beam */
+/* Active Player Turn Wind Glow (Warm Gold Leaf Illumination) */
 .compass-wind-node.is-turn {
-  color: #fef08a;
-  text-shadow: 0 0 16px rgba(250, 204, 21, 0.95), 0 0 24px rgba(250, 204, 21, 0.7);
-  filter: drop-shadow(0 0 8px #fde047);
+  color: #fae7ba;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.75), 0 0 18px rgba(212, 175, 55, 0.45);
+  filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.5));
   z-index: 4;
+}
+
+.compass-wind-node.is-turn .wind-pointer {
+  color: #fae7ba;
 }
 
 .compass-wind-node.is-turn::after {
@@ -1144,81 +1293,75 @@
   position: absolute;
   pointer-events: none;
   z-index: -1;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(250, 204, 21, 0.45) 0%, transparent 70%);
-  animation: wind-spotlight-pulse 1.4s ease-in-out infinite alternate;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.35) 0%, transparent 70%);
+  animation: wind-spotlight-pulse 1.8s ease-in-out infinite alternate;
 }
 
 .compass-wind-node.wind-bottom.is-turn {
-  animation: wind-glow-bottom 1.4s ease-in-out infinite alternate;
+  animation: wind-glow-bottom 1.6s ease-in-out infinite alternate;
 }
 .compass-wind-node.wind-bottom.is-turn::after {
-  width: 80px;
-  height: 40px;
-  bottom: -12px;
+  bottom: -6px;
   left: 50%;
   transform: translateX(-50%);
 }
 
 .compass-wind-node.wind-top.is-turn {
-  animation: wind-glow-top 1.4s ease-in-out infinite alternate;
+  animation: wind-glow-top 1.6s ease-in-out infinite alternate;
 }
 .compass-wind-node.wind-top.is-turn::after {
-  width: 80px;
-  height: 40px;
-  top: -12px;
+  top: -6px;
   left: 50%;
   transform: translateX(-50%);
 }
 
 .compass-wind-node.wind-left.is-turn {
-  animation: wind-glow-left 1.4s ease-in-out infinite alternate;
+  animation: wind-glow-left 1.6s ease-in-out infinite alternate;
 }
 .compass-wind-node.wind-left.is-turn::after {
-  width: 40px;
-  height: 80px;
-  left: -12px;
+  left: -6px;
   top: 50%;
   transform: translateY(-50%);
 }
 
 .compass-wind-node.wind-right.is-turn {
-  animation: wind-glow-right 1.4s ease-in-out infinite alternate;
+  animation: wind-glow-right 1.6s ease-in-out infinite alternate;
 }
 .compass-wind-node.wind-right.is-turn::after {
-  width: 40px;
-  height: 80px;
-  right: -12px;
+  right: -6px;
   top: 50%;
   transform: translateY(-50%);
 }
 
 @keyframes wind-spotlight-pulse {
-  0% { opacity: 0.4; }
-  100% { opacity: 0.95; }
+  0% { opacity: 0.35; transform: scale(0.9); }
+  100% { opacity: 0.8; transform: scale(1.1); }
 }
 
 @keyframes wind-glow-top {
-  from { transform: translateX(-50%) scale(1.1); }
-  to { transform: translateX(-50%) scale(1.22); }
+  from { transform: translateX(-50%) scale(1.05); }
+  to { transform: translateX(-50%) scale(1.16); }
 }
 
 @keyframes wind-glow-bottom {
-  from { transform: translateX(-50%) scale(1.1); }
-  to { transform: translateX(-50%) scale(1.22); }
+  from { transform: translateX(-50%) scale(1.05); }
+  to { transform: translateX(-50%) scale(1.16); }
 }
 
 @keyframes wind-glow-left {
-  from { transform: translateY(-50%) scale(1.1); }
-  to { transform: translateY(-50%) scale(1.22); }
+  from { transform: translateY(-50%) scale(1.05); }
+  to { transform: translateY(-50%) scale(1.16); }
 }
 
 @keyframes wind-glow-right {
-  from { transform: translateY(-50%) scale(1.1); }
-  to { transform: translateY(-50%) scale(1.22); }
+  from { transform: translateY(-50%) scale(1.05); }
+  to { transform: translateY(-50%) scale(1.16); }
 }
 
-/* Central Countdown Timer */
+/* Classical Gilded Numeral Countdown Timer */
 .compass-countdown {
   position: relative;
   z-index: 1;
@@ -1227,58 +1370,58 @@
 }
 
 .countdown-number {
-  color: #fef08a;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #fdf6e2;
+  font-family: var(--serif);
   font-size: clamp(30px, 2.6vw, 44px);
   font-weight: 700;
   line-height: 1;
   text-shadow:
-    0 0 16px rgba(250, 204, 21, 0.75),
-    0 2px 6px rgba(0, 0, 0, 0.7);
+    0 0 12px rgba(212, 175, 55, 0.45),
+    0 2px 5px rgba(0, 0, 0, 0.9);
 }
 
-/* Bottom Status Pill Banner */
+/* Bottom Paperweight Phase Seal Badge */
 .compass-phase-badge {
   padding: 4px 16px;
-  background: rgba(8, 28, 18, 0.88);
-  border: 1px solid rgba(245, 214, 120, 0.5);
-  border-radius: 7px 15px 7px 15px;
-  color: var(--cream);
+  background: linear-gradient(180deg, rgba(26, 16, 10, 0.95), rgba(14, 8, 5, 0.98));
+  border: 1px solid rgba(212, 175, 55, 0.42);
+  border-radius: 6px;
+  color: #fbf6ea;
+  font-family: var(--serif);
   font-size: clamp(11px, 0.95vw, 13px);
-  font-weight: 500;
-  letter-spacing: 0.05em;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  background: linear-gradient(180deg, rgba(13, 41, 29, 0.96), rgba(4, 22, 15, 0.96));
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 235, 175, 0.16);
   transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
 .board-controller.is-active .board-compass-disc {
-  animation: board-compass-pulse 2s ease-in-out infinite alternate;
+  animation: board-compass-pulse 2.2s ease-in-out infinite alternate;
 }
 
 @keyframes board-compass-pulse {
-  0% { opacity: 0.92; }
+  0% { opacity: 0.94; }
   100% { opacity: 1; }
 }
 
 .board-controller.is-urgent .board-compass-disc {
-  animation: compass-urgent 0.68s ease-in-out infinite alternate;
+  animation: compass-urgent 0.72s ease-in-out infinite alternate;
 }
 
 .board-controller.is-urgent .countdown-number {
-  color: #fecaca;
-  text-shadow: 0 0 18px rgba(248, 113, 113, 0.9), 0 2px 6px rgba(0, 0, 0, 0.75);
+  color: #fca5a5;
+  text-shadow: 0 0 16px rgba(239, 68, 68, 0.8), 0 2px 6px rgba(0, 0, 0, 0.85);
 }
 
 .board-controller.is-urgent .compass-phase-badge {
   color: #fee2e2;
-  border-color: rgba(248, 113, 113, 0.72);
-  background: linear-gradient(180deg, rgba(95, 28, 28, 0.94), rgba(50, 12, 12, 0.96));
+  border-color: rgba(239, 68, 68, 0.6);
+  background: linear-gradient(180deg, rgba(90, 20, 20, 0.95), rgba(45, 8, 8, 0.98));
 }
 
 @keyframes compass-urgent {
-  from { opacity: 0.85; transform: scale(0.98); }
+  from { opacity: 0.88; transform: scale(0.99); }
   to { opacity: 1; transform: scale(1.02); }
 }
 
@@ -1311,15 +1454,15 @@
   bottom: -17px;
   left: -28px;
   height: 34px;
-  border: 1px solid rgba(235, 197, 101, 0.42);
+  border: 1px solid rgba(212, 175, 55, 0.42);
   border-radius: 8px 8px 18px 18px;
   background:
-    linear-gradient(180deg, rgba(255, 229, 163, 0.16), transparent 24%),
-    linear-gradient(180deg, #684126 0%, #321c11 46%, #160b07 100%);
+    linear-gradient(180deg, rgba(255, 235, 175, 0.16), transparent 24%),
+    linear-gradient(180deg, #442615 0%, #241209 46%, #120703 100%);
   box-shadow:
-    0 10px 18px rgba(0, 0, 0, 0.62),
-    inset 0 1px rgba(255, 230, 166, 0.25),
-    inset 0 -5px 10px rgba(0, 0, 0, 0.46);
+    0 12px 24px rgba(0, 0, 0, 0.75),
+    inset 0 1px rgba(255, 235, 175, 0.25),
+    inset 0 -5px 12px rgba(0, 0, 0, 0.6);
   transform: perspective(500px) rotateX(46deg);
   transform-origin: bottom center;
 }
@@ -1329,7 +1472,7 @@
   bottom: -4px;
   left: -16px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 225, 145, 0.6), transparent);
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.5), transparent);
 }
 
 .board-own-hand {
@@ -1357,22 +1500,23 @@
   box-shadow:
     inset 0 1px 2px rgba(255, 255, 255, 1),
     0 1px 0 #fff0c0,
-    0 3.5px 0 #287f53,
-    0 6px 0 #125838,
+    0 3.5px 0 #1b6842,
+    0 6px 0 #0e442a,
     0 18px 28px rgba(0, 0, 0, 0.65),
-    0 0 20px rgba(250, 204, 21, 0.35);
+    0 0 14px rgba(212, 175, 55, 0.25);
   z-index: 10;
 }
 
 .board-own-hand .tile.selected {
-  transform: perspective(600px) rotateX(-2deg) translate3d(0, -18px, 16px) scale(1.06);
+  transform: perspective(600px) rotateX(-2deg) translate3d(0, -20px, 18px) scale(1.06);
   box-shadow:
-    inset 0 0 0 2px rgba(254, 240, 138, 0.98),
-    0 1px 0 #fff7cc,
-    0 4.5px 0 #2a8758,
-    0 8px 0 #135d3b,
-    0 26px 36px rgba(0, 0, 0, 0.72),
-    0 0 28px rgba(250, 204, 21, 0.7);
+    inset 0 0 0 1.5px rgba(255, 240, 180, 0.9),
+    0 1px 0 #fff8d6,
+    0 4.5px 0 #1c6842,
+    0 8px 0 #0f4027,
+    0 24px 34px rgba(0, 0, 0, 0.75),
+    0 0 16px rgba(212, 175, 55, 0.35);
+  border-color: rgba(225, 185, 90, 0.95);
   z-index: 20;
 }
 
@@ -1382,13 +1526,13 @@
 
 /* Tenpai hint highlight */
 .board-own-hand .tile.tenpai-hint {
-  border-color: #facc15;
+  border-color: rgba(212, 175, 55, 0.85);
   box-shadow:
-    inset 0 0 0 1.5px rgba(250, 204, 21, 0.95),
-    0 1px 0 #fde047,
-    0 2.5px 0 #18683b,
-    0 4px 0 #0d4a25,
-    0 8px 14px rgba(250, 204, 21, 0.35);
+    inset 0 0 0 1.5px rgba(255, 235, 175, 0.8),
+    0 1px 0 #fff2cc,
+    0 2.5px 0 #185c3b,
+    0 4px 0 #0c3b24,
+    0 8px 14px rgba(212, 175, 55, 0.25);
 }
 
 /* Highlight same tile in hand */
@@ -1400,8 +1544,7 @@
   transform: perspective(600px) rotateX(-2deg) translate3d(0, -18px, 16px) scale(1.06);
 }
 
-/* A small light shelf separates the selected tile from the hand rail.  It
-   keeps the active choice readable even when several hint badges overlap. */
+/* A subtle light shelf separates the selected tile from the hand rail */
 .board-own-hand .tile.selected::after {
   content: '';
   position: absolute;
@@ -1410,16 +1553,16 @@
   width: 72%;
   height: 7px;
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(250, 204, 21, 0.78), transparent 72%);
+  background: radial-gradient(ellipse, rgba(212, 175, 55, 0.55), transparent 72%);
   filter: blur(1px);
   pointer-events: none;
   transform: translateX(-50%) scale(0.78);
-  animation: selected-tile-shelf 1.6s ease-in-out infinite alternate;
+  animation: selected-tile-shelf 1.8s ease-in-out infinite alternate;
 }
 
 @keyframes selected-tile-shelf {
   from { opacity: 0.36; transform: translateX(-50%) scale(0.72); }
-  to { opacity: 0.9; transform: translateX(-50%) scale(1); }
+  to { opacity: 0.88; transform: translateX(-50%) scale(1); }
 }
 
 .board-own-melds {
@@ -1451,7 +1594,7 @@
   height: clamp(36px, 3.3vw, 60px);
 }
 
-/* ─── Action Area ───────────────────────────────────────────── */
+/* ─── Action Area & Oriental Seal Buttons ───────────────────── */
 
 .board-action-area {
   position: absolute;
@@ -1462,56 +1605,57 @@
   display: flex;
   justify-content: center;
   pointer-events: auto !important;
-  filter: drop-shadow(0 7px 17px rgba(0, 0, 0, 0.54));
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.65));
 }
 
 .board-action-area .action-bar {
   position: relative;
   display: flex;
-  gap: 7px;
-  padding: 6px 7px 8px;
+  gap: 10px;
+  padding: 8px 14px;
   justify-content: center;
   align-items: center;
   flex-wrap: nowrap;
-  background: linear-gradient(180deg, rgba(11, 35, 26, 0.92), rgba(4, 19, 14, 0.94));
-  border: 1px solid rgba(241, 211, 133, 0.34);
-  border-radius: 14px;
-  box-shadow: inset 0 1px rgba(255, 240, 193, 0.08), 0 7px 18px rgba(0, 0, 0, 0.42);
-  backdrop-filter: blur(8px);
+  background: linear-gradient(180deg, rgba(26, 16, 10, 0.94), rgba(14, 8, 5, 0.97));
+  border: 1px solid rgba(212, 175, 55, 0.42);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 235, 175, 0.2), 0 8px 24px rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   pointer-events: auto !important;
   animation: action-bar-pop 0.26s cubic-bezier(0.22, 0.9, 0.28, 1.18) both;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .board-action-area .action-bar.has-claims {
-  border-color: rgba(45, 212, 191, 0.62);
+  border-color: rgba(235, 195, 95, 0.75);
   box-shadow:
-    inset 0 1px rgba(204, 251, 241, 0.14),
-    0 7px 18px rgba(0, 0, 0, 0.42),
-    0 0 18px rgba(45, 212, 191, 0.18);
+    inset 0 1px 0 rgba(255, 235, 175, 0.25),
+    0 10px 30px rgba(0, 0, 0, 0.75),
+    0 0 18px rgba(212, 175, 55, 0.22);
 }
 
 .board-action-area .action-bar.has-claims::before {
   content: '';
   position: absolute;
   inset: -3px;
-  border: 1px solid rgba(94, 234, 212, 0.48);
-  border-radius: 17px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 15px;
   pointer-events: none;
-  animation: claim-bar-pulse 1.2s ease-in-out infinite alternate;
+  animation: claim-bar-pulse 1.4s ease-in-out infinite alternate;
 }
 
 .board-action-area .action-bar.is-ready:not(.has-claims) {
-  border-color: rgba(250, 204, 21, 0.56);
+  border-color: rgba(212, 175, 55, 0.65);
   box-shadow:
-    inset 0 1px rgba(255, 240, 193, 0.12),
-    0 7px 18px rgba(0, 0, 0, 0.42),
-    0 0 16px rgba(250, 204, 21, 0.14);
+    inset 0 1px 0 rgba(255, 235, 175, 0.22),
+    0 8px 24px rgba(0, 0, 0, 0.65),
+    0 0 15px rgba(212, 175, 55, 0.25);
 }
 
 @keyframes claim-bar-pulse {
   from { opacity: 0.3; transform: scale(0.99); }
-  to { opacity: 0.9; transform: scale(1.01); }
+  to { opacity: 0.85; transform: scale(1.01); }
 }
 
 @keyframes action-bar-pop {
@@ -1531,158 +1675,248 @@
 
 .board-action-area .btn-action {
   position: relative;
-  min-width: 90px;
-  height: 46px;
-  padding: 0 22px;
-  font-size: 16px;
+  min-width: 102px;
+  height: 52px;
+  padding: 0 24px;
+  font-family: "STKaiti", "Kaiti SC", "KaiTi", "Source Han Serif SC", "Songti SC", "STSong", serif;
+  font-size: 21px;
   font-weight: 900;
-  letter-spacing: 0.14em;
-  border-radius: 12px;
-  border: 1.5px solid rgba(255, 255, 255, 0.4);
-  background: linear-gradient(135deg, #10b981 0%, #047857 50%, #064e3b 100%);
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), 0 0 10px currentColor;
+  letter-spacing: 0.16em;
+  border-radius: 9px;
+  border: 1.5px solid rgba(212, 175, 55, 0.5);
+  background: linear-gradient(145deg, #1d3e2d 0%, #10271c 60%, #08160f 100%);
+  color: #fff9eb;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
   box-shadow:
-    0 4px 18px rgba(0, 0, 0, 0.55),
-    0 0 16px rgba(16, 185, 129, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+    0 6px 18px rgba(0, 0, 0, 0.65),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -2.5px 0 rgba(0, 0, 0, 0.6);
   cursor: pointer !important;
   pointer-events: auto !important;
   white-space: nowrap;
   user-select: none;
-  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
-  overflow: hidden;
+  transition: all 0.22s cubic-bezier(0.2, 0.8, 0.25, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* Double-line Antique Brass Filigree Inset Frame */
 .board-action-area .btn-action::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, transparent 100%);
-  border-radius: 10px 10px 0 0;
+  inset: 3px;
+  border-radius: 6px;
+  border: 1.5px solid rgba(255, 235, 175, 0.35);
   pointer-events: none;
+  display: block;
 }
 
 .board-action-area .btn-action:hover:not(:disabled) {
-  filter: brightness(1.22);
-  transform: translateY(-5px) scale(1.08);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6), 0 0 26px currentColor, inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  filter: brightness(1.15);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.75),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.5);
 }
 
 .board-action-area .btn-action:active:not(:disabled) {
-  transform: translateY(-1px) scale(0.96);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  transform: translateY(1px) scale(0.98);
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.65),
+    inset 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
-/* Hu Button - Flaming Ruby Burst (二游必杀级朱砂红宝石) */
+/* 1. Hu Button - Master Cinnabar Seal with Gilded Relief (御制朱砂红鎏金大印) */
 .board-action-area .btn-action.primary,
 .board-action-area .btn-action.action-hu {
-  min-width: 114px;
-  height: 48px;
-  font-size: 19px;
-  background: linear-gradient(135deg, #ff1a4b 0%, #e11d48 50%, #880b2c 100%);
-  border: 2px solid #fffb00;
-  color: #fffbeb;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 16px #ff1a4b;
+  min-width: 124px;
+  height: 55px;
+  font-size: 25px;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(255, 140, 140, 0.35), transparent 60%),
+    linear-gradient(150deg, #dc2626 0%, #b91c1c 40%, #7f1d1d 85%, #500707 100%);
+  border: 2px solid rgba(255, 230, 140, 0.95);
+  color: #fffdf5;
+  text-shadow:
+    0 1px 0 #fff7cc,
+    0 2px 4px rgba(0, 0, 0, 0.95),
+    0 0 18px rgba(255, 215, 0, 0.8);
   box-shadow:
-    0 8px 26px rgba(225, 29, 72, 0.7),
-    0 0 32px rgba(255, 26, 75, 0.95),
-    inset 0 1px 0 rgba(255, 255, 255, 0.75),
-    inset 0 0 14px rgba(255, 251, 0, 0.4);
-  animation: hu-crystal-pulse 1.1s ease-in-out infinite alternate;
+    0 8px 26px rgba(185, 28, 28, 0.65),
+    0 0 28px rgba(239, 68, 68, 0.5),
+    inset 0 2px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.7);
+  animation: hu-cinnabar-pulse 1.3s ease-in-out infinite alternate;
 }
 
-@keyframes hu-crystal-pulse {
+.board-action-area .btn-action.primary::before,
+.board-action-area .btn-action.action-hu::before {
+  border-color: rgba(255, 240, 190, 0.8);
+  box-shadow: inset 0 0 8px rgba(255, 215, 130, 0.45);
+}
+
+@keyframes hu-cinnabar-pulse {
   from {
     transform: scale(1);
-    box-shadow: 0 6px 20px rgba(225, 29, 72, 0.6), 0 0 24px rgba(255, 26, 75, 0.8);
+    box-shadow:
+      0 8px 24px rgba(185, 28, 28, 0.6),
+      0 0 22px rgba(185, 28, 28, 0.4),
+      inset 0 2px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -3px 0 rgba(0, 0, 0, 0.7);
   }
   to {
-    transform: scale(1.07);
-    box-shadow: 0 12px 34px rgba(225, 29, 72, 0.85), 0 0 42px rgba(255, 26, 75, 1);
-    filter: brightness(1.2);
+    transform: scale(1.04);
+    box-shadow:
+      0 12px 32px rgba(185, 28, 28, 0.8),
+      0 0 34px rgba(239, 68, 68, 0.65),
+      inset 0 2px 0 rgba(255, 255, 255, 0.7),
+      inset 0 -3px 0 rgba(0, 0, 0, 0.7);
+    filter: brightness(1.12);
   }
 }
 
-/* Gang & Kan Buttons - Royal Amethyst Lightning (紫宸雷霆晶石) */
+/* 2. Peng & Gang Buttons - Imperial Emerald Jade with Liquid Sheen (翠玉流光印) */
+.board-action-area .btn-action.action-peng,
 .board-action-area .btn-action.action-ming-gang,
 .board-action-area .btn-action.action-an-gang,
 .board-action-area .btn-action.action-zi-gang,
 .board-action-area .btn-action.action-kan {
-  background: linear-gradient(135deg, #a855f7 0%, #7c3aed 50%, #4c1d95 100%);
-  border-color: #e9d5ff;
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(134, 239, 172, 0.35), transparent 60%),
+    linear-gradient(150deg, #059669 0%, #047857 40%, #065f46 80%, #022c22 100%);
+  border: 2px solid rgba(212, 235, 175, 0.9);
+  color: #f0fdf4;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.95),
+    0 0 16px rgba(52, 211, 153, 0.7);
   box-shadow:
-    0 4px 18px rgba(124, 58, 237, 0.5),
-    0 0 22px rgba(168, 85, 247, 0.65),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    0 8px 24px rgba(6, 78, 59, 0.6),
+    0 0 22px rgba(16, 185, 129, 0.4),
+    inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.7);
 }
 
-/* Peng Button - Imperial Jade Blade (帝王翡翠光刃) */
-.board-action-area .btn-action.action-peng {
-  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #064e3b 100%);
-  border-color: #a7f3d0;
-  box-shadow:
-    0 4px 18px rgba(16, 185, 129, 0.5),
-    0 0 20px rgba(52, 211, 153, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+.board-action-area .btn-action.action-peng::before,
+.board-action-area .btn-action.action-ming-gang::before,
+.board-action-area .btn-action.action-an-gang::before,
+.board-action-area .btn-action.action-zi-gang::before,
+.board-action-area .btn-action.action-kan::before {
+  border-color: rgba(167, 243, 208, 0.65);
+  box-shadow: inset 0 0 8px rgba(52, 211, 153, 0.35);
 }
 
-/* Chi Button - Solar Amber Gold (太阳琥珀流光) */
+/* 3. Chi Button - Honey Amber Inlay (通透温润蜜蜡) */
 .board-action-area .btn-action.action-chi {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #78350f 100%);
-  border-color: #fde047;
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(254, 215, 170, 0.35), transparent 60%),
+    linear-gradient(150deg, #ea580c 0%, #c2410c 45%, #9a3412 80%, #431407 100%);
+  border: 2px solid rgba(254, 215, 170, 0.9);
+  color: #fffbeb;
+  text-shadow: 0 1px 0 rgba(254, 215, 170, 0.6), 0 2px 4px rgba(0, 0, 0, 0.9);
   box-shadow:
-    0 4px 18px rgba(217, 119, 6, 0.5),
-    0 0 20px rgba(251, 191, 36, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    0 8px 22px rgba(0, 0, 0, 0.65),
+    0 0 18px rgba(234, 88, 12, 0.45),
+    inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.7);
 }
 
-/* Close Gate Button - Glacial Frost Shield (寒冰幽蓝符文盾) */
+.board-action-area .btn-action.action-chi::before {
+  border-color: rgba(254, 215, 170, 0.55);
+}
+
+/* 4. Close Gate Button - Lapis Lazuli Celestial Seal (青金石辟邪印) */
 .board-action-area .btn-action.close-gate-btn {
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #0c4a6e 100%);
-  border-color: #7dd3fc;
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(186, 230, 253, 0.35), transparent 60%),
+    linear-gradient(150deg, #0284c7 0%, #0369a1 45%, #075985 80%, #082f49 100%);
+  border: 2px solid rgba(186, 230, 253, 0.9);
+  color: #f0f9ff;
+  text-shadow: 0 1px 0 rgba(186, 230, 253, 0.6), 0 2px 4px rgba(0, 0, 0, 0.9);
   box-shadow:
-    0 4px 18px rgba(2, 132, 199, 0.5),
-    0 0 22px rgba(56, 189, 248, 0.7),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  animation: close-gate-crystal-pulse 1.3s ease-in-out infinite alternate;
+    0 8px 22px rgba(0, 0, 0, 0.65),
+    0 0 20px rgba(2, 132, 199, 0.45),
+    inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.7);
+  animation: close-gate-crystal-pulse 1.4s ease-in-out infinite alternate;
+}
+
+.board-action-area .btn-action.close-gate-btn::before {
+  border-color: rgba(186, 230, 253, 0.55);
 }
 
 @keyframes close-gate-crystal-pulse {
   from { transform: scale(1); }
-  to { transform: scale(1.05); filter: brightness(1.15); }
+  to { transform: scale(1.03); filter: brightness(1.1); }
 }
 
-/* Discard Button (出牌黄金光刃) */
+/* 5. Discard Button - Antique Rosewood Frame with Matte Champagne Gold Relief (香槟金镶嵌) */
 .board-action-area .btn-action.action-discard {
-  background: linear-gradient(135deg, #b45309 0%, #78350f 100%);
-  border-color: rgba(254, 240, 138, 0.5);
+  background:
+    radial-gradient(ellipse at 50% 25%, rgba(212, 175, 55, 0.12), transparent 65%),
+    linear-gradient(150deg, #2c1a0e 0%, #1b1008 50%, #0f0703 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.45);
+  color: #d6c4a8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.65),
+    inset 0 1.5px 0 rgba(255, 235, 175, 0.2),
+    inset 0 -2.5px 0 rgba(0, 0, 0, 0.7);
+}
+
+.board-action-area .btn-action.action-discard::before {
+  border-color: rgba(212, 175, 55, 0.3);
 }
 
 .board-action-area .btn-action.action-discard.is-ready {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #92400e 100%);
-  border-color: #fef08a;
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(255, 255, 235, 0.5), transparent 60%),
+    linear-gradient(150deg, #f59e0b 0%, #d97706 35%, #b45309 75%, #78350f 100%);
+  border: 2px solid rgba(255, 245, 200, 0.95);
+  color: #fffdf5;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6),
+    0 2px 5px rgba(0, 0, 0, 0.9),
+    0 0 16px rgba(251, 191, 36, 0.6);
   box-shadow:
-    0 6px 20px rgba(217, 119, 6, 0.6),
-    0 0 24px rgba(250, 204, 21, 0.75),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  animation: discard-ready-glint 1.1s ease-in-out infinite alternate;
+    0 8px 24px rgba(0, 0, 0, 0.7),
+    0 0 22px rgba(245, 158, 11, 0.5),
+    inset 0 2px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.7);
+  animation: discard-champagne-glow 1.3s ease-in-out infinite alternate;
 }
 
-/* Pass Button - Obsidian Smoke (黑曜石迷烟) */
+.board-action-area .btn-action.action-discard.is-ready::before {
+  border-color: rgba(255, 245, 205, 0.85);
+  box-shadow: inset 0 0 10px rgba(255, 215, 130, 0.45);
+}
+
+@keyframes discard-champagne-glow {
+  from { transform: scale(1); filter: brightness(1); }
+  to { transform: scale(1.03); filter: brightness(1.12); }
+}
+
+/* 6. Pass Button - Dark Basalt Inkstone (玄武古砚) */
 .board-action-area .btn-action.ghost {
-  background: linear-gradient(135deg, #334155 0%, #1e293b 50%, #0f172a 100%);
-  border-color: rgba(148, 163, 184, 0.4);
-  color: #94a3b8;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(150deg, #334155 0%, #1e293b 50%, #0f172a 100%);
+  border: 1.5px solid rgba(148, 163, 184, 0.5);
+  color: #e2e8f0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.6),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -2.5px 0 rgba(0, 0, 0, 0.65);
+}
+
+.board-action-area .btn-action.ghost::before {
+  border-color: rgba(148, 163, 184, 0.35);
 }
 
 .board-action-area .btn-action:disabled {
-  filter: grayscale(0.6) opacity(0.45);
+  filter: grayscale(0.7) opacity(0.45);
   cursor: default !important;
   box-shadow: none !important;
 }
@@ -1694,7 +1928,7 @@
   left: 4%;
   height: 1px;
   z-index: 5;
-  background: linear-gradient(90deg, transparent, rgba(239, 217, 135, 0.42), transparent);
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
 }
 
 /* ─── Tenpai Hint Bar ───────────────────────────────────────── */
@@ -1719,7 +1953,7 @@
   inset: -20%;
   border-radius: 50%;
   pointer-events: none;
-  background: radial-gradient(circle, rgba(251, 211, 111, 0.45) 0%, rgba(251, 211, 111, 0.12) 42%, transparent 72%);
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.35) 0%, rgba(212, 175, 55, 0.08) 42%, transparent 72%);
   transform: translateZ(0);
   animation: discard-flight-glow 0.22s ease-out both;
 }
@@ -1778,14 +2012,15 @@
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 20;
-  padding: 12px 20px;
-  background: rgba(15, 23, 42, 0.92);
-  border: 1px solid rgba(245, 214, 120, 0.4);
-  border-radius: 10px;
-  color: #e2e8f0;
+  padding: 12px 24px;
+  background: linear-gradient(180deg, rgba(26, 16, 10, 0.95), rgba(15, 9, 6, 0.98));
+  border: 1px solid rgba(212, 175, 55, 0.42);
+  border-radius: 8px;
+  color: #f7eed8;
+  font-family: var(--serif);
   font-size: 14px;
   text-align: center;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 235, 175, 0.15);
 }
 
 .net-dot {

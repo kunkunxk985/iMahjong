@@ -39,7 +39,9 @@ export const CenterCompass = memo(function CenterCompass({
 
       <div
         className="board-compass-disc"
-        style={{ background: `conic-gradient(#f3c34f ${ring}%, rgba(255, 255, 255, 0.08) 0)` }}
+        style={{
+          background: `conic-gradient(var(--compass-gold, #c5a059) ${ring}%, rgba(10, 8, 6, 0.72) 0)`,
+        }}
       >
         <div className="compass-disc-inner">
           <div className={`compass-wind-node wind-top ${currentRel === 2 ? 'is-turn' : ''}`}>
