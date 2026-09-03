@@ -141,8 +141,7 @@
   }
 
   .board-table-geometry {
-    width: min(280px, 42vw);
-    opacity: 0.42;
+    display: none !important;
   }
 
   .board-room-label {
@@ -213,15 +212,17 @@
   }
 
   .board-player-left {
-    top: 20%;
-    left: 25px;
-    transform: none;
+    top: clamp(60px, 12vh, 100px);
+    left: 12px;
+    right: auto;
+    bottom: auto;
   }
 
   .board-player-right {
-    top: 20%;
-    right: 25px;
-    transform: none;
+    bottom: clamp(60px, 12vh, 100px);
+    right: 12px;
+    left: auto;
+    top: auto;
   }
 
   .board-player-bottom {
@@ -570,8 +571,7 @@
   }
 
   .board-table-geometry {
-    width: clamp(160px, 24vh, 185px);
-    height: clamp(160px, 24vh, 185px);
+    display: none !important;
   }
 
   .board-player-top {
@@ -582,11 +582,17 @@
   }
 
   .board-player-left {
-    top: 56px;
+    top: clamp(60px, 12vh, 90px);
+    left: 10px;
+    right: auto;
+    bottom: auto;
   }
 
   .board-player-right {
-    top: 56px;
+    bottom: clamp(60px, 12vh, 90px);
+    right: 10px;
+    left: auto;
+    top: auto;
   }
 
   .board-concealed-top {
