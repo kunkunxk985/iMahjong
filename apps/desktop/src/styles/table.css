@@ -1,6 +1,8 @@
 /* ─── Night-table art direction: walnut, jade felt, aged brass ─ */
 
 .mahjong-board {
+  --table-center-y: 48%;
+  --table-center-x: 50%;
   position: relative;
   width: 100%;
   height: 100%;
@@ -99,36 +101,27 @@
 .board-table-geometry {
   position: absolute;
   z-index: 3;
-  top: 45%;
+  top: var(--table-center-y, 48%);
   left: 50%;
-  width: clamp(300px, 30vw, 430px);
-  aspect-ratio: 1.55;
+  width: clamp(204px, 17.5vw, 236px);
+  height: clamp(204px, 17.5vw, 236px);
   transform: translate(-50%, -50%);
-  opacity: 0.62;
-  border: 1px solid rgba(239, 208, 128, 0.08);
-  border-radius: 34%;
+  opacity: 0.85;
+  border: 1px solid rgba(239, 208, 128, 0.2);
+  border-radius: 50%;
   box-shadow:
-    0 0 0 26px rgba(239, 208, 128, 0.018),
-    0 0 0 27px rgba(239, 208, 128, 0.045),
-    inset 0 0 42px rgba(2, 22, 14, 0.22);
+    0 0 0 4px rgba(6, 26, 17, 0.75),
+    0 0 0 5px rgba(239, 208, 128, 0.12),
+    inset 0 0 28px rgba(3, 20, 13, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.45);
   pointer-events: none;
 }
 
 .board-table-geometry::before,
 .board-table-geometry::after,
 .board-table-geometry > span {
-  content: '';
-  position: absolute;
-  inset: 50% auto auto 50%;
-  width: 78%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(240, 208, 124, 0.11), transparent);
-  transform-origin: center;
+  display: none;
 }
-
-.board-table-geometry::before { transform: translate(-50%, -50%) rotate(28deg); }
-.board-table-geometry::after { transform: translate(-50%, -50%) rotate(-28deg); }
-.board-table-geometry > span { transform: translate(-50%, -50%); }
 
 .board-corner {
   position: absolute;
@@ -410,9 +403,9 @@
 
 /* ─── Discard Rivers: Perfectly Symmetrical 4-Quadrant Ring (四向等距对称牌河) ─── */
 
-/* Top river: exactly north of compass */
+/* Top river: exactly north of compass, with comfortable breathing room */
 .board-discard-top {
-  top: calc(50% - clamp(130px, 15vh, 170px));
+  top: calc(var(--table-center-y, 48%) - clamp(168px, 19.5vh, 215px));
   left: 50%;
   right: auto;
   bottom: auto;
@@ -420,9 +413,9 @@
   transform: translate(-50%, -50%);
 }
 
-/* Bottom river: exactly south of compass */
+/* Bottom river: comfortably south of compass, clear of both compass console and hand action area */
 .board-discard-bottom {
-  top: calc(50% + clamp(130px, 15vh, 170px));
+  top: calc(var(--table-center-y, 48%) + clamp(140px, 16.5vh, 175px));
   left: 50%;
   right: auto;
   bottom: auto;
@@ -430,20 +423,20 @@
   transform: translate(-50%, -50%);
 }
 
-/* Left river: exactly west of compass */
+/* Left river: exactly west of compass, vertically aligned with table center */
 .board-discard-left {
-  top: 50%;
-  left: calc(50% - clamp(200px, 17vw, 260px));
+  top: var(--table-center-y, 48%);
+  left: calc(50% - clamp(180px, 16vw, 230px));
   right: auto;
   bottom: auto;
   width: clamp(80px, 7vw, 110px);
   transform: translate(-50%, -50%);
 }
 
-/* Right river: exactly east of compass */
+/* Right river: exactly east of compass, vertically aligned with table center */
 .board-discard-right {
-  top: 50%;
-  left: calc(50% + clamp(200px, 17vw, 260px));
+  top: var(--table-center-y, 48%);
+  left: calc(50% + clamp(180px, 16vw, 230px));
   right: auto;
   bottom: auto;
   width: clamp(80px, 7vw, 110px);
@@ -592,19 +585,14 @@
 
 .board-player {
   position: absolute;
-  z-index: 8;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: clamp(130px, 11vw, 172px);
-  padding: 6px 12px 6px 8px;
   z-index: 15;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
+  min-width: clamp(130px, 11vw, 172px);
   padding: 4px 14px 4px 5px;
   border-radius: 999px;
-  background: rgba(8, 24, 18, 0.88);
+  background: rgba(8, 24, 18, 0.9);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1.5px solid rgba(250, 204, 21, 0.38);
@@ -630,16 +618,17 @@
     0 6px 20px rgba(0, 0, 0, 0.65);
 }
 
-/* 1. Top Player: Dead center at the top edge, perfectly aligned with vertical table axis */
+/* 1. Top Player: Positioned to the left of top concealed hand, parallel with tiles */
 .board-player-top {
-  top: clamp(14px, 2vh, 22px);
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%);
+  top: clamp(66px, 8.2vh, 84px);
+  right: calc(50% + clamp(210px, 20vw, 275px));
+  left: auto;
+  transform: none;
+  transform-origin: right center;
 }
 
 .board-player-top.is-current {
-  transform: translateX(-50%) scale(1.04);
+  transform: scale(1.04);
 }
 
 /* 2. Bottom Player: Cleanly anchored at bottom left corner, spacious and never overlapping hand */
@@ -650,17 +639,17 @@
   transform: none;
 }
 
-/* 3. Left Player: Exactly mirrored with Right Player, positioned above left concealed tiles */
+/* 3. Left Player: Exactly mirrored with Right Player, positioned comfortably above left hand rack */
 .board-player-left {
-  top: calc(50% - 190px);
+  top: clamp(72px, 11vh, 120px);
   left: clamp(18px, 2vw, 36px);
   right: auto;
   transform: none;
 }
 
-/* 4. Right Player: Exact bilateral mirror of Left Player */
+/* 4. Right Player: Exact bilateral mirror of Left Player, positioned comfortably above right hand rack */
 .board-player-right {
-  top: calc(50% - 190px);
+  top: clamp(72px, 11vh, 120px);
   right: clamp(18px, 2vw, 36px);
   left: auto;
   transform: none;
@@ -741,7 +730,7 @@
   gap: 2px;
   text-align: left;
   min-width: 54px;
-  max-width: 100px;
+  max-width: clamp(88px, 9vw, 125px);
 }
 
 .player-name-row {
@@ -839,9 +828,9 @@
   margin-left: 0;
 }
 
-/* Top concealed: 3D standing rack below top player avatar */
+/* Top concealed: 3D standing rack parallel with top player avatar */
 .board-concealed-top {
-  top: clamp(68px, 8.5vh, 88px);
+  top: clamp(66px, 8.2vh, 84px);
   left: 50%;
   transform: translateX(-50%);
 }
@@ -850,9 +839,9 @@
   margin-left: -1px;
 }
 
-/* Left concealed: 3D standing rack, vertically centered at 50% */
+/* Left concealed: 3D standing rack, vertically centered with table center */
 .board-concealed-left {
-  top: 50%;
+  top: var(--table-center-y, 48%);
   left: clamp(28px, 2.8vw, 48px);
   transform: translateY(-50%) rotate(90deg);
   transform-origin: center center;
@@ -866,9 +855,9 @@
   margin-top: 0;
 }
 
-/* Right concealed: 3D standing rack, vertically centered at 50% (Exact mirror) */
+/* Right concealed: 3D standing rack, vertically centered with table center (Exact mirror) */
 .board-concealed-right {
-  top: 50%;
+  top: var(--table-center-y, 48%);
   right: clamp(28px, 2.8vw, 48px);
   transform: translateY(-50%) rotate(-90deg);
   transform-origin: center center;
@@ -899,7 +888,7 @@
 
 .board-opponent-melds .melds-container {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
 }
 
@@ -907,11 +896,11 @@
   pointer-events: auto !important;
 }
 
-/* Top melds: beside top concealed hand */
+/* Top melds: beside top concealed hand on the right */
 .board-melds-top {
-  top: 76px;
-  right: calc(50% - min(460px, 38vw));
-  left: auto;
+  top: clamp(66px, 8.2vh, 84px);
+  left: calc(50% + clamp(210px, 20vw, 275px));
+  right: auto;
   width: auto;
   transform: none;
 }
@@ -975,13 +964,13 @@
 
 .board-controller {
   position: absolute;
-  top: 45%;
+  top: var(--table-center-y, 48%);
   left: 50%;
   z-index: 7;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 9px;
+  gap: 7px;
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
@@ -1014,8 +1003,8 @@
 /* Grand Compass Disc */
 .board-compass-disc {
   position: relative;
-  width: clamp(124px, 10vw, 150px);
-  height: clamp(124px, 10vw, 150px);
+  width: clamp(114px, 8.8vw, 136px);
+  height: clamp(114px, 8.8vw, 136px);
   display: grid;
   padding: 4px;
   border: 2px solid rgba(255, 221, 126, 0.8);
@@ -1205,8 +1194,8 @@
 }
 
 @keyframes wind-spotlight-pulse {
-  0% { opacity: 0.45; transform: scale(0.95); }
-  100% { opacity: 0.95; transform: scale(1.15); }
+  0% { opacity: 0.4; }
+  100% { opacity: 0.95; }
 }
 
 @keyframes wind-glow-top {
@@ -1376,7 +1365,7 @@
 }
 
 .board-own-hand .tile.selected {
-  transform: perspective(600px) rotateX(-2deg) translate3d(0, -26px, 24px) scale(1.08);
+  transform: perspective(600px) rotateX(-2deg) translate3d(0, -18px, 16px) scale(1.06);
   box-shadow:
     inset 0 0 0 2px rgba(254, 240, 138, 0.98),
     0 1px 0 #fff7cc,
@@ -1408,7 +1397,7 @@
 }
 
 .board-own-hand .tile.highlight-same.selected {
-  transform: perspective(600px) rotateX(-2deg) translate3d(0, -26px, 24px) scale(1.08);
+  transform: perspective(600px) rotateX(-2deg) translate3d(0, -18px, 16px) scale(1.06);
 }
 
 /* A small light shelf separates the selected tile from the hand rail.  It
@@ -1466,7 +1455,7 @@
 
 .board-action-area {
   position: absolute;
-  bottom: calc(100% + 10px);
+  bottom: calc(100% + clamp(14px, 2vh, 22px));
   left: 50%;
   transform: translateX(-50%);
   z-index: 60 !important;

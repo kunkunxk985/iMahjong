@@ -197,11 +197,10 @@
   }
 
   .board-player-top {
-    /* Keep the centered top plaque clear of the compact toolbar and top rack. */
-    top: 48px;
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
+    top: 52px;
+    right: calc(50% + clamp(155px, 20vw, 210px));
+    left: auto;
+    transform: none;
   }
 
   .board-player {
@@ -232,9 +231,15 @@
   }
 
   .board-concealed-top {
-    top: 106px;
+    top: 52px;
     left: 50%;
     transform: translateX(-50%);
+  }
+
+  .board-melds-top {
+    top: 52px;
+    left: calc(50% + clamp(155px, 20vw, 210px));
+    right: auto;
   }
 
   .board-concealed-left {
@@ -560,31 +565,88 @@
 }
 
 @media (max-height: 620px) and (min-width: 761px) {
+  .mahjong-board {
+    --table-center-y: 47%;
+  }
+
+  .board-table-geometry {
+    width: clamp(160px, 24vh, 185px);
+    height: clamp(160px, 24vh, 185px);
+  }
+
+  .board-player-top {
+    top: 48px;
+    right: calc(50% + clamp(175px, 18vw, 230px));
+    left: auto;
+    transform: none;
+  }
+
+  .board-player-left {
+    top: 56px;
+  }
+
+  .board-player-right {
+    top: 56px;
+  }
+
+  .board-concealed-top {
+    top: 48px;
+  }
+
+  .board-melds-top {
+    top: 48px;
+    left: calc(50% + clamp(175px, 18vw, 230px));
+    right: auto;
+  }
+
+  .board-discard-top {
+    top: calc(var(--table-center-y, 47%) - clamp(128px, 22vh, 148px));
+  }
+
+  .board-discard-bottom {
+    top: calc(var(--table-center-y, 47%) + clamp(110px, 19vh, 126px));
+  }
+
+  .board-discard-left {
+    top: var(--table-center-y, 47%);
+    left: calc(50% - clamp(140px, 14vw, 185px));
+  }
+
+  .board-discard-right {
+    top: var(--table-center-y, 47%);
+    left: calc(50% + clamp(140px, 14vw, 185px));
+  }
+
+  .board-discard-tile {
+    width: clamp(23px, 1.9vw, 29px) !important;
+    height: clamp(32px, 2.6vw, 41px) !important;
+  }
+
   .board-player-bottom {
-    bottom: 14px;
+    bottom: 12px;
   }
 
   .board-hand-area {
-    bottom: 20px;
+    bottom: 14px;
   }
 
   .board-own-hand .tile {
-    width: clamp(38px, 3.25vw, 54px);
-    height: clamp(54px, 4.65vw, 78px);
+    width: clamp(38px, 3.25vw, 52px);
+    height: clamp(54px, 4.65vw, 74px);
   }
 
   .board-controller {
-    top: 44.5%;
-    gap: 6px;
+    top: var(--table-center-y, 47%);
+    gap: 4px;
   }
 
   .board-compass-disc {
-    width: clamp(112px, 9.5vw, 136px);
-    height: clamp(112px, 9.5vw, 136px);
+    width: clamp(94px, 7.8vw, 110px);
+    height: clamp(94px, 7.8vw, 110px);
   }
 
   .board-action-area {
-    bottom: calc(100% + 5px);
+    bottom: calc(100% + 8px);
   }
 }
 
