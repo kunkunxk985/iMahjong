@@ -19,6 +19,8 @@ import { QuickChat } from '../components/QuickChat';
 import { ChatBubbleOverlay, type ActiveChatBubble } from '../components/ChatBubble';
 import { useSoundEffects } from '../audio/useSoundEffects';
 import { isMuted, toggleMute } from '../audio/sfx';
+import { subscribeAudioSettings } from '../audio/settings';
+import { SettingsModal } from '../components/SettingsModal';
 import { BoardPlayer, ConcealedHand, DiscardRiver, relativeSeat } from '../table/BoardSeats';
 import { DiscardFlightLayer, type DiscardFlight } from '../table/DiscardFlight';
 import { countVisibleTiles, TenpaiBar } from '../table/TenpaiBar';
@@ -30,6 +32,7 @@ interface TableProps {
   view: ClientView;
   onAction: (action: GameAction) => void;
   onRules?: () => void;
+  onSettings?: () => void;
   onLeave?: () => void;
   onOpenProfile?: () => void;
   onSendChat?: (message: string, isEmote?: boolean) => void;
@@ -38,7 +41,7 @@ interface TableProps {
   practice?: boolean;
 }
 
-type BoardIconName = 'rules' | 'chat' | 'sound' | 'muted' | 'leave';
+type BoardIconName = 'rules' | 'settings' | 'chat' | 'sound' | 'muted' | 'leave';
 
 function BoardIcon({ name }: { name: BoardIconName }) {
   const common = {
@@ -52,11 +55,19 @@ function BoardIcon({ name }: { name: BoardIconName }) {
     'aria-hidden': true,
   };
 
-  if (name === 'rules') {
+  if (name === 'settings') {
     return (
       <svg {...common}>
         <circle cx="12" cy="12" r="3.2" />
         <path d="M19.2 13.4v-2.8l-2-.7a7 7 0 0 0-.7-1.6l.9-1.9-2-2-1.9.9a7 7 0 0 0-1.6-.7l-.7-2H8.4l-.7 2a7 7 0 0 0-1.6.7l-1.9-.9-2 2 .9 1.9a7 7 0 0 0-.7 1.6l-2 .7v2.8l2 .7a7 7 0 0 0 .7 1.6l-.9 1.9 2 2 1.9-.9a7 7 0 0 0 1.6.7l.7 2h2.8l.7-2a7 7 0 0 0 1.6-.7l1.9.9 2-2-.9-1.9a7 7 0 0 0 .7-1.6z" />
+      </svg>
+    );
+  }
+  if (name === 'rules') {
+    return (
+      <svg {...common}>
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
       </svg>
     );
   }
@@ -101,6 +112,7 @@ export function Table({
   view,
   onAction,
   onRules,
+  onSettings,
   onLeave,
   onOpenProfile,
   onSendChat,
@@ -139,10 +151,19 @@ export function Table({
   const [hoveredTileId, setHoveredTileId] = useState<string | null>(null);
   const [enteringId, setEnteringId] = useState<string | undefined>(undefined);
   const [muted, setMuted] = useState(isMuted());
+  const [showSettings, setShowSettings] = useState(false);
+
+  useEffect(() => {
+    setMuted(isMuted());
+    return subscribeAudioSettings((s) => {
+      setMuted(s.muted);
+    });
+  }, []);
   const [showQuickChat, setShowQuickChat] = useState(false);
   const [chatBubbles, setChatBubbles] = useState<ActiveChatBubble[]>([]);
   const [discardFlight, setDiscardFlight] = useState<DiscardFlight | null>(null);
   const [flyingDiscardId, setFlyingDiscardId] = useState<string | null>(null);
+  const flyingDiscardIdRef = useRef<string | null>(null);
   const seenDiscardIdRef = useRef<string | null>(null);
   const hasSeenDiscardRef = useRef(false);
   const seenIncomingChatRef = useRef<string | null>(null);
@@ -222,6 +243,7 @@ export function Table({
       face: faceSrc(tile),
       submittedSequence: view.sequence,
     };
+    flyingDiscardIdRef.current = tileId;
   }, [myHand, view.sequence]);
 
   useLayoutEffect(() => {
@@ -248,6 +270,7 @@ export function Table({
     );
 
     setFlyingDiscardId(target ? pending.tileId : null);
+    flyingDiscardIdRef.current = target ? pending.tileId : null;
     setDiscardFlight({
       flightId: view.sequence,
       from: pending.from,
@@ -303,6 +326,7 @@ export function Table({
     ).find((element) => element.dataset.discardTileId === discardId);
     if (!source || !target) return;
 
+    flyingDiscardIdRef.current = discardId;
     setFlyingDiscardId(discardId);
     setDiscardFlight({
       flightId: view.sequence,
@@ -315,6 +339,7 @@ export function Table({
   const finishDiscardFlight = useCallback(() => {
     setDiscardFlight(null);
     setFlyingDiscardId(null);
+    flyingDiscardIdRef.current = null;
   }, []);
 
   // Track previous lastDrawnId to detect new draws for entering animation
@@ -397,7 +422,7 @@ export function Table({
   // ── Tenpai calculation ──
   const tenpaiOptions = useMemo((): DiscardTenpaiOption[] => {
     if (!canDiscard || myHand.length === 0) return [];
-    return getDiscardTenpaiOptions(myHand, myMelds.length);
+    return getDiscardTenpaiOptions(myHand, myMelds.length, myMelds);
   }, [myHand, myMelds.length, canDiscard]);
 
   const tenpaiTileIds = useMemo(() => {
@@ -697,6 +722,18 @@ export function Table({
             type="button"
             className="board-icon-button"
             onClick={() => {
+              if (onSettings) onSettings();
+              else setShowSettings(true);
+            }}
+            title="游戏与声音设置"
+            aria-label="游戏与声音设置"
+          >
+            <BoardIcon name="settings" />
+          </button>
+          <button
+            type="button"
+            className="board-icon-button"
+            onClick={() => {
               const next = toggleMute();
               setMuted(next);
             }}
@@ -771,6 +808,7 @@ export function Table({
               position={position}
               lastDiscardId={view.lastDiscard?.tile.id}
               flyingDiscardId={flyingDiscardId}
+              flyingDiscardIdRef={flyingDiscardIdRef}
               highlightKey={focusKey}
               onTileHover={setHoveredTileKey}
             />
@@ -849,6 +887,19 @@ export function Table({
       <ChatBubbleOverlay bubbles={chatBubbles} />
       {showQuickChat ? (
         <QuickChat onSend={handleSendChat} onClose={() => setShowQuickChat(false)} />
+      ) : null}
+      {showSettings ? (
+        <SettingsModal
+          serverUrl={(() => {
+            try {
+              return localStorage.getItem('pizhou_server_url') || '';
+            } catch {
+              return '';
+            }
+          })()}
+          onSave={() => {}}
+          onClose={() => setShowSettings(false)}
+        />
       ) : null}
       {discardFlight ? (
         <DiscardFlightLayer key={discardFlight.flightId} flight={discardFlight} onDone={finishDiscardFlight} />

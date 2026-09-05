@@ -11,6 +11,7 @@ import {
   normalizeRoomCode,
   sanitizeAvatar,
   sanitizeProfileTitle,
+  sanitizeProfileBio,
   sanitizeNickname,
   type C2SMessage,
   type ClientView,
@@ -20,6 +21,7 @@ import {
   type Settlement,
 } from '@pizhou/shared';
 import { nextDealer, PizhouGame, type PlayerMeta } from '@pizhou/rules';
+import type { RoomPersistenceStore } from './persistence.ts';
 
 export type UniversalWebSocket = {
   readyState: number;
@@ -32,6 +34,7 @@ export interface RoomPlayer {
   nickname: string;
   avatar: string;
   title: string;
+  bio?: string;
   token: string;
   ready: boolean;
   ws: UniversalWebSocket | null;
@@ -70,6 +73,7 @@ export class Room {
     ws: UniversalWebSocket,
     avatar = DEFAULT_AVATAR,
     title = DEFAULT_TITLE,
+    bio?: string,
   ): RoomPlayer | string {
     const seat = this.players.findIndex((player) => player === null);
     if (seat < 0) return '房间已满';
@@ -80,6 +84,7 @@ export class Room {
       nickname: name,
       avatar: sanitizeAvatar(avatar),
       title: sanitizeProfileTitle(title),
+      bio: typeof bio === 'string' ? sanitizeProfileBio(bio) : undefined,
       token: randomUUID(),
       ready: false,
       ws,
@@ -93,14 +98,23 @@ export class Room {
     return player;
   }
 
-  addBot(nickname: string): RoomPlayer | string {
+  addBot(nickname?: string): RoomPlayer | string {
     const seat = this.players.findIndex((player) => player === null);
     if (seat < 0) return '房间已满';
+    const botPresets = [
+      { name: '陪练·阿东', avatar: 'guofeng_yushi', title: '稳健防守', bio: '牌风稳健，主打不点炮！' },
+      { name: '陪练·阿南', avatar: 'guofeng_mingling', title: '巧变千金', bio: '不碰坎不上，单钓不换张！' },
+      { name: '陪练·阿西', avatar: 'guofeng_daoshi', title: '运河隐士', bio: '专吃上家，卡张就摸！' },
+      { name: '陪练·阿北', avatar: 'guofeng_nuxia', title: '决断如电', bio: '快手出牌，绝不拖泥带水！' },
+    ];
+    const defaultPreset = botPresets[seat] ?? botPresets[0];
+    const chosenName = nickname?.trim() || (this.occupied.some((p) => p.nickname === defaultPreset.name) ? `陪练·${seat + 1}号` : defaultPreset.name);
     const player: RoomPlayer = {
       seat,
-      nickname,
-      avatar: DEFAULT_AVATAR,
-      title: '牌桌陪练',
+      nickname: chosenName,
+      avatar: defaultPreset.avatar,
+      title: defaultPreset.title,
+      bio: defaultPreset.bio,
       token: randomUUID(),
       ready: true,
       ws: null,
@@ -111,6 +125,35 @@ export class Room {
     };
     this.players[seat] = player;
     return player;
+  }
+
+  addBots(count: number): number {
+    let addedCount = 0;
+    const toAdd = Math.min(count, PLAYER_COUNT - this.occupied.length);
+    for (let i = 0; i < toAdd; i++) {
+      const added = this.addBot();
+      if (typeof added === 'string') break;
+      addedCount += 1;
+    }
+    return addedCount;
+  }
+
+  removeBot(seat?: number): boolean | string {
+    if (typeof seat === 'number') {
+      const player = this.players[seat];
+      if (!player) return '该位置没有玩家';
+      if (!player.isBot) return '无法移除真实玩家';
+      this.players[seat] = null;
+      return true;
+    }
+    for (let i = this.players.length - 1; i >= 0; i--) {
+      const player = this.players[i];
+      if (player && player.isBot) {
+        this.players[i] = null;
+        return true;
+      }
+    }
+    return '房间内没有陪练人机';
   }
 
   fillSoloBots(): void {
@@ -124,7 +167,8 @@ export class Room {
   removePlayer(player: RoomPlayer): void {
     this.players[player.seat] = null;
     if (player.seat === this.hostSeat) {
-      this.hostSeat = this.occupied[0]?.seat ?? 0;
+      const nextHuman = this.occupied.find((item) => !item.isBot);
+      this.hostSeat = nextHuman ? nextHuman.seat : (this.occupied[0]?.seat ?? 0);
     }
   }
 
@@ -198,7 +242,7 @@ export class Room {
     this.phase = 'lobby';
   }
 
-  updatePlayerProfile(player: RoomPlayer, nickname: string, avatar?: string, title?: string): string | null {
+  updatePlayerProfile(player: RoomPlayer, nickname: string, avatar?: string, title?: string, bio?: string): string | null {
     const name = sanitizeNickname(nickname, player.nickname);
     if (this.occupied.some((item) => item !== player && item.nickname === name)) {
       return '昵称已被使用';
@@ -206,6 +250,9 @@ export class Room {
     player.nickname = name;
     player.avatar = sanitizeAvatar(avatar, player.avatar);
     player.title = sanitizeProfileTitle(title, player.title);
+    if (typeof bio === 'string') {
+      player.bio = sanitizeProfileBio(bio, player.bio);
+    }
     return null;
   }
 
@@ -213,13 +260,17 @@ export class Room {
     player.lastSeen = now;
   }
 
-  sweep(now = Date.now()): { heartbeatOffline: RoomPlayer[]; expired: boolean } {
-    const heartbeatOffline: RoomPlayer[] = [];
+  sweep(now = Date.now()): {
+    heartbeatOffline: Array<{ player: RoomPlayer; ws: UniversalWebSocket | null }>;
+    expired: boolean;
+  } {
+    const heartbeatOffline: Array<{ player: RoomPlayer; ws: UniversalWebSocket | null }> = [];
     for (const player of this.occupied) {
       if (player.isBot) continue;
       if (player.ws && now - player.lastSeen > HEARTBEAT_TIMEOUT_MS) {
+        const socket = player.ws;
         this.markOffline(player, now);
-        heartbeatOffline.push(player);
+        heartbeatOffline.push({ player, ws: socket });
       }
     }
     const lastActivity = Math.max(
@@ -237,6 +288,7 @@ export class Room {
         nickname: item?.nickname ?? `空位${seat + 1}`,
         avatar: item?.avatar ?? DEFAULT_AVATAR,
         title: item?.title ?? DEFAULT_TITLE,
+        bio: item?.bio,
         ready: item?.ready ?? false,
         online: Boolean(item && (item.isBot || (item.ws && item.offlineAt === null))),
         isHost: seat === this.hostSeat,
@@ -274,6 +326,7 @@ export class Room {
         nickname: metas[seat]!.nickname,
         avatar: metas[seat]!.avatar ?? DEFAULT_AVATAR,
         title: metas[seat]!.title ?? DEFAULT_TITLE,
+        bio: metas[seat]!.bio,
         ready: metas[seat]!.ready,
         online: metas[seat]!.online,
         isHost: metas[seat]!.isHost,
@@ -297,6 +350,33 @@ export class Room {
 
 export class RoomManager {
   private readonly rooms = new Map<string, Room>();
+  private readonly store?: RoomPersistenceStore;
+
+  constructor(store?: RoomPersistenceStore) {
+    this.store = store;
+  }
+
+  async init(): Promise<void> {
+    if (!this.store) return;
+    const loaded = await this.store.loadAllRooms();
+    for (const room of loaded) {
+      this.rooms.set(room.code, room);
+    }
+  }
+
+  persist(room: Room): Promise<void> | void {
+    if (!this.store) return;
+    try {
+      const res = this.store.saveRoom(room);
+      if (res && typeof (res as Promise<void>).catch === 'function') {
+        return (res as Promise<void>).catch((err) => {
+          console.error('[RoomManager] Failed to persist room:', err);
+        });
+      }
+    } catch (err) {
+      console.error('[RoomManager] Failed to persist room:', err);
+    }
+  }
 
   create(
     nickname: string,
@@ -305,17 +385,22 @@ export class RoomManager {
     pointRate = 0.1,
     avatar = DEFAULT_AVATAR,
     title = DEFAULT_TITLE,
+    bio?: string,
+    botCount?: number,
   ): { room: Room; player: RoomPlayer } {
     const room = new Room(generateRoomCode((code) => this.rooms.has(code)));
     room.pointRate = typeof pointRate === 'number' && pointRate >= 0 ? pointRate : 0.1;
-    const player = room.addPlayer(nickname, ws, avatar, title);
+    const player = room.addPlayer(nickname, ws, avatar, title, bio);
     if (typeof player === 'string') throw new Error(player);
     if (solo) {
       room.solo = true;
       player.ready = true;
       room.fillSoloBots();
+    } else if (typeof botCount === 'number' && botCount > 0) {
+      room.addBots(Math.min(3, Math.max(0, botCount)));
     }
     this.rooms.set(room.code, room);
+    this.persist(room);
     return { room, player };
   }
 
@@ -325,6 +410,7 @@ export class RoomManager {
     ws: UniversalWebSocket,
     avatar = DEFAULT_AVATAR,
     title = DEFAULT_TITLE,
+    bio?: string,
   ): { room: Room; player: RoomPlayer } | string {
     const code = normalizeRoomCode(roomCode);
     if (!isValidRoomCode(code)) return '房间号应为6位数字';
@@ -332,8 +418,9 @@ export class RoomManager {
     if (!room) return '房间不存在';
     if (room.phase === 'playing') return '对局已开始，请使用重连';
     if (room.occupied.length >= PLAYER_COUNT) return '房间已满';
-    const player = room.addPlayer(nickname, ws, avatar, title);
+    const player = room.addPlayer(nickname, ws, avatar, title, bio);
     if (typeof player === 'string') return player;
+    this.persist(room);
     return { room, player };
   }
 
@@ -345,10 +432,19 @@ export class RoomManager {
       const leftover = found.room.occupied;
       if (leftover.length === 0 || leftover.every((item) => item.isBot)) {
         this.rooms.delete(found.room.code);
+        if (this.store) {
+          const res = this.store.deleteRoom(found.room.code);
+          if (res && typeof (res as Promise<void>).catch === 'function') {
+            (res as Promise<void>).catch(() => {});
+          }
+        }
+      } else {
+        this.persist(found.room);
       }
       return { ...found, removed: true };
     }
     found.room.markOffline(found.player);
+    this.persist(found.room);
     return { ...found, removed: false };
   }
 
@@ -361,6 +457,7 @@ export class RoomManager {
     if (!player) return '找不到原来的座位';
     const error = room.reconnect(player, ws);
     if (error) return error;
+    this.persist(room);
     return { room, player };
   }
 
@@ -376,6 +473,7 @@ export class RoomManager {
     const found = this.bySocket(ws);
     if (!found) return null;
     found.room.markOffline(found.player);
+    this.persist(found.room);
     return found;
   }
 
@@ -387,18 +485,41 @@ export class RoomManager {
     return [...this.rooms.values()];
   }
 
-  sweep(now = Date.now()): string[] {
+  sweep(
+    now = Date.now(),
+    onHeartbeatOffline?: (info: { room: Room; player: RoomPlayer; ws: UniversalWebSocket | null }) => void,
+  ): string[] {
     const removed: string[] = [];
     for (const [code, room] of this.rooms) {
-      const { expired } = room.sweep(now);
+      const { heartbeatOffline, expired } = room.sweep(now);
+      for (const item of heartbeatOffline) {
+        onHeartbeatOffline?.({ room, player: item.player, ws: item.ws });
+      }
+      if (heartbeatOffline.length > 0) {
+        this.persist(room);
+      }
       if (expired) {
         this.rooms.delete(code);
+        if (this.store) {
+          const res = this.store.deleteRoom(code);
+          if (res && typeof (res as Promise<void>).catch === 'function') {
+            (res as Promise<void>).catch(() => {});
+          }
+        }
         removed.push(code);
       }
     }
     return removed;
   }
 
+  sweepDetailed(now = Date.now()): {
+    removed: string[];
+    offline: Array<{ room: Room; player: RoomPlayer; ws: UniversalWebSocket | null }>;
+  } {
+    const offline: Array<{ room: Room; player: RoomPlayer; ws: UniversalWebSocket | null }> = [];
+    const removed = this.sweep(now, (info) => offline.push(info));
+    return { removed, offline };
+  }
 }
 
 export function send(ws: UniversalWebSocket | null, message: S2CMessage): void {

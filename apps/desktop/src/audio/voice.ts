@@ -1,107 +1,77 @@
-import { tileLabel } from '@pizhou/shared';
+/**
+ * Mahjong Authentic Voice Pack Facade
+ *
+ * Backed entirely by authentic recorded/synthesized broadcast audio assets
+ * (Mandarin and Pizhou dialect) via SoundManager.
+ * Zero browser-dependent synthetic speech.
+ */
 
-export type VoiceMode = 'pizhou' | 'mandarin' | 'off';
+import { getVoiceMode, setVoiceMode, type VoiceMode } from './settings';
+import { soundManager } from './soundManager';
 
-const STORAGE_KEY = 'pizhou_voice_mode';
+export type { VoiceMode };
+export { getVoiceMode, setVoiceMode };
 
-let currentVoiceMode: VoiceMode = (() => {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === 'pizhou' || saved === 'mandarin' || saved === 'off') return saved;
-  } catch {}
-  return 'pizhou';
-})();
-
-export function getVoiceMode(): VoiceMode {
-  return currentVoiceMode;
-}
-
-export function setVoiceMode(mode: VoiceMode): void {
-  currentVoiceMode = mode;
-  try {
-    localStorage.setItem(STORAGE_KEY, mode);
-  } catch {}
-}
-
-const PIZHOU_PHRASES: Record<string, string> = {
-  peng: '碰！',
-  chi: '吃了！',
-  kan: '坎上了！',
-  gang: '开杠！',
-  'an-gang': '暗杠！',
-  'close-gate': '关大门听牌！',
-  hu: '给老子胡了！',
-  'qidong-gang-hu': '起手杠胡大满贯！',
-  baozhuang: '点炮包庄咯！',
+/** Mapping from game action strings to voice clip filenames */
+const ACTION_CLIP_MAP: Record<string, string> = {
+  peng: 'peng',
+  chi: 'chi',
+  kan: 'kan',
+  gang: 'gang',
+  'ming-gang': 'gang',
+  'an-gang': 'an_gang',
+  'zi-gang': 'gang',
+  'close-gate': 'close_gate',
+  hu: 'hu',
+  'qidong-gang-hu': 'qidong_gang_hu',
+  baozhuang: 'baozhuang',
 };
 
-const MANDARIN_PHRASES: Record<string, string> = {
-  peng: '碰！',
-  chi: '吃！',
-  kan: '坎上！',
-  gang: '杠！',
-  'an-gang': '暗杠！',
-  'close-gate': '关门听牌！',
-  hu: '胡了！',
-  'qidong-gang-hu': '起手杠胡！',
-  baozhuang: '包庄！',
-};
-
-let chineseVoice: SpeechSynthesisVoice | null = null;
-
-function getChineseVoice(): SpeechSynthesisVoice | null {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return null;
-  if (!chineseVoice) {
-    const voices = window.speechSynthesis.getVoices();
-    chineseVoice =
-      voices.find((v) => v.lang.includes('zh-CN') || v.lang.includes('cmn')) ||
-      voices.find((v) => v.lang.includes('zh')) ||
-      null;
-  }
-  return chineseVoice;
+/**
+ * Convert tileKey (e.g. "wan-1", "tiao-9", "dragon-1") to audio clip filename (e.g. "wan_1")
+ */
+function tileKeyToClip(tileKey: string): string {
+  return tileKey.replace(/-/g, '_');
 }
 
-if (typeof window !== 'undefined' && window.speechSynthesis) {
-  window.speechSynthesis.onvoiceschanged = () => {
-    chineseVoice = null;
-    getChineseVoice();
-  };
-}
-
-export function speakText(text: string, options?: { pitch?: number; rate?: number }): void {
-  if (currentVoiceMode === 'off' || typeof window === 'undefined' || !window.speechSynthesis) {
-    return;
-  }
-
-  try {
-    window.speechSynthesis.cancel(); // cancel previous unfinished queue
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'zh-CN';
-    const voice = getChineseVoice();
-    if (voice) utter.voice = voice;
-
-    if (currentVoiceMode === 'pizhou') {
-      utter.pitch = options?.pitch ?? 1.15; // energetic local tone
-      utter.rate = options?.rate ?? 1.12;
-    } else {
-      utter.pitch = options?.pitch ?? 1.0;
-      utter.rate = options?.rate ?? 1.05;
-    }
-    utter.volume = 1.0;
-
-    window.speechSynthesis.speak(utter);
-  } catch {}
-}
-
+/**
+ * Play action announcement voice clip (e.g. "碰！", "关大门听牌！")
+ */
 export function speakAction(actionType: string): void {
-  if (currentVoiceMode === 'off') return;
-  const dict = currentVoiceMode === 'pizhou' ? PIZHOU_PHRASES : MANDARIN_PHRASES;
-  const text = dict[actionType] || actionType;
-  speakText(text, { pitch: 1.2, rate: 1.15 });
+  const mode = getVoiceMode();
+  if (mode === 'off') return;
+
+  const clipName = ACTION_CLIP_MAP[actionType] || actionType.replace(/-/g, '_');
+  soundManager.playVoice(mode, clipName);
 }
 
+/**
+ * Play tile discard announcement voice clip (e.g. "一万", "幺鸡", "红中")
+ */
 export function speakDiscardTile(tileKey: string): void {
-  if (currentVoiceMode === 'off') return;
-  const label = tileLabel(tileKey);
-  speakText(label, { pitch: 1.05, rate: 1.18 });
+  const mode = getVoiceMode();
+  if (mode === 'off') return;
+
+  const clipName = tileKeyToClip(tileKey);
+  soundManager.playVoice(mode, clipName);
+}
+
+/**
+ * Legacy API compatibility helper.
+ * Strictly operates without native browser speech synthesis.
+ */
+export function speakText(text: string): void {
+  const mode = getVoiceMode();
+  if (mode === 'off') return;
+
+  // If text matches any known action or tile, redirect to audio asset
+  const trimmed = text.replace(/[！!]/g, '');
+  if (trimmed === '碰') speakAction('peng');
+  else if (trimmed === '吃' || trimmed === '吃了') speakAction('chi');
+  else if (trimmed === '坎上' || trimmed === '坎上了') speakAction('kan');
+  else if (trimmed === '杠' || trimmed === '开杠') speakAction('gang');
+  else if (trimmed === '暗杠') speakAction('an-gang');
+  else if (trimmed.includes('关门') || trimmed.includes('关大门')) speakAction('close-gate');
+  else if (trimmed.includes('胡')) speakAction('hu');
+  else if (trimmed.includes('包庄')) speakAction('baozhuang');
 }

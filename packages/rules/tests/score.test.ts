@@ -491,7 +491,7 @@ test('明杠与暗杠计分不同', () => {
   assert.equal(ziGangResult.yao, 5);
 });
 
-test('飘荤：四组单钓，飘荤者先翻胡数并收荤底，涉及庄家再翻胡差', () => {
+test('飘荤：四组单钓，牌面胡固定、结算胡差翻倍并收荤底', () => {
   const exposed: Meld[] = [
     { type: 'peng', tiles: tiles(['tiao', 2, 0], ['tiao', 2, 1], ['tiao', 2, 2]) },
     { type: 'peng', tiles: tiles(['tiao', 3, 0], ['tiao', 3, 1], ['tiao', 3, 2]) },
@@ -511,7 +511,7 @@ test('飘荤：四组单钓，飘荤者先翻胡数并收荤底，涉及庄家�
   });
   assert.equal(result.hunDi, true);
   assert.equal(result.seats[0]?.piaoHun, true);
-  // 赢家牌面14胡，飘荤后28胡；对庄家胡差×2，三家荤底仍各30。
+  // 赢家牌面14胡；对庄家的原始胡差14先按飘荤×2，再按庄家×2，三家荤底仍各30。
   assert.deepEqual(result.deltas, [202, -86, -58, -58]);
   assertAccounting(result);
 });
@@ -531,7 +531,7 @@ test('含吃的三组碰坎杠加两对不误判为飘荤', () => {
   assert.equal(isPiaoHun(hand, exposed), false);
 });
 
-test('飘荤先折算胡数，涉及庄家时整体翻胡差且幺差不翻', () => {
+test('飘荤先查原始胡差再翻本笔结算，涉及庄家再翻胡差且幺差不翻', () => {
   const winnerExposed: Meld[] = [
     { type: 'kan', tiles: tiles(['dragon', 1, 0], ['dragon', 1, 1], ['dragon', 1, 2]) },
     { type: 'peng', tiles: tiles(['tiao', 2, 0], ['tiao', 2, 1], ['tiao', 2, 2]) },
@@ -566,12 +566,15 @@ test('飘荤先折算胡数，涉及庄家时整体翻胡差且幺差不翻', ()
   assert.equal(opponent.hu, 6);
   assert.equal(nonDealerTx.huMultiplierA, 2);
   assert.equal(nonDealerTx.huMultiplierB, 1);
-  assert.equal(nonDealerTx.effectiveHuA, 34);
+  assert.equal(nonDealerTx.effectiveHuA, 17);
   assert.equal(nonDealerTx.effectiveHuB, 6);
   assert.equal(nonDealerTx.isDealerPair, false);
-  assert.equal(nonDealerTx.deltaHu, 17 * 2 - 6);
+  assert.equal(nonDealerTx.rawDeltaHu, 17 - 6);
+  assert.equal(nonDealerTx.piaoMultiplier, 2);
+  assert.equal(nonDealerTx.dealerMultiplier, 1);
+  assert.equal(nonDealerTx.deltaHu, (17 - 6) * 2);
   assert.equal(nonDealerTx.deltaYao, 1);
-  assert.equal(nonDealerTx.points, (17 * 2 - 6) * HU_RATE + YAO_RATE);
+  assert.equal(nonDealerTx.points, (17 - 6) * 2 * HU_RATE + YAO_RATE);
 
   const dealerResult = settleChaHu({ seats, winnerSeat: 0, dealer: 1 });
   const dealerTx = dealerResult.transactions.find(
@@ -579,12 +582,15 @@ test('飘荤先折算胡数，涉及庄家时整体翻胡差且幺差不翻', ()
   )!;
   assert.equal(dealerTx.huMultiplierA, 2);
   assert.equal(dealerTx.huMultiplierB, 1);
-  assert.equal(dealerTx.effectiveHuA, 34);
+  assert.equal(dealerTx.effectiveHuA, 17);
   assert.equal(dealerTx.effectiveHuB, 6);
   assert.equal(dealerTx.isDealerPair, true);
-  assert.equal(dealerTx.deltaHu, (17 * 2 - 6) * 2);
+  assert.equal(dealerTx.rawDeltaHu, 17 - 6);
+  assert.equal(dealerTx.piaoMultiplier, 2);
+  assert.equal(dealerTx.dealerMultiplier, 2);
+  assert.equal(dealerTx.deltaHu, (17 - 6) * 2 * 2);
   assert.equal(dealerTx.deltaYao, 1);
-  assert.equal(dealerTx.points, (17 * 2 - 6) * 2 * HU_RATE + YAO_RATE);
+  assert.equal(dealerTx.points, (17 - 6) * 2 * 2 * HU_RATE + YAO_RATE);
 
   const dealerPiaoResult = settleChaHu({ seats, winnerSeat: 0, dealer: 0 });
   const dealerPiaoTx = dealerPiaoResult.transactions.find(
@@ -592,9 +598,12 @@ test('飘荤先折算胡数，涉及庄家时整体翻胡差且幺差不翻', ()
   )!;
   assert.equal(dealerPiaoTx.huMultiplierA, 2);
   assert.equal(dealerPiaoTx.huMultiplierB, 1);
-  assert.equal(dealerPiaoTx.effectiveHuA, 34);
+  assert.equal(dealerPiaoTx.effectiveHuA, 17);
   assert.equal(dealerPiaoTx.effectiveHuB, 6);
-  assert.equal(dealerPiaoTx.deltaHu, (17 * 2 - 6) * 2);
+  assert.equal(dealerPiaoTx.rawDeltaHu, 17 - 6);
+  assert.equal(dealerPiaoTx.piaoMultiplier, 2);
+  assert.equal(dealerPiaoTx.dealerMultiplier, 2);
+  assert.equal(dealerPiaoTx.deltaHu, (17 - 6) * 2 * 2);
 });
 
 test('涉及庄家时先算原始胡差再整体翻倍', () => {
@@ -790,12 +799,70 @@ test('包庄：三坎两对未关门时遇香牌点炮', () => {
   assert.equal(result.baoZhuang?.reason, 'xiang');
   assert.equal(result.baoZhuang?.payerSeat, 2);
   assert.equal(result.seats[0]?.piaoHun, true);
-  // 赢家16胡，飘荤后32胡；对庄家的胡差按关系×2，另加三份荤底90。
+  // 赢家牌面16胡；每组先查原始胡差，再按飘荤/庄家关系结算，另加三份荤底90。
   // 2号包庄后独付218。
   assert.equal(result.seats[0]?.hu, 16);
   assert.deepEqual(result.deltas, [218, 0, -218, 0]);
   assert.deepEqual(result.payables, [0, 0, 218, 0]);
   assert.deepEqual(result.receivables, [218, 0, 0, 0]);
+  assertAccounting(result);
+});
+
+test('包庄流水也按原始胡差再翻飘荤，不能把赢家牌面胡先乘二', () => {
+  const winnerExposed: Meld[] = [
+    { type: 'kan', tiles: tiles(['dragon', 1, 0], ['dragon', 1, 1], ['dragon', 1, 2]) },
+    { type: 'peng', tiles: tiles(['tiao', 2, 0], ['tiao', 2, 1], ['tiao', 2, 2]) },
+    { type: 'peng', tiles: tiles(['tiao', 3, 0], ['tiao', 3, 1], ['tiao', 3, 2]) },
+  ];
+  const winningHand = tiles(
+    ['wan', 1, 0], ['wan', 1, 1], ['wan', 1, 2],
+    ['wan', 2, 0], ['wan', 2, 1],
+  );
+  const result = settleChaHu({
+    seats: [
+      {
+        hand: winningHand,
+        exposed: winnerExposed,
+        winningDiscardId: winningHand[2]!.id,
+        closedTwoPair: false,
+        discardedBeforeClose: [],
+      },
+      {
+        hand: tiles(['tiao', 8, 0]),
+        exposed: [
+          { type: 'kan', tiles: tiles(['tiao', 5, 0], ['tiao', 5, 1], ['tiao', 5, 2]) },
+          { type: 'kan', tiles: tiles(['tiao', 6, 0], ['tiao', 6, 1], ['tiao', 6, 2]) },
+          { type: 'kan', tiles: tiles(['tiao', 7, 0], ['tiao', 7, 1], ['tiao', 7, 2]) },
+        ],
+      },
+      emptySeat(),
+      emptySeat(),
+    ],
+    winnerSeat: 0,
+    dealer: 3,
+    ron: true,
+    discardKey: 'wan-1',
+    discarderSeat: 1,
+  });
+  const winner = result.seats[0]!;
+  const opponent = result.seats[1]!;
+  const tx = result.transactions.find((item) => item.seatA === 0 && item.seatB === 1)!;
+
+  assert.equal(result.baoZhuang?.reason, 'xiang');
+  assert.equal(winner.piaoHun, true);
+  assert.equal(tx.rawDeltaHu, winner.hu - opponent.hu);
+  assert.equal(tx.effectiveHuA, winner.hu);
+  assert.equal(tx.effectiveHuB, opponent.hu);
+  assert.equal(tx.piaoMultiplier, 2);
+  assert.equal(tx.dealerMultiplier, 1);
+  assert.equal(tx.deltaHu, (winner.hu - opponent.hu) * 2);
+  assert.equal(tx.points, tx.deltaHu * HU_RATE + (winner.yao - opponent.yao) * YAO_RATE);
+  // 包庄不抹掉非胡家之间的两组流水：1号仍从2号、3号收各自的差胡。
+  assert.deepEqual(result.deltas, [260, -242, -6, -12]);
+  assert.deepEqual(result.payables, [0, 260, 6, 12]);
+  assert.deepEqual(result.receivables, [260, 18, 0, 0]);
+  assert.equal(result.transactions.find((item) => item.seatA === 1 && item.seatB === 2)?.points, 6);
+  assert.equal(result.transactions.find((item) => item.seatA === 1 && item.seatB === 3)?.points, 12);
   assertAccounting(result);
 });
 

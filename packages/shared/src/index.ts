@@ -5,3 +5,4 @@ export * from './events.ts';
 export * from './protocol.ts';
 export * from './seats.ts';
 export * from './auth.ts';
+export * from './rank.ts';

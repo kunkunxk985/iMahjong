@@ -251,7 +251,10 @@ export function actionMatchesAvailable(action: GameAction, available: AvailableA
     return available.some((item) => item.kind === 'an-gang' && item.key === action.key);
   }
   if (action.kind === 'zi-gang') {
-    return available.some((item) => item.kind === 'zi-gang' && (item.key === action.key || item.tileId === action.tileId));
+    // 自杠必须同时锁定“哪一组坎”和“哪一张第四牌”，不能只靠其中一个字段放行。
+    return available.some((item) => item.kind === 'zi-gang'
+      && item.key === action.key
+      && item.tileId === action.tileId);
   }
   if (action.kind === 'chi') {
     const want = (action.tileIds ?? []).slice().sort().join(',');

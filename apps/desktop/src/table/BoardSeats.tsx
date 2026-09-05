@@ -93,6 +93,7 @@ export const DiscardRiver = memo(function DiscardRiver({
   position,
   lastDiscardId,
   flyingDiscardId,
+  flyingDiscardIdRef,
   highlightKey,
   onTileHover,
 }: {
@@ -100,10 +101,16 @@ export const DiscardRiver = memo(function DiscardRiver({
   position: BoardPosition;
   lastDiscardId?: string;
   flyingDiscardId?: string | null;
+  flyingDiscardIdRef?: React.RefObject<string | null>;
   highlightKey?: string | null;
   onTileHover?: (key: string | null) => void;
 }) {
   if (player.discards.length === 0) return null;
+
+  // Read the ref synchronously to hide the flight target tile on the very
+  // first render, before React commits and the browser paints.  The state
+  // value (flyingDiscardId) serves as a fallback for subsequent renders.
+  const hiddenId = flyingDiscardIdRef?.current ?? flyingDiscardId ?? null;
 
   return (
     <div className={`board-discard board-discard-${position}`} aria-label={`${SEAT_NAMES[player.seat]}弃牌区`}>
@@ -112,7 +119,7 @@ export const DiscardRiver = memo(function DiscardRiver({
           return (
             <div
               key={tile.id}
-              className={`board-discard-cell ${tile.id === lastDiscardId ? 'is-last' : ''} ${tile.id === flyingDiscardId ? 'is-flight-target' : ''}`}
+              className={`board-discard-cell ${tile.id === lastDiscardId ? 'is-last' : ''} ${tile.id === hiddenId ? 'is-flight-target' : ''}`}
               data-discard-tile-id={tile.id}
             >
               <TileView

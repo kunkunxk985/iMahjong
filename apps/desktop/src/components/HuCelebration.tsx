@@ -108,10 +108,10 @@ export function HuCelebration({ view, settlement, onFinish }: HuCelebrationProps
                 <b className="meta-tag">牌面分值</b>
                 <span className="meta-val highlight">{settlement.hu} 胡 {settlement.yao > 0 ? `${settlement.yao} 幺` : ''}</span>
               </span>
-              {settlement.dealerMultiplier > 1 && (
+              {!isDraw && (
                 <span className="hu-meta-item">
-                  <b className="meta-tag">庄家胡差</b>
-                  <span className="meta-val gold">胡差 ×2</span>
+                  <b className="meta-tag">庄家对账</b>
+                  <span className="meta-val gold">涉及庄家胡差 ×2</span>
                 </span>
               )}
             </div>
@@ -132,8 +132,8 @@ export function HuCelebration({ view, settlement, onFinish }: HuCelebrationProps
                 <p className="hu-baozhuang-desc">
                   {BAO_BRIEF[settlement.baoZhuang.reason]}{' '}
                   {settlement.baoZhuang.payerSeat === view.mySeat
-                    ? '您是本次点炮方，需要代付另外两家原本应向胡家支付的份额；如有荤底，三家荤底也由您承担。'
-                    : `【${view.players[settlement.baoZhuang.payerSeat]?.nickname || `${SEAT_NAMES[settlement.baoZhuang.payerSeat]}位`}】是本次包庄者，将代付另外两家原本应向胡家支付的份额。`}
+                    ? '您是本次点炮方，需要代付另外两家原本应向胡家支付的正向份额；其他两两差胡仍照算，如有荤底三家荤底也由您承担。'
+                    : `【${view.players[settlement.baoZhuang.payerSeat]?.nickname || `${SEAT_NAMES[settlement.baoZhuang.payerSeat]}位`}】是本次包庄者，将代付另外两家原本应向胡家支付的正向份额，其他两两差胡仍照算。`}
                 </p>
               </div>
             ) : null}

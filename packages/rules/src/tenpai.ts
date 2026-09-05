@@ -1,5 +1,6 @@
 import { canHuTiles } from './win.ts';
-import type { Tile } from '@pizhou/shared';
+import { canFormSequence } from './score.ts';
+import type { Meld, Tile } from '@pizhou/shared';
 
 /**
  * All 30 unique tile keys in Pizhou mahjong (no wind, no flower).
@@ -18,6 +19,7 @@ export const ALL_TILE_KEYS: readonly string[] = [
 export function getTenpaiWaits(
   hand: Array<Pick<Tile, 'key'>>,
   exposedMeldCount: number,
+  exposedMelds?: Array<Pick<Meld, 'type'>>,
 ): string[] {
   const needMelds = 4 - exposedMeldCount;
   if (needMelds < 0 || hand.length !== needMelds * 3 + 1) return [];
@@ -28,7 +30,20 @@ export function getTenpaiWaits(
       waits.push(key);
     }
   }
-  return waits;
+
+  // 邳州本房的四组碰/坎/杠单张特殊等牌：单张与别人打来的牌能组成顺子时，
+  // 也可以胡并按对应的包庄/飘荤流程处理。必须拿到副露类型并确认四组都不是吃，
+  // 避免仅凭 meldCount 把含吃牌的普通单钓误提示成特殊听牌。
+  const isFourNonChi = exposedMeldCount === 4
+    && exposedMelds?.length === 4
+    && exposedMelds.every((meld) => meld.type !== 'chi');
+  if (isFourNonChi && hand.length === 1) {
+    const singleKey = hand[0]!.key;
+    for (const key of ALL_TILE_KEYS) {
+      if (canFormSequence(singleKey, key) && !waits.includes(key)) waits.push(key);
+    }
+  }
+  return waits.sort((a, b) => ALL_TILE_KEYS.indexOf(a) - ALL_TILE_KEYS.indexOf(b));
 }
 
 /**
@@ -53,6 +68,7 @@ export interface DiscardTenpaiOption {
 export function getDiscardTenpaiOptions(
   hand: Tile[],
   exposedMeldCount: number,
+  exposedMelds?: Array<Pick<Meld, 'type'>>,
 ): DiscardTenpaiOption[] {
   const needMelds = 4 - exposedMeldCount;
   if (needMelds < 0 || hand.length !== needMelds * 3 + 2) return [];
@@ -65,7 +81,7 @@ export function getDiscardTenpaiOptions(
     let waits = checkedKeys.get(tile.key);
     if (waits === undefined) {
       const rest = hand.filter((_, idx) => idx !== i);
-      waits = getTenpaiWaits(rest, exposedMeldCount);
+      waits = getTenpaiWaits(rest, exposedMeldCount, exposedMelds);
       checkedKeys.set(tile.key, waits);
     }
     if (waits.length > 0) {

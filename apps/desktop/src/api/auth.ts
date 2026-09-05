@@ -11,6 +11,7 @@ import type {
   FriendItem,
   FriendRequestItem,
   GameMode,
+  LeaderboardEntry,
   MatchRecord,
   ModeStats,
   UserProfile,
@@ -220,15 +221,50 @@ export async function apiChangePassword(
   return data;
 }
 
-export async function apiLogout(serverWsUrl: string, token: string): Promise<void> {
+export async function apiRenewToken(serverWsUrl: string, token: string): Promise<AuthResponse> {
   const httpUrl = wsToHttpUrl(serverWsUrl);
-  const res = await fetch(`${httpUrl}/api/auth/logout`, {
+  const res = await fetch(`${httpUrl}/api/auth/renew`, {
     method: 'POST',
     headers: {
+      'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
   });
-  await readApiResponse<{ success: boolean }>(res, '退出登录失败');
+  const data = await readAuthResponse(res, '续期登录态失败');
+  saveStoredAuth(data.token, data.user);
+  return data;
+}
+
+export async function apiLogout(
+  serverWsUrl: string,
+  token?: string | null,
+): Promise<AuthResponse | null> {
+  if (token) {
+    try {
+      const httpUrl = wsToHttpUrl(serverWsUrl);
+      const res = await fetch(`${httpUrl}/api/auth/logout`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      await readApiResponse<{ success: boolean }>(res, '退出登录失败');
+    } catch (err) {
+      console.warn('远程退出登录失败，继续清除本地凭据:', err);
+    }
+  }
+
+  // Cleanly clear localStorage credentials
+  saveStoredAuth(null, null);
+
+  // Return to fresh guest
+  try {
+    const guest = await apiGuestLogin(serverWsUrl);
+    return guest;
+  } catch (err) {
+    console.warn('退出后初始化新游客失败:', err);
+    return null;
+  }
 }
 
 export async function apiGetProfile(serverWsUrl: string, token: string): Promise<UserProfile> {
@@ -290,6 +326,20 @@ export async function apiSaveMatch(serverWsUrl: string, token: string, record: M
     body: JSON.stringify(record),
   });
   await readApiResponse<{ success: boolean }>(res, '同步战绩失败');
+}
+
+export async function apiGetLeaderboard(serverWsUrl: string): Promise<LeaderboardEntry[]> {
+  const httpUrl = wsToHttpUrl(serverWsUrl);
+  try {
+    const res = await fetch(`${httpUrl}/api/leaderboard`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const data = await readApiResponse<{ leaderboard?: LeaderboardEntry[] }>(res, '获取雀友风云榜失败');
+    return Array.isArray(data?.leaderboard) ? data.leaderboard : [];
+  } catch {
+    return [];
+  }
 }
 
 // ==========================================
