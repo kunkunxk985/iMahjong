@@ -33,7 +33,7 @@ describe('Cloudflare DO HubDatabase', () => {
     assert.equal(loginRes.user.username, 'player_test');
 
     const stored = await db.getUserById(loginRes.user.userId);
-    assert.match(stored?.password_hash ?? '', /^pbkdf2-sha256\$120000\$/);
+    assert.match(stored?.password_hash ?? '', /^pbkdf2-sha256\$100000\$/);
 
     const wrongLogin = await db.login('player_test', 'wrongpassword');
     assert.equal(wrongLogin, '账号或密码不正确');
@@ -187,7 +187,7 @@ describe('Cloudflare DO HubDatabase', () => {
 
     const login = await db.login('legacy_password_user', 'legacyPass123');
     assert.ok(typeof login !== 'string');
-    assert.match(row.password_hash, /^pbkdf2-sha256\$120000\$/);
+    assert.match(row.password_hash, /^pbkdf2-sha256\$100000\$/);
   });
 
   it('修改密码会轮换凭证并让旧密码和旧 token 失效', async () => {

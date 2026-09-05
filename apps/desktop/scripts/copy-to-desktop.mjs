@@ -25,16 +25,7 @@ if (fs.existsSync(releaseDir) && fs.existsSync(desktopDir)) {
     }
   }
 
-  // 2. Copy Windows package if present
-  const winZip = fs.readdirSync(releaseDir).find((item) => item.includes('win') && item.endsWith('.zip'));
-  if (winZip) {
-    const srcWinZip = path.join(releaseDir, winZip);
-    const destWinZip = path.join(desktopDir, 'iMahjong-Windows版.zip');
-    fs.copyFileSync(srcWinZip, destWinZip);
-    console.log(`✓ 已成功将 Windows 独立免安装版压缩包生成到桌面: ${destWinZip}`);
-  }
-
-  // 3. Clean up any obsolete .dmg on desktop if present
+  // Clean up any obsolete .dmg on desktop if present
   const desktopFiles = fs.readdirSync(desktopDir);
   for (const file of desktopFiles) {
     if (file.startsWith('iMahjong') && file.endsWith('.dmg')) {
