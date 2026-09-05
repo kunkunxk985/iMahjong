@@ -6,7 +6,7 @@ Use a very large team of agents.
 
 全面重塑邳州麻将（Pizhou Mahjong）项目的沉浸式视听体验、高水平智能陪练 AI 以及服务端高可用持久化，使其彻底摆脱技术 Demo 状态，达到正式产品级的品质与稳定性。
 
-Working directory: /Users/kun/Desktop/pizhou-mahjong-demo
+Working directory: /Users/kun/Desktop/iMahjong
 Integrity mode: development
 
 ## Requirements
@@ -50,7 +50,7 @@ Use a very large team of agents.
 
 全面重构与完善邳州麻将的账号安全体系、多端数据漫游与雀士名片成就系统，并深度重塑游戏东方美学视觉、牌桌零遮挡交互体验与高颜值战报分享系统。
 
-Working directory: /Users/kun/Desktop/pizhou-mahjong-demo
+Working directory: /Users/kun/Desktop/iMahjong
 Integrity mode: development
 
 ## Requirements

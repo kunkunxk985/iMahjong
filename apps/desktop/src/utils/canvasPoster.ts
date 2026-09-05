@@ -1,5 +1,5 @@
 /**
- * Pizhou Mahjong - HTML5 Canvas 2D Battle Report Poster Generator
+ * iMahjong - HTML5 Canvas 2D Battle Report Poster Generator
  * High-Aesthetic Guofeng Battle Report Poster at 2x Retina Resolution
  */
 
