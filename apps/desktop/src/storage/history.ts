@@ -1,12 +1,17 @@
 import type { GameMode, MatchPlayerScore, MatchRecord, ModeStats } from '@pizhou/shared';
+import { getStoredAuth } from '../api/auth.ts';
 
 export type { MatchPlayerScore, MatchRecord };
 
-const HISTORY_STORAGE_KEY = 'pizhou_match_history_v2';
+export function getHistoryStorageKey(userId?: string): string {
+  const resolved = (userId || getStoredAuth().user?.userId || '').trim();
+  return resolved ? `pizhou_match_history_v2_${resolved}` : 'pizhou_match_history_v2_guest';
+}
 
-export function getMatchHistory(mode?: GameMode): MatchRecord[] {
+export function getMatchHistory(mode?: GameMode, userId?: string): MatchRecord[] {
   try {
-    const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+    const key = getHistoryStorageKey(userId);
+    const raw = localStorage.getItem(key);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
@@ -51,23 +56,29 @@ export function calculateStats(records: MatchRecord[]): ModeStats {
   };
 }
 
-export function saveMatchToHistory(record: MatchRecord): void {
+export function saveMatchToHistory(record: MatchRecord, userId?: string): void {
   try {
-    const current = getMatchHistory();
+    const resolvedUserId = (userId || record.userId || getStoredAuth().user?.userId || '').trim();
+    if (resolvedUserId && !record.userId) {
+      record.userId = resolvedUserId;
+    }
+    const current = getMatchHistory(undefined, resolvedUserId || undefined);
     // Keep up to 60 most recent matches locally
     const updated = [record, ...current.filter((r) => r.id !== record.id)].slice(0, 60);
-    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updated));
+    const key = getHistoryStorageKey(resolvedUserId || undefined);
+    localStorage.setItem(key, JSON.stringify(updated));
   } catch {}
 }
 
-export function clearMatchHistory(mode?: GameMode): void {
+export function clearMatchHistory(mode?: GameMode, userId?: string): void {
   try {
+    const key = getHistoryStorageKey(userId);
     if (!mode) {
-      localStorage.removeItem(HISTORY_STORAGE_KEY);
+      localStorage.removeItem(key);
     } else {
-      const current = getMatchHistory();
+      const current = getMatchHistory(undefined, userId);
       const kept = current.filter((r) => r.mode !== mode);
-      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(kept));
+      localStorage.setItem(key, JSON.stringify(kept));
     }
   } catch {}
 }

@@ -1,0 +1,1301 @@
+/* ==========================================================================
+   Oriental Aesthetic Guofeng Lobby & Shenghun-Style Settlement Overhaul
+   ========================================================================== */
+
+:root {
+  --jade-deep: #051a11;
+  --jade-lacquer: #08291b;
+  --jade-surface: #0d3826;
+  --jade-light: #16563c;
+  --gold-primary: #d4af37;
+  --gold-light: #fef08a;
+  --gold-glow: rgba(245, 158, 11, 0.35);
+  --cinnabar-red: #b91c1c;
+  --cinnabar-deep: #7f1d1d;
+  --mutton-fat-white: #fdfbf7;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   1. Premium Frosted Jade Lacquer Header Bar
+   ────────────────────────────────────────────────────────────────────────── */
+
+.guofeng-nav-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  width: 100%;
+  padding: 14px 36px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(180deg, rgba(4, 18, 12, 0.92) 0%, rgba(6, 26, 17, 0.85) 60%, rgba(4, 18, 12, 0.4) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.32);
+  box-shadow: 0 4px 28px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.guofeng-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.guofeng-seal {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  border: 1.5px solid #fef08a;
+  color: #fffbeb;
+  font-family: var(--serif, "SongTi SC", "STKaiti", serif);
+  font-size: 22px;
+  font-weight: 900;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 16px rgba(220, 38, 38, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.guofeng-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.guofeng-title {
+  font-size: 21px;
+  font-family: var(--serif, "SongTi SC", "STKaiti", "Noto Serif SC", serif);
+  font-weight: 900;
+  letter-spacing: 2.5px;
+  color: #fffbeb;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+.guofeng-subtitle {
+  font-size: 9.5px;
+  color: #d4af37;
+  letter-spacing: 2px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.guofeng-ping-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(8, 38, 25, 0.7);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+.guofeng-ping-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+  animation: ping-pulse 2s infinite;
+}
+
+.guofeng-ping-dot.connecting {
+  background: #eab308;
+  box-shadow: 0 0 8px #eab308;
+}
+
+.guofeng-ping-dot.closed {
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+}
+
+@keyframes ping-pulse {
+  0%   { transform: scale(1); opacity: 1; }
+  50%  { transform: scale(1.3); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Header Right Actions */
+.guofeng-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Gold Currency Pill */
+.guofeng-currency-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(40, 26, 8, 0.85) 0%, rgba(20, 14, 4, 0.9) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(254, 240, 138, 0.3);
+  cursor: default;
+  transition: all 0.25s ease;
+}
+
+.guofeng-currency-pill:hover {
+  border-color: rgba(254, 240, 138, 0.8);
+  box-shadow: 0 2px 14px rgba(245, 158, 11, 0.4), inset 0 1px 1px rgba(254, 240, 138, 0.5);
+}
+
+.currency-gold-coin {
+  font-size: 16px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+
+.currency-amount {
+  font-family: "DIN Alternate", "PingFang SC", sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fef08a;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.currency-unit {
+  font-size: 11px;
+  color: #fbbf24;
+  font-weight: 500;
+}
+
+/* Player Mini Profile Preview Capsule */
+.guofeng-dossier-capsule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 14px 4px 6px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, rgba(14, 46, 32, 0.85) 0%, rgba(8, 28, 19, 0.9) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  color: #fff;
+  transition: all 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.guofeng-dossier-capsule:hover {
+  border-color: #fef08a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(212, 175, 55, 0.35);
+}
+
+.guofeng-avatar-ring {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid #d4af37;
+  overflow: hidden;
+  background: #0d281e;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+}
+
+.guofeng-avatar-ring .avatar-view-wrap {
+  width: 100%;
+  height: 100%;
+}
+
+.guofeng-dossier-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.guofeng-dossier-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f8fafc;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guofeng-dossier-rank {
+  font-size: 10.5px;
+  color: #fde047;
+  font-weight: 500;
+}
+
+.guofeng-capsule-arrow {
+  color: rgba(212, 175, 55, 0.7);
+  font-size: 15px;
+  margin-left: 2px;
+}
+
+/* Nav Tool Buttons */
+.guofeng-tool-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
+  border-radius: 18px;
+  background: rgba(14, 46, 32, 0.7);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: #e2e8f0;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.guofeng-tool-btn:hover {
+  background: rgba(22, 70, 48, 0.9);
+  border-color: #fde047;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.guofeng-tool-btn.logout {
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.guofeng-tool-btn.logout:hover {
+  background: rgba(185, 28, 28, 0.25);
+  border-color: #ef4444;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   2. Main Stage & Mode Selection Cards
+   ────────────────────────────────────────────────────────────────────────── */
+
+.guofeng-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(16px, 1.8vw, 24px);
+  width: 100%;
+  max-width: min(880px, 55vw);
+}
+
+.guofeng-mode-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(8, 35, 23, 0.88) 0%, rgba(4, 18, 12, 0.92) 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.35);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  padding: clamp(20px, 2vw, 26px) clamp(20px, 2.2vw, 26px);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: clamp(180px, 22vh, 225px);
+}
+
+.guofeng-mode-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  padding: 1.5px;
+  background: linear-gradient(135deg, rgba(254, 240, 138, 0.4), transparent 50%, rgba(212, 175, 55, 0.2));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.guofeng-mode-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  border-color: rgba(254, 240, 138, 0.8);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.8), 0 0 28px rgba(212, 175, 55, 0.4);
+}
+
+.guofeng-mode-card:active {
+  transform: translateY(-1px) scale(0.995);
+}
+
+.guofeng-mode-card.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Specific Card Themes */
+.guofeng-mode-card.card-solo:hover {
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(34, 197, 94, 0.3);
+}
+
+.guofeng-mode-card.card-create:hover {
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(234, 179, 8, 0.35);
+}
+
+.guofeng-mode-card.card-join:hover {
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(59, 130, 246, 0.3);
+}
+
+.guofeng-mode-card.card-match:hover {
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(168, 85, 247, 0.3);
+}
+
+/* Card Header */
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.card-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+}
+
+.card-badge-pill.emerald {
+  background: rgba(21, 128, 61, 0.35);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.card-badge-pill.amber {
+  background: rgba(180, 83, 9, 0.35);
+  color: #fde047;
+  border: 1px solid rgba(234, 179, 8, 0.4);
+}
+
+.card-badge-pill.sapphire {
+  background: rgba(30, 64, 175, 0.35);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.card-badge-pill.purple {
+  background: rgba(107, 33, 168, 0.35);
+  color: #d8b4fe;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+}
+
+.card-en-sub {
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(212, 175, 55, 0.6);
+  letter-spacing: 1.5px;
+}
+
+/* Gold-Leaf Emboss Card Title */
+.gold-emboss-title {
+  font-size: 24px;
+  font-family: var(--serif, "SongTi SC", "STKaiti", "Noto Serif SC", serif);
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  margin: 0 0 6px 0;
+  background: linear-gradient(135deg, #ffffff 0%, #fef08a 50%, #d4af37 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+}
+
+.card-desc-text {
+  font-size: 12.5px;
+  color: #94a3b8;
+  line-height: 1.55;
+  margin: 0 0 16px 0;
+}
+
+/* Button-in-Button CTA */
+.card-cta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.card-cta-text {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: 0.5px;
+}
+
+.card-cta-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.2);
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  color: #fef08a;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  transition: all 0.25s ease;
+}
+
+.guofeng-mode-card:hover .card-cta-circle {
+  background: #d4af37;
+  color: #051a11;
+  transform: translateX(4px);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+}
+
+.card-bg-watermark {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  font-size: 64px;
+  opacity: 0.06;
+  pointer-events: none;
+  font-family: serif;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   3. Refined 6-Digit Segmented PIN Room Join Panel
+   ────────────────────────────────────────────────────────────────────────── */
+
+.guofeng-join-panel {
+  position: relative;
+  width: 100%;
+  max-width: 580px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(8, 35, 23, 0.94) 0%, rgba(4, 18, 12, 0.96) 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.45);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  padding: 30px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  animation: join-panel-entry 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+
+@keyframes join-panel-entry {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.join-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.join-panel-title {
+  font-size: 22px;
+  font-family: var(--serif, "SongTi SC", "STKaiti", serif);
+  font-weight: 900;
+  color: #fffbeb;
+  margin: 0;
+  letter-spacing: 1.5px;
+}
+
+.join-panel-hint {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* 6-Box Segmented PIN Inputs */
+.segmented-pin-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
+}
+
+.pin-digit-box {
+  position: relative;
+  width: 56px;
+  height: 68px;
+  border-radius: 12px;
+  background: rgba(5, 22, 14, 0.85);
+  border: 1.5px solid rgba(212, 175, 55, 0.35);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.pin-digit-box.is-active {
+  border-color: #fef08a;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.5), inset 0 1px 2px rgba(254, 240, 138, 0.2);
+  transform: translateY(-2px);
+}
+
+.pin-digit-box.is-filled {
+  border-color: rgba(212, 175, 55, 0.7);
+  background: linear-gradient(180deg, rgba(14, 46, 32, 0.9) 0%, rgba(8, 28, 19, 0.9) 100%);
+}
+
+.pin-digit-input {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  text-align: center;
+  font-family: "DIN Alternate", "PingFang SC", sans-serif;
+  font-size: 32px;
+  font-weight: 900;
+  color: #fef08a;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  caret-color: #f59e0b;
+}
+
+.pin-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 6px;
+}
+
+.btn-guofeng-join {
+  flex: 1;
+  padding: 13px 20px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  border: 1.5px solid #fef08a;
+  color: #fffbeb;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(180, 83, 9, 0.5);
+  transition: all 0.25s ease;
+}
+
+.btn-guofeng-join:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(245, 158, 11, 0.65);
+}
+
+.btn-guofeng-join:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-guofeng-clear {
+  padding: 13px 18px;
+  border-radius: 12px;
+  background: rgba(14, 46, 32, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: #cbd5e1;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-guofeng-clear:hover {
+  background: rgba(22, 70, 48, 0.8);
+  border-color: #fde047;
+  color: #fff;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   4. Shenghun-Style Settlement Post-Match Presentation
+   ────────────────────────────────────────────────────────────────────────── */
+
+.shenghun-settlement {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Top Winning Hand Domino Decomposition Tray */
+.winning-hand-tray {
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(8, 30, 20, 0.88) 0%, rgba(4, 16, 11, 0.92) 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.45);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  padding: 16px 20px;
+}
+
+.winning-tray-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.winning-tray-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-family: var(--serif, "SongTi SC", "STKaiti", serif);
+  font-weight: 900;
+  color: #fef08a;
+}
+
+.winning-fan-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fan-chip {
+  padding: 3px 9px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.fan-chip.win-type {
+  background: rgba(220, 38, 38, 0.35);
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  color: #fca5a5;
+}
+
+.fan-chip.hun-di {
+  background: rgba(234, 179, 8, 0.3);
+  border: 1px solid rgba(253, 224, 71, 0.5);
+  color: #fef08a;
+}
+
+.fan-chip.dealer {
+  background: rgba(180, 83, 9, 0.35);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #fde68a;
+}
+
+.fan-chip.closed {
+  background: rgba(37, 99, 235, 0.3);
+  border: 1px solid rgba(96, 165, 250, 0.5);
+  color: #bfdbfe;
+}
+
+.fan-chip.baozhuang {
+  background: rgba(153, 27, 27, 0.4);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  color: #fecaca;
+}
+
+/* Domino Tiles Row */
+.winning-domino-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 6px 2px;
+}
+
+.domino-melds-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.domino-hand-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.domino-group-sep {
+  width: 1.5px;
+  height: 48px;
+  background: rgba(212, 175, 55, 0.4);
+}
+
+/* 4-Player Ranking Cards Podium Grid */
+.shenghun-podium-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.podium-player-card {
+  position: relative;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(8, 30, 20, 0.85) 0%, rgba(4, 16, 11, 0.9) 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  transition: all 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.podium-player-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(254, 240, 138, 0.6);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65), 0 0 16px rgba(212, 175, 55, 0.3);
+}
+
+/* 1st Place MVP Laurel Styling */
+.podium-player-card.rank-1 {
+  background: linear-gradient(135deg, rgba(42, 28, 8, 0.92) 0%, rgba(20, 14, 4, 0.95) 100%);
+  border: 2px solid #f59e0b;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 28px rgba(245, 158, 11, 0.45);
+}
+
+.mvp-crest-badge {
+  position: absolute;
+  top: -12px;
+  padding: 3px 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  border: 1.5px solid #fef08a;
+  color: #fffbeb;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 10px rgba(217, 119, 6, 0.6);
+}
+
+/* Rank Medals */
+.podium-rank-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--serif, "SongTi SC", "STKaiti", serif);
+  font-size: 16px;
+  font-weight: 900;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.podium-rank-badge.rank-1 {
+  background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+  color: #fffbeb;
+  border: 1.5px solid #fef08a;
+}
+
+.podium-rank-badge.rank-2 {
+  background: linear-gradient(135deg, #64748b 0%, #334155 100%);
+  color: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+}
+
+.podium-rank-badge.rank-3 {
+  background: linear-gradient(135deg, #92400e 0%, #451a03 100%);
+  color: #fef3c7;
+  border: 1.5px solid #d97706;
+}
+
+.podium-rank-badge.rank-4 {
+  background: rgba(30, 41, 59, 0.8);
+  color: #94a3b8;
+  border: 1px solid #475569;
+}
+
+/* Avatar in Podium */
+.podium-avatar-wrap {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid rgba(212, 175, 55, 0.5);
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.podium-player-card.rank-1 .podium-avatar-wrap {
+  border-color: #fef08a;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.5);
+}
+
+.podium-seat-tag {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #0f3825;
+  color: #fef08a;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 4px;
+  border: 1px solid rgba(212, 175, 55, 0.6);
+}
+
+.podium-player-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: #f8fafc;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.podium-tags-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.podium-mini-tag {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.podium-mini-tag.dealer {
+  background: rgba(180, 83, 9, 0.4);
+  color: #fde047;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.podium-mini-tag.winner {
+  background: rgba(220, 38, 38, 0.4);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.podium-mini-tag.closed {
+  background: rgba(30, 64, 175, 0.4);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.podium-mini-tag.piao {
+  background: rgba(107, 33, 168, 0.4);
+  color: #d8b4fe;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+}
+
+/* Big Score Delta */
+.podium-score-delta {
+  font-family: "DIN Alternate", "PingFang SC", sans-serif;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+.podium-score-delta.positive {
+  color: #fef08a;
+  text-shadow: 0 2px 8px rgba(245, 158, 11, 0.5);
+}
+
+.podium-score-delta.negative {
+  color: #f87171;
+}
+
+.podium-score-delta.zero {
+  color: #94a3b8;
+}
+
+.podium-hu-detail {
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   5. Poster Preview Modal
+   ────────────────────────────────────────────────────────────────────────── */
+
+.poster-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: poster-modal-fade 0.25s ease-out forwards;
+}
+
+@keyframes poster-modal-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.poster-modal-card {
+  position: relative;
+  max-width: 580px;
+  max-height: 92vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #061e14;
+  border-radius: 20px;
+  border: 1.5px solid #d4af37;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(212, 175, 55, 0.35);
+  overflow: hidden;
+}
+
+.poster-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px;
+  background: linear-gradient(180deg, rgba(8, 38, 25, 0.95) 0%, rgba(5, 26, 17, 0.95) 100%);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.poster-modal-title {
+  font-size: 18px;
+  font-family: var(--serif, "SongTi SC", "STKaiti", serif);
+  font-weight: 900;
+  color: #fef08a;
+  margin: 0;
+}
+
+.poster-modal-close {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+  transition: color 0.2s ease;
+}
+
+.poster-modal-close:hover {
+  color: #fff;
+}
+
+.poster-img-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 50%, #08291b 0%, #030f0a 100%);
+}
+
+.poster-preview-img {
+  width: 100%;
+  max-height: 64vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+}
+
+.poster-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 14px 22px;
+  background: #04140d;
+  border-top: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+.btn-poster-download {
+  padding: 10px 22px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  border: 1px solid #fef08a;
+  color: #fffbeb;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.5);
+  transition: all 0.2s ease;
+}
+
+.btn-poster-download:hover {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.6);
+}
+
+.btn-poster-copy {
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: rgba(14, 46, 32, 0.8);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  color: #e2e8f0;
+  font-weight: 600;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-poster-copy:hover {
+  background: rgba(22, 70, 48, 0.95);
+  border-color: #fde047;
+  color: #fff;
+}
+
+/* Toast feedback */
+.poster-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2500;
+  padding: 10px 24px;
+  border-radius: 20px;
+  background: rgba(5, 26, 17, 0.95);
+  border: 1.5px solid #fde047;
+  color: #fef08a;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(245, 158, 11, 0.4);
+  animation: toast-fade 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+@keyframes toast-fade {
+  from { opacity: 0; transform: translate(-50%, 10px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Create Room Modal (Custom Bot Count & Rate)
+   ────────────────────────────────────────────────────────────────────────── */
+
+.create-room-dialog {
+  max-width: 640px;
+  width: min(640px, calc(100vw - 40px));
+  padding: 32px 36px 28px;
+  border-radius: 24px;
+  background: linear-gradient(165deg, rgba(8, 32, 22, 0.96) 0%, rgba(4, 18, 12, 0.98) 100%);
+  border: 1.5px solid rgba(245, 214, 120, 0.4);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.8), 0 0 40px rgba(212, 175, 55, 0.18);
+  animation: parlor-fade-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.create-room-modal-header {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.create-room-modal-header .eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: #d4af37;
+}
+
+.create-room-modal-header h2 {
+  margin: 0 0 6px;
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 900;
+  color: #fffbeb;
+  letter-spacing: 0.08em;
+}
+
+.create-room-modal-header .sub {
+  margin: 0;
+  font-size: 12.5px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.create-room-section {
+  margin-bottom: 20px;
+}
+
+.create-section-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.create-section-label span {
+  font-size: 14px;
+  font-weight: 800;
+  color: #fef08a;
+  letter-spacing: 0.04em;
+}
+
+.create-section-label small {
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+
+.create-bot-options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.create-bot-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(12, 42, 30, 0.55);
+  border: 1.5px solid rgba(245, 214, 120, 0.2);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.create-bot-card:hover {
+  background: rgba(16, 56, 40, 0.75);
+  border-color: rgba(245, 214, 120, 0.45);
+  transform: translateY(-1.5px);
+}
+
+.create-bot-card.active {
+  background: linear-gradient(145deg, rgba(20, 70, 50, 0.85), rgba(12, 45, 32, 0.95));
+  border-color: #fde047;
+  box-shadow: 0 0 16px rgba(250, 204, 21, 0.25), inset 0 0 12px rgba(250, 204, 21, 0.1);
+}
+
+.create-bot-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.create-bot-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #fffbeb;
+}
+
+.create-bot-card.active .create-bot-title {
+  color: #fef08a;
+}
+
+.create-bot-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  color: #fde047;
+}
+
+.create-bot-card.active .create-bot-tag {
+  background: #d97706;
+  border-color: #fef08a;
+  color: #fff;
+}
+
+.create-bot-desc {
+  margin: 0;
+  font-size: 11.5px;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+
+.create-bot-card.active .create-bot-desc {
+  color: #cbd5e1;
+}
+
+.create-rate-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.create-rate-chip {
+  flex: 1;
+  min-width: 85px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(12, 42, 30, 0.55);
+  border: 1.5px solid rgba(245, 214, 120, 0.2);
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.create-rate-chip:hover {
+  background: rgba(16, 56, 40, 0.75);
+  border-color: rgba(245, 214, 120, 0.4);
+  color: #fff;
+}
+
+.create-rate-chip.active {
+  background: linear-gradient(135deg, rgba(202, 138, 4, 0.4), rgba(217, 119, 6, 0.6));
+  border-color: #fde047;
+  color: #fffbeb;
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.3);
+}
+
+.create-room-hint-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  margin-bottom: 22px;
+}
+
+.create-room-hint-box .hint-icon {
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.create-room-hint-box p {
+  margin: 0;
+  font-size: 12px;
+  color: #a7f3d0;
+  line-height: 1.4;
+}
+
+.create-room-modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-create-confirm {
+  flex: 2;
+  padding: 13px 20px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  border: 1.5px solid #fef08a;
+  color: #fffbeb;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.45);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-create-confirm:hover {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  transform: translateY(-1.5px);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.55);
+}
+
+.btn-create-cancel {
+  flex: 1;
+  padding: 13px 18px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-create-cancel:hover {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: #94a3b8;
+  color: #fff;
+}

@@ -55,6 +55,19 @@ describe('getTenpaiWaits', () => {
     const waits = getTenpaiWaits(h, 0);
     assert.equal(waits.length, 0, '散牌不应听');
   });
+
+  it('四组非吃副露的单张可提示顺子特殊等牌', () => {
+    const h = hand(['wan', 5]);
+    const exposed = [
+      { type: 'peng' as const },
+      { type: 'kan' as const },
+      { type: 'ming-gang' as const },
+      { type: 'an-gang' as const },
+    ];
+    const waits = getTenpaiWaits(h, 4, exposed);
+    assert.deepEqual(waits, ['wan-3', 'wan-4', 'wan-5', 'wan-6', 'wan-7']);
+    assert.deepEqual(getTenpaiWaits(h, 4), ['wan-5'], '缺少副露类型时保持保守提示');
+  });
 });
 
 describe('getDiscardTenpaiOptions', () => {

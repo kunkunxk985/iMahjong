@@ -1,0 +1,43 @@
+# 邳州麻将规则与核心架构代码归属规范 (CODEOWNERS)
+#
+# 本文件基于《邳州麻将规则核心冻结与开发权限规范》设定。
+# 保护原则：
+# 1. UI、动画、音效和纯排版组件可由前端开发人员自由修改；
+# 2. 展示层涉及协议绑定、房间流程和结算数据渲染的文件需审慎修改；
+# 3. 核心规则引擎、两两结算对账、网络协议定义与服务端权威裁决为绝对受保护区域，必须由项目负责人统一审核批准。
+
+# ==============================================================================
+# 第一类：禁止随意修改（核心规则引擎与回归测试，最高保护级别）
+# ==============================================================================
+/packages/rules/src/score.ts                            @kunkunxk985
+/packages/rules/src/engine.ts                           @kunkunxk985
+/packages/rules/src/actions.ts                          @kunkunxk985
+/packages/rules/src/win.ts                              @kunkunxk985
+/packages/rules/src/shanten.ts                          @kunkunxk985
+/packages/rules/src/defense.ts                          @kunkunxk985
+/packages/rules/tests/                                  @kunkunxk985
+/packages/rules/package.json                            @kunkunxk985
+
+# ==============================================================================
+# 第二类：需先确认（网络协议合同、服务端权威裁决与核心流程）
+# ==============================================================================
+/packages/shared/src/types.ts                           @kunkunxk985
+/packages/shared/src/events.ts                          @kunkunxk985
+/packages/server-core/src/room.ts                       @kunkunxk985
+/packages/server-core/src/messageHandler.ts             @kunkunxk985
+/packages/rules/src/companion.ts                        @kunkunxk985
+
+# ==============================================================================
+# 规则文档与考据规范（官方房规准绳）
+# ==============================================================================
+/docs/产品与规则说明.txt                                 @kunkunxk985
+/docs/邳州麻将规则考据.md                                 @kunkunxk985
+/docs/规则核心冻结与团队开发规范.md                         @kunkunxk985
+
+# ==============================================================================
+# 关键结算与规则展示视图（仅限展示层，禁止本地算分）
+# ==============================================================================
+/apps/desktop/src/views/Table.tsx                       @kunkunxk985
+/apps/desktop/src/views/Settlement.tsx                  @kunkunxk985
+/apps/desktop/src/components/RulesModal.tsx             @kunkunxk985
+/apps/desktop/src/components/HuCelebration.tsx          @kunkunxk985

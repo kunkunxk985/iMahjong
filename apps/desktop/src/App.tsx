@@ -60,6 +60,7 @@ export function App() {
   const [auth, setAuth] = useState<{ token: string | null; user: UserProfile | null }>(() => getStoredAuth());
   const [authOpen, setAuthOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [profileInitialTab, setProfileInitialTab] = useState<'look' | 'stats' | 'leaderboard' | 'achievements' | 'security'>('look');
   const [friendsOpen, setFriendsOpen] = useState(false);
   const [incomingInvite, setIncomingInvite] = useState<FriendInvite | null>(null);
   const [incomingChat, setIncomingChat] = useState<GameChatMessage | null>(null);
@@ -204,6 +205,7 @@ export function App() {
         auth.user.nickname,
         auth.user.avatar || DEFAULT_AVATAR,
         auth.user.title || DEFAULT_TITLE,
+        auth.user.bio,
       );
     }
   }, [auth.user]);
@@ -220,6 +222,7 @@ export function App() {
       auth.user?.avatar || DEFAULT_AVATAR,
       true,
       auth.user?.title || DEFAULT_TITLE,
+      auth.user?.bio,
     );
   }, [networkStatus, nickname, auth.user]);
 
@@ -273,7 +276,7 @@ export function App() {
     return true;
   };
 
-  const createRoom = () => {
+  const createRoom = (options?: { botCount?: number; pointRate?: number }) => {
     if (!requireOnline()) return;
     requestedModeRef.current = 'online';
     clientRef.current?.createRoom(
@@ -281,6 +284,9 @@ export function App() {
       auth.user?.avatar || DEFAULT_AVATAR,
       false,
       auth.user?.title || DEFAULT_TITLE,
+      auth.user?.bio,
+      options?.botCount ?? 0,
+      options?.pointRate ?? 0.1,
     );
   };
 
@@ -406,6 +412,8 @@ export function App() {
             onSetRate={(rate) => clientRef.current?.setConfig({ pointRate: rate })}
             onInviteFriends={() => setFriendsOpen(true)}
             onOpenProfile={() => setProfileOpen(true)}
+            onAddBot={() => clientRef.current?.addBot()}
+            onRemoveBot={(seat) => clientRef.current?.removeBot(seat)}
           />
         ) : (
           /* Step 2: Progressive Tiered Lobby */
@@ -422,7 +430,14 @@ export function App() {
             onStartLocal={startLocal}
             onRules={() => setRulesOpen(true)}
             onSettings={() => setSettingsOpen(true)}
-            onOpenProfile={() => setProfileOpen(true)}
+            onOpenProfile={() => {
+              setProfileInitialTab('look');
+              setProfileOpen(true);
+            }}
+            onOpenLeaderboard={() => {
+              setProfileInitialTab('leaderboard');
+              setProfileOpen(true);
+            }}
             onOpenFriends={() => setFriendsOpen(true)}
             onLogout={handleLogout}
           />
@@ -473,6 +488,7 @@ export function App() {
             serverUrl={displayUrl}
             token={auth.token}
             user={auth.user}
+            initialTab={profileInitialTab}
             onClose={() => setProfileOpen(false)}
             onUpdate={handleAuthSuccess}
             onOpenAuth={() => {

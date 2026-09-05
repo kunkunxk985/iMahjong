@@ -11,6 +11,8 @@ interface WaitingRoomProps {
   onSetRate?: (rate: number) => void;
   onInviteFriends?: () => void;
   onOpenProfile?: () => void;
+  onAddBot?: () => void;
+  onRemoveBot?: (seat: number) => void;
 }
 
 function isOccupied(view: ClientView['players'][number], seat: number): boolean {
@@ -26,10 +28,14 @@ export function WaitingRoom({
   onSetRate,
   onInviteFriends,
   onOpenProfile,
+  onAddBot,
+  onRemoveBot,
 }: WaitingRoomProps) {
   const [copied, setCopied] = useState(false);
   const me = view.players[view.mySeat];
   const occupied = view.players.filter((player, seat) => isOccupied(player, seat));
+  const botCount = view.players.filter((player, seat) => isOccupied(player, seat) && player.isBot).length;
+  const humanCount = occupied.length - botCount;
   const readyCount = occupied.filter((player) => player.ready).length;
   const full = occupied.length === 4;
   const isHost = view.mySeat === view.hostSeat;
@@ -48,13 +54,17 @@ export function WaitingRoom({
   return (
     <div className="hall waiting-hall">
       <div className="hall-vignette" />
-      <div className="hall-card waiting-card">
+      <div className="parlor-corner top-left" aria-hidden="true" />
+      <div className="parlor-corner top-right" aria-hidden="true" />
+      <div className="parlor-corner bottom-left" aria-hidden="true" />
+      <div className="parlor-corner bottom-right" aria-hidden="true" />
+      <div className="hall-card waiting-card grand-parlor">
         <div className="gold-line" />
         <div className="waiting-heading-row">
           <div className="waiting-heading-copy">
-            <p className="eyebrow">四 人 · 老 家 桌</p>
+            <p className="eyebrow">四 人 · 江 淮 老 家 桌</p>
             <h1>等朋友入座</h1>
-            <p className="sub">把房间号发到群里，人齐后房主开局</p>
+            <p className="sub">把 6 位方格房间号发给牌友，四人入席准备后房主开局</p>
           </div>
           {onOpenProfile && me ? (
             <button
@@ -66,41 +76,50 @@ export function WaitingRoom({
               <AvatarView avatar={me.isBot ? '陪' : me.avatar} className="waiting-profile-avatar" alt="我的头像" />
               <span>
                 <strong>{me.nickname}</strong>
-                <small>账号资料</small>
+                <small>雀士名片</small>
               </span>
             </button>
           ) : null}
         </div>
 
         <button type="button" className="room-code-banner" onClick={copyRoomCode} title="点击复制房间号">
-          <span className="room-code-label">房间号</span>
+          <div className="room-code-label-wrap">
+            <span className="room-code-tag">朱砂印鉴房号</span>
+            <span className="room-code-label">ROOM CODE</span>
+          </div>
           <strong className="room-code-num">{view.roomCode}</strong>
-          <span className="btn-action ghost copy-btn">{copied ? '已复制' : '复制房号'}</span>
+          <span className={`btn-action ghost copy-btn ${copied ? 'is-copied' : ''}`}>
+            {copied ? '✓ 房号已复制' : '复制 6 位房号'}
+          </span>
         </button>
 
         <div className="waiting-body-grid">
           <section className="waiting-seats-section" aria-label="牌桌座位">
             <div className="waiting-section-heading">
               <div>
-                <span className="waiting-section-kicker">牌 桌 座 位</span>
-                <strong>四方入座</strong>
+                <span className="waiting-section-kicker">四 方 席 位</span>
+                <strong>入座情况</strong>
               </div>
               <span className={`waiting-readiness ${full ? 'complete' : ''}`}>
-                {full ? '已满桌' : `还差 ${4 - occupied.length} 人`}
+                {full ? '✓ 已满桌' : `还差 ${4 - occupied.length} 人`}
               </span>
             </div>
 
             <ul className="seat-grid">
               {view.players.map((player, seat) => {
                 const present = isOccupied(player, seat);
+                const isThisPlayerBot = Boolean(present && player.isBot);
                 return (
-                  <li key={player.seat} className={`seat-card ${present ? '' : 'empty'} ${seat === view.mySeat ? 'me' : ''}`}>
+                  <li
+                    key={player.seat}
+                    className={`seat-card ${present ? '' : 'empty'} ${seat === view.mySeat ? 'me' : ''} ${player.ready ? 'ready-state' : ''} ${isThisPlayerBot ? 'is-bot' : ''}`}
+                  >
                     <span className="seat-wind">{SEAT_NAMES[seat]}</span>
                     {present ? (
                       <>
                         <div className="waiting-seat-avatar">
                           <AvatarView
-                            avatar={player.isBot ? '陪' : player.avatar}
+                            avatar={player.avatar || (player.isBot ? '陪' : undefined)}
                             alt={`${player.nickname}头像`}
                           />
                         </div>
@@ -109,6 +128,17 @@ export function WaitingRoom({
                             <span>{player.nickname}</span>
                             {seat === view.mySeat ? <span className="tag me-tag">你</span> : null}
                             {player.isHost ? <span className="tag host-tag">房主</span> : null}
+                            {isThisPlayerBot ? <span className="tag bot-tag">陪练人机</span> : null}
+                            {isHost && isThisPlayerBot && onRemoveBot ? (
+                              <button
+                                type="button"
+                                className="btn-remove-bot-seat"
+                                onClick={() => onRemoveBot(seat)}
+                                title="移除该陪练人机，空出座位给朋友"
+                              >
+                                ✕ 移除
+                              </button>
+                            ) : null}
                           </div>
                           {player.title ? <small className="seat-title">{player.title}</small> : null}
                           <div className="seat-status">
@@ -122,7 +152,19 @@ export function WaitingRoom({
                         </div>
                       </>
                     ) : (
-                      <span className="empty-hint">等待朋友加入</span>
+                      <div className="seat-empty-body">
+                        <span className="empty-hint">等待朋友加入</span>
+                        {isHost && onAddBot ? (
+                          <button
+                            type="button"
+                            className="btn-add-bot-seat"
+                            onClick={onAddBot}
+                            title="添加入座一位智能陪练人机"
+                          >
+                            + 补入人机
+                          </button>
+                        ) : null}
+                      </div>
                     )}
                   </li>
                 );
@@ -165,6 +207,53 @@ export function WaitingRoom({
               </div>
             </div>
 
+            {/* Companion AI Bot Manager Panel */}
+            <div className="waiting-bot-panel">
+              <div className="waiting-bot-header">
+                <span className="waiting-bot-title">🤖 智能陪练人机</span>
+                <span className="waiting-bot-hint">
+                  {botCount > 0 ? `已入座 ${botCount} 位 (${humanCount}真人+${botCount}人机)` : '缺人开局？可随时补入人机'}
+                </span>
+              </div>
+              {isHost ? (
+                <div className="waiting-bot-actions">
+                  {!full && onAddBot ? (
+                    <button
+                      type="button"
+                      className="btn-bot-action add"
+                      onClick={onAddBot}
+                      title="立即添加入座一位智能陪练人机"
+                    >
+                      + 添加入座 1 位人机
+                    </button>
+                  ) : null}
+                  {botCount > 0 && onRemoveBot ? (
+                    <button
+                      type="button"
+                      className="btn-bot-action remove"
+                      onClick={() => {
+                        const lastBot = [...view.players].reverse().find((p, idx) => {
+                          const originalSeat = 3 - idx;
+                          return isOccupied(p, originalSeat) && p.isBot;
+                        });
+                        if (lastBot) onRemoveBot(lastBot.seat);
+                      }}
+                      title="移出一位人机，空出座位给新朋友"
+                    >
+                      - 移出 1 位人机
+                    </button>
+                  ) : null}
+                  {full && botCount === 0 ? (
+                    <span className="waiting-bot-full-text">✓ 四人全席已满（全真人牌友）</span>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="waiting-bot-guest-note">
+                  {botCount > 0 ? `当前房间由房主配有 ${botCount} 名陪练人机（自动准备就绪）` : '当前全员为真人牌友'}
+                </p>
+              )}
+            </div>
+
             <div className="waiting-progress-card">
               <div className="waiting-progress-head">
                 <span>开局准备度</span>
@@ -183,10 +272,10 @@ export function WaitingRoom({
                 {me ? (
                   <button
                     type="button"
-                    className={`btn-action ${me.ready ? 'ghost' : 'primary'}`}
+                    className={`btn-action btn-ready-toggle ${me.ready ? 'is-ready' : 'primary'}`}
                     onClick={() => onReady(!me.ready)}
                   >
-                    {me.ready ? '取消准备' : '准备好了'}
+                    {me.ready ? '✓ 已准备（点击取消）' : '🔥 准备好了'}
                   </button>
                 ) : null}
 
@@ -202,12 +291,17 @@ export function WaitingRoom({
               </div>
 
               {isHost ? (
-                <button type="button" className="btn-action hero" disabled={!canStart} onClick={onStart}>
-                  {canStart ? '开始游戏' : full ? `等待全员准备（${readyCount}/4）` : `还差 ${4 - occupied.length} 人`}
-                  <small>房主操作</small>
+                <button
+                  type="button"
+                  className={`btn-action hero ${canStart ? 'can-start-pulse' : ''}`}
+                  disabled={!canStart}
+                  onClick={onStart}
+                >
+                  {canStart ? '🀄 立即开局对决' : full ? `等待全员准备（${readyCount}/4）` : `还差 ${4 - occupied.length} 人入座`}
+                  <small>房主权限</small>
                 </button>
               ) : (
-                <p className="hint waiting-host-hint">等房主开始游戏</p>
+                <p className="hint waiting-host-hint">等待房主开启对局…</p>
               )}
             </div>
           </aside>

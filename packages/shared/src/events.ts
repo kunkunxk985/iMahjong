@@ -8,6 +8,8 @@ export const C2S = {
   ROOM_START: 'room:start',
   ROOM_AGAIN: 'room:again',
   ROOM_CONFIG: 'room:config',
+  ROOM_BOT_ADD: 'room:bot:add',
+  ROOM_BOT_REMOVE: 'room:bot:remove',
   GAME_ACTION: 'game:action',
   GAME_CHAT: 'game:chat',
   GAME_NEXT_ROUND: 'game:nextRound',
@@ -48,18 +50,20 @@ export interface GameChatMessage {
 }
 
 export type C2SMessage =
-  | { type: 'room:create'; nickname: string; avatar?: string; title?: string; solo?: boolean; pointRate?: number }
-  | { type: 'room:join'; roomCode: string; nickname: string; avatar?: string; title?: string }
+  | { type: 'room:create'; nickname: string; avatar?: string; title?: string; bio?: string; solo?: boolean; pointRate?: number; botCount?: number }
+  | { type: 'room:join'; roomCode: string; nickname: string; avatar?: string; title?: string; bio?: string }
   | { type: 'room:leave' }
   | { type: 'room:ready'; ready?: boolean }
   | { type: 'room:start' }
   | { type: 'room:again' }
   | { type: 'room:config'; pointRate: number }
+  | { type: 'room:bot:add' }
+  | { type: 'room:bot:remove'; seat?: number }
   | { type: 'game:nextRound' }
   | { type: 'game:action'; sequence: number; actionId: string; action: GameAction }
   | { type: 'game:chat'; message: string; isEmote?: boolean }
-  | { type: 'player:reconnect'; roomCode: string; token: string; nickname?: string; avatar?: string; title?: string }
-  | { type: 'player:updateProfile'; nickname: string; avatar?: string; title?: string }
+  | { type: 'player:reconnect'; roomCode: string; token: string; nickname?: string; avatar?: string; title?: string; bio?: string }
+  | { type: 'player:updateProfile'; nickname: string; avatar?: string; title?: string; bio?: string }
   | { type: 'player:heartbeat' }
   | { type: 'friend:bindUser'; userId: string; token: string }
   | { type: 'friend:unbindUser' }

@@ -4,6 +4,7 @@ import { startMahjongServer } from '@pizhou/server-core';
 
 const port = Number(process.env.PORT ?? SERVER_PORT);
 const started = await startMahjongServer({ port, host: '0.0.0.0', log: true });
+console.log('REST 账号与多端漫游服务已就绪 (/api/auth/*, /api/profile, /api/matches)。');
 console.log('同一 Wi-Fi 下，其他电脑请填写上面的局域网地址。');
 
 const shutdown = async () => {

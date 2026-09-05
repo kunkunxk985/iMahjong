@@ -9,6 +9,12 @@ import {
   type UniversalWebSocket,
 } from './room.ts';
 import { cancelBots, scheduleBots } from './bots.ts';
+import type { RateLimiter } from './rateLimiter.ts';
+
+export interface MessageHandlerContext {
+  rateLimiter?: RateLimiter;
+  clientIp?: string;
+}
 
 function sanitizeChatMessage(raw: unknown): string {
   if (typeof raw !== 'string') return '';
@@ -30,6 +36,7 @@ export function handleMessage(
   manager: RoomManager,
   ws: UniversalWebSocket,
   message: ReturnType<typeof parseClientMessage> & object,
+  context?: MessageHandlerContext,
 ): void {
   if (!message) return;
 
@@ -41,6 +48,11 @@ export function handleMessage(
   }
 
   if (message.type === 'room:create') {
+    const ip = context?.clientIp ?? '127.0.0.1';
+    if (context?.rateLimiter && !context.rateLimiter.consume(`create-room:${ip}`, 5, 60_000)) {
+      send(ws, { type: 'error', message: '创建房间过于频繁，请稍后再试', code: 'rate-limited' });
+      return;
+    }
     const { room, player } = manager.create(
       message.nickname,
       ws,
@@ -48,6 +60,8 @@ export function handleMessage(
       message.pointRate,
       message.avatar,
       message.title,
+      message.bio,
+      message.botCount,
     );
     send(ws, { type: 'room:created', roomCode: room.code, token: player.token, seat: player.seat });
     if (room.solo) {
@@ -57,6 +71,7 @@ export function handleMessage(
         broadcastState(room);
         return;
       }
+      manager.persist(room);
       send(ws, { type: 'game:roundStarted', view: room.viewFor(player) });
       broadcastState(room);
       scheduleBots(room);
@@ -67,7 +82,14 @@ export function handleMessage(
   }
 
   if (message.type === 'room:join') {
-    const result = manager.join(message.roomCode.trim(), message.nickname, ws, message.avatar, message.title);
+    const result = manager.join(
+      message.roomCode.trim(),
+      message.nickname,
+      ws,
+      message.avatar,
+      message.title,
+      message.bio,
+    );
     if (typeof result === 'string') {
       send(ws, { type: 'error', message: result, code: 'join-failed' });
       return;
@@ -94,6 +116,7 @@ export function handleMessage(
         message.nickname,
         message.avatar,
         message.title,
+        message.bio,
       );
       if (profileError) send(ws, { type: 'error', message: profileError, code: 'profile-update-failed' });
     }
@@ -128,6 +151,10 @@ export function handleMessage(
   room.heartbeat(player);
 
   if (message.type === 'game:chat') {
+    if (context?.rateLimiter && !context.rateLimiter.consume(`chat:${room.code}:${player.seat}`, 3, 5000)) {
+      send(ws, { type: 'error', message: '发言过于频繁，请稍后再试', code: 'chat-rate-limited' });
+      return;
+    }
     const content = sanitizeChatMessage(message.message);
     if (!content) {
       send(ws, { type: 'error', message: '互动内容不能为空', code: 'chat-invalid' });
@@ -153,16 +180,18 @@ export function handleMessage(
       return;
     }
     player.ready = message.ready ?? !player.ready;
+    manager.persist(room);
     broadcastState(room);
     return;
   }
 
   if (message.type === 'player:updateProfile') {
-    const profileError = room.updatePlayerProfile(player, message.nickname, message.avatar, message.title);
+    const profileError = room.updatePlayerProfile(player, message.nickname, message.avatar, message.title, message.bio);
     if (profileError) {
       send(ws, { type: 'error', message: profileError, code: 'profile-update-failed' });
       return;
     }
+    manager.persist(room);
     broadcastState(room);
     return;
   }
@@ -178,8 +207,47 @@ export function handleMessage(
     }
     if (typeof message.pointRate === 'number' && message.pointRate >= 0) {
       room.pointRate = message.pointRate;
+      manager.persist(room);
       broadcastState(room);
     }
+    return;
+  }
+
+  if (message.type === 'room:bot:add') {
+    if (player.seat !== room.hostSeat) {
+      send(ws, { type: 'error', message: '只有房主可以添加陪练人机' });
+      return;
+    }
+    if (room.phase !== 'lobby') {
+      send(ws, { type: 'error', message: '对局进行中无法添加人机' });
+      return;
+    }
+    const result = room.addBot();
+    if (typeof result === 'string') {
+      send(ws, { type: 'error', message: result });
+      return;
+    }
+    manager.persist(room);
+    broadcastState(room);
+    return;
+  }
+
+  if (message.type === 'room:bot:remove') {
+    if (player.seat !== room.hostSeat) {
+      send(ws, { type: 'error', message: '只有房主可以移除陪练人机' });
+      return;
+    }
+    if (room.phase !== 'lobby') {
+      send(ws, { type: 'error', message: '对局进行中无法移除人机' });
+      return;
+    }
+    const result = room.removeBot(message.seat);
+    if (typeof result === 'string') {
+      send(ws, { type: 'error', message: result });
+      return;
+    }
+    manager.persist(room);
+    broadcastState(room);
     return;
   }
 
@@ -200,6 +268,7 @@ export function handleMessage(
       send(ws, { type: 'error', message: error });
       return;
     }
+    manager.persist(room);
     for (const item of room.occupied) {
       send(item.ws, { type: 'game:roundStarted', view: room.viewFor(item) });
     }
@@ -232,6 +301,7 @@ export function handleMessage(
         broadcastState(room);
         return;
       }
+      manager.persist(room);
       for (const item of room.occupied) {
         send(item.ws, { type: 'game:roundStarted', view: room.viewFor(item) });
       }
@@ -239,6 +309,7 @@ export function handleMessage(
       scheduleBots(room);
       return;
     }
+    manager.persist(room);
     broadcastState(room);
     return;
   }
@@ -250,6 +321,7 @@ export function handleMessage(
       broadcastState(room);
       return;
     }
+    manager.persist(room);
     if (room.phase === 'settlement' && room.game?.settlement) {
       broadcastSettlement(room, room.game.settlement);
       scheduleBots(room);

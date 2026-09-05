@@ -9,6 +9,7 @@ import {
   DEFAULT_TITLE,
   type GameAction,
   type GamePhase,
+  type Meld,
   type PublicPlayerView,
   sanitizeProfileTitle,
   type Settlement,
@@ -34,6 +35,7 @@ export interface PlayerMeta {
   nickname: string;
   avatar?: string;
   title?: string;
+  bio?: string;
   ready: boolean;
   online: boolean;
   isHost: boolean;
@@ -221,7 +223,15 @@ export class PizhouGame {
   }): ClientView {
     const players = [0, 1, 2, 3].map((seat) => {
       const runtime = this.seats[seat]!;
-      const meta = input.metas[seat]!;
+      const meta = input.metas?.[seat] ?? {
+        nickname: `玩家${seat + 1}`,
+        avatar: DEFAULT_AVATAR,
+        title: DEFAULT_TITLE,
+        ready: true,
+        online: true,
+        isHost: seat === (input.hostSeat ?? 0),
+        score: 0,
+      };
       const winningTile = this.settlement?.winnerSeat === seat
         && !this.settlement.selfDraw
         && this.lastDiscard
@@ -238,6 +248,7 @@ export class PizhouGame {
         nickname: meta.nickname,
         avatar: meta.avatar ?? DEFAULT_AVATAR,
         title: sanitizeProfileTitle(meta.title, DEFAULT_TITLE),
+        bio: meta.bio,
         ready: meta.ready,
         online: meta.online,
         isHost: meta.isHost,
@@ -415,10 +426,11 @@ export class PizhouGame {
 
   private declareZiGang(seat: number, key?: string, tileId?: string): ApplyResult {
     if (this.wall.length === 0) return { ok: false, error: '牌墙已空，不能杠', changed: false };
+    if (!key || !tileId) return { ok: false, error: '请选择要自杠的坎和第四张牌', changed: false };
     const runtime = this.seats[seat]!;
     const kanIndex = runtime.melds.findIndex((meld) => meld.type === 'kan' && meld.tiles[0]?.key === key);
     if (kanIndex < 0) return { ok: false, error: '只有坎上的牌可以自杠', changed: false };
-    const extra = runtime.hand.find((tile) => tile.id === tileId || tile.key === key);
+    const extra = runtime.hand.find((tile) => tile.id === tileId && tile.key === key);
     if (!extra) return { ok: false, error: '手牌中没有自杠的第四张牌', changed: false };
     const extraIndex = runtime.hand.findIndex((tile) => tile.id === extra.id);
     if (extraIndex < 0) return { ok: false, error: '自杠失败', changed: false };
@@ -562,9 +574,8 @@ export class PizhouGame {
    */
   private recordResolvedDiscard(tile: Tile): void {
     for (const target of this.seats) {
-      // “香/臭”只看该玩家报两对关门之前的牌河。关门完成后，
-      // 后续才落地的牌不能追溯改变这位玩家已经锁定的牌河快照。
-      if (target.closedTwoPair) continue;
+      // “香/臭”必须保留整局截至当前的已结算牌河。玩家若拆对换听导致
+      // 两对关门失效，之后再次关门时仍要能识别此前已经出现过的臭牌。
       if (!target.discardedBeforeClose.includes(tile.key)) {
         target.discardedBeforeClose.push(tile.key);
       }
@@ -808,6 +819,18 @@ export class PizhouGame {
     }
     return runtime.hand[runtime.hand.length - 1] ?? null;
   }
+
+  static serialize(game: PizhouGame): SerializedGameState {
+    return serializeGame(game);
+  }
+
+  static deserialize(data: SerializedGameState, options?: EngineOptions): PizhouGame {
+    return deserializeGame(data, options);
+  }
+
+  serialize(): SerializedGameState {
+    return serializeGame(this);
+  }
 }
 
 function emptySeat(): SeatRuntime {
@@ -826,4 +849,177 @@ function emptySeat(): SeatRuntime {
 
 export function legalZiGangKeys(seat: SeatRuntime): string[] {
   return ziGangActions(seat).map((action) => action.key!).filter(Boolean);
+}
+
+export interface SerializedSeatRuntime {
+  hand: Tile[];
+  discards: Tile[];
+  melds: Meld[];
+  lastDrawnId?: string;
+  firstDiscardKey?: string;
+  changed: boolean;
+  closed: boolean;
+  closedTwoPair: boolean;
+  closedTwoPairKeys: string[];
+  discardedBeforeClose: string[];
+  waitKey?: string;
+  singleWaitChanged: boolean;
+}
+
+export interface SerializedPendingCandidate {
+  seat: number;
+  actions: AvailableAction[];
+}
+
+export interface SerializedPendingWindow {
+  reason: 'discard' | 'qidong';
+  tile: Tile;
+  fromSeat: number;
+  deadline: number;
+  candidates: SerializedPendingCandidate[];
+  responses: Array<[number, GameAction]>;
+}
+
+export interface SerializedGameState {
+  seats: [SerializedSeatRuntime, SerializedSeatRuntime, SerializedSeatRuntime, SerializedSeatRuntime];
+  wall: Tile[];
+  dealer: number;
+  currentSeat: number;
+  phase: GamePhase;
+  sequence: number;
+  lastDiscard: { tile: Tile; fromSeat: number } | null;
+  pending: SerializedPendingWindow | null;
+  settlement: Settlement | null;
+  firstDiscardDone: boolean;
+  hadOpeningKong: boolean;
+  processedActionIds: string[];
+  turnDeadline: number;
+  timeoutMs: number;
+}
+
+export type SerializedGame = SerializedGameState;
+
+export function serializeGame(game: PizhouGame): SerializedGameState {
+  return {
+    seats: [
+      serializeSeat(game.seats[0]!),
+      serializeSeat(game.seats[1]!),
+      serializeSeat(game.seats[2]!),
+      serializeSeat(game.seats[3]!),
+    ],
+    wall: game.wall.map((tile) => ({ ...tile })),
+    dealer: game.dealer,
+    currentSeat: game.currentSeat,
+    phase: game.phase,
+    sequence: game.sequence,
+    lastDiscard: game.lastDiscard
+      ? { tile: { ...game.lastDiscard.tile }, fromSeat: game.lastDiscard.fromSeat }
+      : null,
+    pending: game.pending ? serializePendingWindow(game.pending) : null,
+    settlement: game.settlement ? JSON.parse(JSON.stringify(game.settlement)) : null,
+    firstDiscardDone: game.firstDiscardDone,
+    hadOpeningKong: game.hadOpeningKong,
+    processedActionIds: Array.from(game.processedActionIds),
+    turnDeadline: game.turnDeadline,
+    timeoutMs: game.timeoutMs,
+  };
+}
+
+function serializeSeat(seat: SeatRuntime): SerializedSeatRuntime {
+  return {
+    hand: seat.hand.map((tile) => ({ ...tile })),
+    discards: seat.discards.map((tile) => ({ ...tile })),
+    melds: seat.melds.map((meld) => ({
+      type: meld.type,
+      tiles: meld.tiles.map((tile) => ({ ...tile })),
+      fromSeat: meld.fromSeat,
+      claimedTileId: meld.claimedTileId,
+    })),
+    lastDrawnId: seat.lastDrawnId,
+    firstDiscardKey: seat.firstDiscardKey,
+    changed: seat.changed,
+    closed: seat.closed,
+    closedTwoPair: seat.closedTwoPair,
+    closedTwoPairKeys: [...seat.closedTwoPairKeys],
+    discardedBeforeClose: [...seat.discardedBeforeClose],
+    waitKey: seat.waitKey,
+    singleWaitChanged: seat.singleWaitChanged,
+  };
+}
+
+function serializePendingWindow(pending: PendingWindow): SerializedPendingWindow {
+  return {
+    reason: pending.reason,
+    tile: { ...pending.tile },
+    fromSeat: pending.fromSeat,
+    deadline: pending.deadline,
+    candidates: pending.candidates.map((candidate) => ({
+      seat: candidate.seat,
+      actions: candidate.actions.map((action) => ({ ...action })),
+    })),
+    responses: Array.from(pending.responses.entries()).map(([seat, action]) => [seat, { ...action }]),
+  };
+}
+
+export function deserializeGame(data: SerializedGameState, options?: EngineOptions): PizhouGame {
+  const game = Object.create(PizhouGame.prototype) as PizhouGame;
+  (game as any).now = options?.now ?? Date.now;
+  (game as any).timeoutMs = options?.timeoutMs ?? data.timeoutMs ?? ACTION_TIMEOUT_MS;
+  game.dealer = data.dealer;
+  (game as any).seats = [
+    deserializeSeat(data.seats[0]),
+    deserializeSeat(data.seats[1]),
+    deserializeSeat(data.seats[2]),
+    deserializeSeat(data.seats[3]),
+  ];
+  game.wall = data.wall.map((tile) => ({ ...tile }));
+  game.currentSeat = data.currentSeat;
+  game.phase = data.phase;
+  game.sequence = data.sequence;
+  game.lastDiscard = data.lastDiscard
+    ? { tile: { ...data.lastDiscard.tile }, fromSeat: data.lastDiscard.fromSeat }
+    : null;
+  game.pending = data.pending ? deserializePendingWindow(data.pending) : null;
+  game.settlement = data.settlement ? JSON.parse(JSON.stringify(data.settlement)) : null;
+  game.firstDiscardDone = data.firstDiscardDone;
+  game.hadOpeningKong = data.hadOpeningKong;
+  game.processedActionIds = new Set(data.processedActionIds);
+  game.turnDeadline = data.turnDeadline;
+  return game;
+}
+
+function deserializeSeat(data: SerializedSeatRuntime): SeatRuntime {
+  return {
+    hand: data.hand.map((tile) => ({ ...tile })),
+    discards: data.discards.map((tile) => ({ ...tile })),
+    melds: data.melds.map((meld) => ({
+      type: meld.type,
+      tiles: meld.tiles.map((tile) => ({ ...tile })),
+      fromSeat: meld.fromSeat,
+      claimedTileId: meld.claimedTileId,
+    })),
+    lastDrawnId: data.lastDrawnId,
+    firstDiscardKey: data.firstDiscardKey,
+    changed: Boolean(data.changed),
+    closed: Boolean(data.closed),
+    closedTwoPair: Boolean(data.closedTwoPair),
+    closedTwoPairKeys: Array.isArray(data.closedTwoPairKeys) ? [...data.closedTwoPairKeys] : [],
+    discardedBeforeClose: Array.isArray(data.discardedBeforeClose) ? [...data.discardedBeforeClose] : [],
+    waitKey: data.waitKey,
+    singleWaitChanged: Boolean(data.singleWaitChanged),
+  };
+}
+
+function deserializePendingWindow(data: SerializedPendingWindow): PendingWindow {
+  return {
+    reason: data.reason,
+    tile: { ...data.tile },
+    fromSeat: data.fromSeat,
+    deadline: data.deadline,
+    candidates: data.candidates.map((candidate) => ({
+      seat: candidate.seat,
+      actions: candidate.actions.map((action) => ({ ...action })),
+    })),
+    responses: new Map(data.responses.map(([seat, action]) => [Number(seat), { ...action }])),
+  };
 }

@@ -11,6 +11,7 @@ interface SeatSplashEvent {
   type: 'hu' | 'peng' | 'kan' | 'gang' | 'chi' | 'close-gate';
   seat: number;
   position: 'bottom' | 'top' | 'left' | 'right';
+  quadrant: 'sw' | 'ne' | 'nw' | 'se';
   nickname: string;
 }
 
@@ -26,6 +27,27 @@ function getRelativePosition(seat: number, mySeat: number): 'bottom' | 'top' | '
   return 'left';
 }
 
+/**
+ * Maps player relative table positions to the 4 Mid-Ground Diagonal Safe Quadrants
+ * to guarantee 100% ZERO occlusion with hand tiles, discard drop points, and river tiles:
+ * - bottom (self) -> Q_SW (20% left, 78% top)
+ * - top (opposite) -> Q_NE (80% left, 22% top)
+ * - left (left player) -> Q_NW (20% left, 22% top / mid-left safe band)
+ * - right (right player) -> Q_SE (80% left, 78% top / mid-right safe band)
+ */
+function getSafeQuadrant(position: 'bottom' | 'top' | 'left' | 'right'): 'sw' | 'ne' | 'nw' | 'se' {
+  switch (position) {
+    case 'bottom':
+      return 'sw';
+    case 'top':
+      return 'ne';
+    case 'left':
+      return 'nw';
+    case 'right':
+      return 'se';
+  }
+}
+
 export function ActionSplash({ view }: ActionSplashProps) {
   const [splashes, setSplashes] = useState<SeatSplashEvent[]>([]);
   const prevMeldsRef = useRef<Map<number, string[]>>(
@@ -39,6 +61,7 @@ export function ActionSplash({ view }: ActionSplashProps) {
   const triggerSeatSplash = (text: string, type: SeatSplashEvent['type'], seat: number) => {
     const splashId = Date.now() + Math.random();
     const position = getRelativePosition(seat, view.mySeat);
+    const quadrant = getSafeQuadrant(position);
     const player = view.players.find((item) => item.seat === seat);
     const nickname = player?.nickname || `${SEAT_NAMES[seat]}位`;
 
@@ -48,6 +71,7 @@ export function ActionSplash({ view }: ActionSplashProps) {
       type,
       seat,
       position,
+      quadrant,
       nickname,
     };
 
@@ -110,14 +134,19 @@ export function ActionSplash({ view }: ActionSplashProps) {
       {splashes.map((splash) => (
         <div
           key={splash.id}
-          className={`action-seat-splash pos-${splash.position} is-${splash.type}`}
+          className={`action-seat-splash pos-${splash.position} quadrant-${splash.quadrant} is-${splash.type}`}
+          data-seat={splash.seat}
         >
           <div className="action-shockwave-ring ring-1" />
           <div className="action-shockwave-ring ring-2" />
           <div className="action-burst-rays" />
           <div className="action-seat-aura" />
-          <div className="action-seat-pill">
+          <div className="action-seat-seal action-seat-pill">
+            <div className="action-seal-inner-border" />
             <div className="action-shimmer-sweep" />
+            {splash.position !== 'bottom' ? (
+              <span className="action-seal-player">{splash.nickname}</span>
+            ) : null}
             <span className="action-seat-text">{splash.text}</span>
           </div>
         </div>

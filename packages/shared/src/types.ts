@@ -58,16 +58,22 @@ export interface PairwiseTransaction {
   huB: number;
   yaoA: number;
   yaoB: number;
-  /** A 家牌面胡数的飘荤倍率；庄家倍率作用于涉及庄家的整笔胡差。 */
+  /** A 家牌面胡数对应的飘荤标记（兼容旧版流水字段），不直接修改 huA。 */
   huMultiplierA: number;
-  /** B 家牌面胡数的飘荤倍率；庄家倍率作用于涉及庄家的整笔胡差。 */
+  /** B 家牌面胡数对应的飘荤标记（兼容旧版流水字段），不直接修改 huB。 */
   huMultiplierB: number;
-  /** A 家先按飘荤折算、尚未应用庄家胡差倍率的胡数。 */
+  /** A 家牌面胡数的兼容展示别名；牌面胡数固定，不含任何结算倍率。 */
   effectiveHuA: number;
-  /** B 家先按飘荤折算、尚未应用庄家胡差倍率的胡数。 */
+  /** B 家牌面胡数的兼容展示别名；牌面胡数固定，不含任何结算倍率。 */
   effectiveHuB: number;
   isDealerPair: boolean;
-  /** 两家先查折算胡差，再在涉及庄家时整体乘 2。 */
+  /** 未应用飘荤和庄家倍率前的原始牌面胡差：huA - huB。 */
+  rawDeltaHu: number;
+  /** 本笔是否按飘荤结算；飘荤倍率作用在原始胡差之后。 */
+  piaoMultiplier: number;
+  /** 本笔是否涉及庄家；庄家倍率作用在飘荤结算胡差之后。 */
+  dealerMultiplier: number;
+  /** 两家先查原始胡差，再按本笔倍率结算。 */
   deltaHu: number;
   deltaYao: number;
   points: number;
@@ -121,6 +127,8 @@ export interface PublicPlayerView {
   avatar: string;
   /** 账号资料中的牌桌头衔；旧客户端/旧快照缺失时由界面回退到默认头衔。 */
   title?: string;
+  /** 账号资料中的个性签名 / 牌桌宣言；旧客户端/旧快照缺失时由界面回退。 */
+  bio?: string;
   ready: boolean;
   online: boolean;
   isHost: boolean;

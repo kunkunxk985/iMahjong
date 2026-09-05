@@ -1,5 +1,6 @@
 import { NICKNAME_MAX } from './constants.ts';
 import { sanitizeNickname } from './seats.ts';
+import { GUOFENG_AVATARS } from './rank.ts';
 
 export type GameMode = 'online' | 'local';
 
@@ -63,6 +64,24 @@ export interface ModeStats {
 export interface AuthResponse {
   token: string;
   user: UserProfile;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  username: string;
+  nickname: string;
+  avatar: string;
+  title: string;
+  bio: string;
+  isGuest: boolean;
+  totalMatches: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  totalScore: number;
+  maxWinScore: number;
+  maxHu: number;
 }
 
 export interface FriendItem {
@@ -151,10 +170,13 @@ export const PRESET_AVATARS = [
   '🀄', '🐱', '👑', '🦊', '🐼', '🎭', '🦚', '🏮', '⚡', '🌟', '🐉', '🎋'
 ] as const;
 
+export const GUOFENG_AVATAR_PATTERN = /^guofeng_[a-z0-9_]+$/;
+
 export function sanitizeAvatar(raw: unknown, fallback = DEFAULT_AVATAR): string {
   if (typeof raw !== 'string') return fallback;
   const value = raw.trim();
   if (PRESET_AVATARS.includes(value as (typeof PRESET_AVATARS)[number])) return value;
+  if ((GUOFENG_AVATARS as readonly string[]).includes(value) || GUOFENG_AVATAR_PATTERN.test(value)) return value;
   return isImageAvatar(value) ? value : fallback;
 }
 

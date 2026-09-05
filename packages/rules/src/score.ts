@@ -61,11 +61,39 @@ export interface SeatScore {
 }
 
 /**
- * 本房规则：飘荤先把飘荤者本人的牌面胡数乘 2；庄家不改自己的牌面胡数，
- * 而是在两家查胡时把涉及庄家的胡差整体乘 2。幺差和荤底不走这里。
+ * 本房规则：牌面胡数始终固定。每组两两结算先查原始胡差，再把本笔胡差按
+ * 飘荤倍率结算；如果这组涉及庄家，再把这笔胡差整体乘 2。幺差和荤底不走这里。
  */
 function piaoHuMultiplierForSeat(score: SeatScore): number {
   return score.piaoHun ? 2 : 1;
+}
+
+function pairHuSettlement(
+  a: SeatScore,
+  b: SeatScore,
+  isDealerPair: boolean,
+): {
+  huMultiplierA: number;
+  huMultiplierB: number;
+  rawDeltaHu: number;
+  piaoMultiplier: number;
+  dealerMultiplier: number;
+  deltaHu: number;
+} {
+  const huMultiplierA = piaoHuMultiplierForSeat(a);
+  const huMultiplierB = piaoHuMultiplierForSeat(b);
+  const rawDeltaHu = a.hu - b.hu;
+  // 飘荤是本笔胡差的结算倍数，不是把赢家/输家的牌面胡数分别改写。
+  const piaoMultiplier = huMultiplierA > 1 || huMultiplierB > 1 ? 2 : 1;
+  const dealerMultiplier = isDealerPair ? 2 : 1;
+  return {
+    huMultiplierA,
+    huMultiplierB,
+    rawDeltaHu,
+    piaoMultiplier,
+    dealerMultiplier,
+    deltaHu: rawDeltaHu * piaoMultiplier * dealerMultiplier,
+  };
 }
 
 export interface ChaHuResult {
@@ -476,7 +504,7 @@ export function scoreSeat(input: {
     breakdown.unshift({ label: input.winType === 'qidong-gang-hu' ? '起手杠胡' : '胡牌', hu: BASE_HU, yao: 0 });
     notes.push('胡牌+10胡');
     if (piao) {
-      notes.push('飘荤（先将本人牌面胡数×2，再查胡）');
+      notes.push('飘荤（先查两家胡差，再将本笔胡差×2）');
     }
   }
   if (input.isDealer) {
@@ -595,12 +623,8 @@ export function settleChaHu(input: {
   for (let i = 0; i < 4; i += 1) {
     for (let j = i + 1; j < 4; j += 1) {
       const isDealerPair = i === input.dealer || j === input.dealer;
-      const huMultiplierA = piaoHuMultiplierForSeat(seats[i]!);
-      const huMultiplierB = piaoHuMultiplierForSeat(seats[j]!);
-      const effectiveHuA = seats[i]!.hu * huMultiplierA;
-      const effectiveHuB = seats[j]!.hu * huMultiplierB;
-      const diffHuBeforeDealer = effectiveHuA - effectiveHuB;
-      const diffHu = diffHuBeforeDealer * (isDealerPair ? 2 : 1);
+      const huSettlement = pairHuSettlement(seats[i]!, seats[j]!, isDealerPair);
+      const diffHu = huSettlement.deltaHu;
       const diffYao = seats[i]!.yao - seats[j]!.yao;
       const pairPoints = diffHu * HU_RATE + diffYao * YAO_RATE;
 
@@ -622,11 +646,14 @@ export function settleChaHu(input: {
         huB: seats[j]!.hu,
         yaoA: seats[i]!.yao,
         yaoB: seats[j]!.yao,
-        huMultiplierA,
-        huMultiplierB,
-        effectiveHuA,
-        effectiveHuB,
+        huMultiplierA: huSettlement.huMultiplierA,
+        huMultiplierB: huSettlement.huMultiplierB,
+        effectiveHuA: seats[i]!.hu,
+        effectiveHuB: seats[j]!.hu,
         isDealerPair,
+        rawDeltaHu: huSettlement.rawDeltaHu,
+        piaoMultiplier: huSettlement.piaoMultiplier,
+        dealerMultiplier: huSettlement.dealerMultiplier,
         deltaHu: diffHu,
         deltaYao: diffYao,
         points: pairPoints,
@@ -655,46 +682,41 @@ export function settleChaHu(input: {
   if (baoZhuang && input.winnerSeat !== null) {
     const winnerSeat = input.winnerSeat;
     const pack = baoZhuang.payerSeat;
-    const winnerSeatObj = seats[winnerSeat]!;
-    const huMultiplierWinner = piaoHuMultiplierForSeat(winnerSeatObj);
-    const effectiveHuWinner = winnerSeatObj.hu * huMultiplierWinner;
-    let totalWin = 0;
+    // 包庄不是把六组两两流水清空后只给赢家一笔总账。
+    // 先完整保留普通查胡结果，再把“另外两家原本给胡家的正向份额”
+    // 转由点炮者承担；例如丁仍然要给乙付差胡，不能因为甲胡了就被抹掉。
+    for (let seat = 0; seat < 4; seat += 1) {
+      if (seat === winnerSeat || seat === pack) continue;
+      const transaction = transactions.find((item) => (
+        (item.seatA === winnerSeat && item.seatB === seat)
+        || (item.seatA === seat && item.seatB === winnerSeat)
+      ));
+      if (!transaction) continue;
+      const winnerPoints = transaction.seatA === winnerSeat
+        ? transaction.points
+        : -transaction.points;
+      if (winnerPoints <= 0) continue;
 
-    // Reset all deltas & transactions for clean 100% bao-zhuang transfer
-    for (let s = 0; s < 4; s += 1) {
-      deltas[s] = 0;
-      receivables[s] = 0;
-      payables[s] = 0;
+      // 撤销被包玩家 -> 胡家的原转账。
+      deltas[seat] += winnerPoints;
+      deltas[winnerSeat] -= winnerPoints;
+      receivables[winnerSeat] -= winnerPoints;
+      payables[seat] -= winnerPoints;
+
+      // 改为包庄者 -> 胡家；其余五组两两结算保持原样。
+      deltas[pack] -= winnerPoints;
+      deltas[winnerSeat] += winnerPoints;
+      payables[pack] += winnerPoints;
+      receivables[winnerSeat] += winnerPoints;
     }
 
-    for (let seat = 0; seat < 4; seat += 1) {
-      if (seat === winnerSeat) continue;
-      const opponent = seats[seat]!;
-      const huMultiplierOpp = piaoHuMultiplierForSeat(opponent);
-      const effectiveHuOpp = opponent.hu * huMultiplierOpp;
-      const diffHuBeforeDealer = effectiveHuWinner - effectiveHuOpp;
-      const diffHu = diffHuBeforeDealer * (winnerSeat === input.dealer || seat === input.dealer ? 2 : 1);
-      const diffYao = winnerSeatObj.yao - opponent.yao;
-      const pairPoints = diffHu * HU_RATE + diffYao * YAO_RATE;
-
-      const seatGain = Math.max(0, pairPoints) + (hunDi ? HUN_DI : 0);
-      totalWin += seatGain;
-    }
-
-    deltas[winnerSeat] = totalWin;
-    receivables[winnerSeat] = totalWin;
-    payables[winnerSeat] = 0;
-
-    deltas[pack] = -totalWin;
-    payables[pack] = totalWin;
-    receivables[pack] = 0;
-
-    for (let seat = 0; seat < 4; seat += 1) {
-      if (seat !== winnerSeat && seat !== pack) {
-        deltas[seat] = 0;
-        receivables[seat] = 0;
-        payables[seat] = 0;
-      }
+    if (hunDi) {
+      // 荤底仍是三份独立的 30 分；包庄时三份都由包庄者承担。
+      const totalHunDi = HUN_DI * 3;
+      deltas[winnerSeat] += totalHunDi;
+      deltas[pack] -= totalHunDi;
+      receivables[winnerSeat] += totalHunDi;
+      payables[pack] += totalHunDi;
     }
   }
 

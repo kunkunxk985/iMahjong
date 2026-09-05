@@ -33,11 +33,13 @@ export class GameClient {
   url = DEFAULT_WS_URL;
   private ws: WebSocket | null = null;
   private heartbeat: ReturnType<typeof setInterval> | null = null;
+  private watchdog: ReturnType<typeof setInterval> | null = null;
   private retry: ReturnType<typeof setTimeout> | null = null;
+  private lastServerActivity = Date.now();
   private handlers: ClientHandlers;
   private pendingReconnect: { roomCode: string; token: string } | null = null;
   private boundUser: { userId: string; token: string } | null = null;
-  private playerProfile: { nickname: string; avatar: string; title: string } | null = null;
+  private playerProfile: { nickname: string; avatar: string; title: string; bio?: string } | null = null;
   private roomActive = false;
   private retries = 0;
   private closedByUser = false;
@@ -60,11 +62,15 @@ export class GameClient {
       return;
     }
     this.ws = ws;
+    this.lastServerActivity = Date.now();
     ws.onopen = () => {
       if (this.ws !== ws) return;
       this.retries = 0;
+      this.lastServerActivity = Date.now();
       this.handlers.onStatus('open');
       this.heartbeat = setInterval(() => this.send({ type: 'player:heartbeat' }), HEARTBEAT_INTERVAL_MS);
+      this.clearWatchdog();
+      this.watchdog = setInterval(() => this.checkWatchdog(), 5000);
       if (this.boundUser) {
         this.send({ type: 'friend:bindUser', userId: this.boundUser.userId, token: this.boundUser.token });
       }
@@ -82,6 +88,7 @@ export class GameClient {
       if (this.ws !== ws) return;
       this.ws = null;
       this.clearHeartbeat();
+      this.clearWatchdog();
       this.retry = null;
       this.handlers.onStatus('closed');
       if (!this.closedByUser) this.scheduleReconnect();
@@ -92,6 +99,7 @@ export class GameClient {
     };
     ws.onmessage = (event) => {
       if (this.ws !== ws) return;
+      this.lastServerActivity = Date.now();
       let message: S2CMessage;
       try {
         message = JSON.parse(String(event.data)) as S2CMessage;
@@ -137,11 +145,13 @@ export class GameClient {
         }
       }
       if (message.type === 'error') {
-        if (message.code === 'left') {
+        if (message.code === 'left' || message.code === 'reconnect-failed') {
           this.pendingReconnect = null;
           this.roomActive = false;
-          this.handlers.onLeft?.();
-          return;
+          if (message.code === 'left') {
+            this.handlers.onLeft?.();
+            return;
+          }
         }
         this.handlers.onError(message.message, message.code);
       }
@@ -151,6 +161,7 @@ export class GameClient {
   disconnect(user = true): void {
     this.closedByUser = user;
     this.clearHeartbeat();
+    this.clearWatchdog();
     if (this.retry) {
       clearTimeout(this.retry);
       this.retry = null;
@@ -185,10 +196,10 @@ export class GameClient {
     }
   }
 
-  setPlayerProfile(nickname: string, avatar = DEFAULT_AVATAR, title = DEFAULT_TITLE): void {
-    this.playerProfile = { nickname, avatar, title };
+  setPlayerProfile(nickname: string, avatar = DEFAULT_AVATAR, title = DEFAULT_TITLE, bio?: string): void {
+    this.playerProfile = { nickname, avatar, title, bio };
     if (this.roomActive && this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.send({ type: 'player:updateProfile', nickname, avatar, title });
+      this.send({ type: 'player:updateProfile', nickname, avatar, title, bio });
     }
   }
 
@@ -205,16 +216,27 @@ export class GameClient {
     avatarOrSolo: string | boolean = DEFAULT_AVATAR,
     solo = false,
     title = DEFAULT_TITLE,
+    bio?: string,
+    botCount?: number,
+    pointRate?: number,
   ): void {
     const avatar = typeof avatarOrSolo === 'string' ? avatarOrSolo : DEFAULT_AVATAR;
     const isSolo = typeof avatarOrSolo === 'boolean' ? avatarOrSolo : solo;
-    this.playerProfile = { nickname, avatar, title };
-    this.send({ type: 'room:create', nickname, avatar, title, solo: isSolo });
+    this.playerProfile = { nickname, avatar, title, bio };
+    this.send({ type: 'room:create', nickname, avatar, title, bio, solo: isSolo, botCount, pointRate });
   }
 
-  joinRoom(roomCode: string, nickname: string, avatar = DEFAULT_AVATAR, title = DEFAULT_TITLE): void {
-    this.playerProfile = { nickname, avatar, title };
-    this.send({ type: 'room:join', roomCode, nickname, avatar, title });
+  addBot(): void {
+    this.send({ type: 'room:bot:add' });
+  }
+
+  removeBot(seat?: number): void {
+    this.send({ type: 'room:bot:remove', seat });
+  }
+
+  joinRoom(roomCode: string, nickname: string, avatar = DEFAULT_AVATAR, title = DEFAULT_TITLE, bio?: string): void {
+    this.playerProfile = { nickname, avatar, title, bio };
+    this.send({ type: 'room:join', roomCode, nickname, avatar, title, bio });
   }
 
   leave(): void {
@@ -251,9 +273,27 @@ export class GameClient {
   }
 
   private scheduleReconnect(): void {
-    if (!this.pendingReconnect || this.retries >= 20) return;
+    if (!this.pendingReconnect || this.retries >= 30) return;
     this.retries += 1;
-    this.retry = setTimeout(() => this.connect(this.url), Math.min(1000 * this.retries, 5000));
+    // Exponential backoff with random jitter: base 500ms, multiplier 1.8, max 10s
+    const base = Math.min(500 * Math.pow(1.8, Math.max(0, this.retries - 1)), 10_000);
+    const jitter = 0.8 + Math.random() * 0.4;
+    const delay = Math.round(base * jitter);
+    this.retry = setTimeout(() => this.connect(this.url), delay);
+  }
+
+  private checkWatchdog(): void {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    if (Date.now() - this.lastServerActivity > 25_000) {
+      this.handlers.onError('网络连接响应超时，正在自动重连...', 'watchdog-timeout');
+      if (this.ws) {
+        try {
+          this.ws.close();
+        } catch {
+          // Ignore
+        }
+      }
+    }
   }
 
   private send(message: C2SMessage): void {
@@ -268,6 +308,13 @@ export class GameClient {
     if (this.heartbeat) {
       clearInterval(this.heartbeat);
       this.heartbeat = null;
+    }
+  }
+
+  private clearWatchdog(): void {
+    if (this.watchdog) {
+      clearInterval(this.watchdog);
+      this.watchdog = null;
     }
   }
 }

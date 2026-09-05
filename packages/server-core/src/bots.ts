@@ -1,4 +1,5 @@
 import { chooseCompanionAction, companionThinkMs } from '@pizhou/rules';
+import type { PublicPlayerView } from '@pizhou/shared';
 import { broadcastSettlement, broadcastState, handleAction, type Room } from './room.ts';
 
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -7,7 +8,7 @@ export function scheduleBots(room: Room): void {
   const prev = timers.get(room.code);
   if (prev) clearTimeout(prev);
   timers.delete(room.code);
-  if (!room.solo) return;
+  if (!room.occupied.some((player) => player.isBot)) return;
   if (room.phase === 'settlement') {
     for (const player of room.occupied) {
       if (player.isBot) player.ready = true;
@@ -52,7 +53,25 @@ function stepBots(room: Room): void {
   for (const player of room.occupied) {
     if (!player.isBot) continue;
     const actions = room.game.availableFor(player.seat);
-    const action = chooseCompanionAction(actions, room.game.seats[player.seat]!);
+    if (actions.length === 0) continue;
+
+    // Collect public perspectives and table discards for companion tactical analysis
+    const clientView = room.viewFor(player);
+    const publicViews = clientView.players.filter((p) => p.seat !== player.seat) as PublicPlayerView[];
+    const allDiscards = room.game.seats.flatMap((s) => s.discards);
+    const humanBusy = room.occupied.some((p) => !p.isBot && room.game!.availableFor(p.seat).length > 0);
+
+    const action = chooseCompanionAction(
+      actions,
+      room.game.seats[player.seat]!,
+      Math.random,
+      {
+        publicViews,
+        allDiscards,
+        currentSeat: player.seat,
+        humanBusy,
+      },
+    );
     if (!action) continue;
     const error = handleAction(room, player, room.game.sequence, `bot-${Date.now()}-${player.seat}`, action);
     if (error) continue;

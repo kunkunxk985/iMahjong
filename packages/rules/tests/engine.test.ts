@@ -148,10 +148,12 @@ test('三张相同牌提示坎上，确认后锁定且不能拆开出牌', () =>
 
   const action = game.availableFor(0).find((item) => item.kind === 'kan' && item.key === 'tong-5');
   assert.ok(action, '应提示坎上五筒');
+  const wallBeforeKan = game['wall'].length;
   const result = game.apply(0, { kind: 'kan', key: 'tong-5', tileIds: action!.tileIds }, 'kan-1', game.sequence);
   assert.equal(result.ok, true, result.error);
   assert.equal(runtime.melds.some((meld) => meld.type === 'kan' && meld.tiles[0]?.key === 'tong-5'), true);
   assert.equal(runtime.hand.some((tile) => locked.some((item) => item.id === tile.id)), false);
+  assert.equal(game['wall'].length, wallBeforeKan, '主动坎上只锁定三张，不应从牌尾补牌');
 
   const discardLocked = game.apply(0, { kind: 'discard', tileId: locked[0]!.id }, 'kan-locked', game.sequence);
   assert.equal(discardLocked.ok, false);
@@ -196,11 +198,11 @@ test('三组碰坎杠后可选择出牌并关门，臭牌记录采用全桌牌�
   assert.deepEqual(runtime.discardedBeforeClose.sort(), ['dragon-1', 'wan-8', 'wan-9']);
   assert.equal(runtime.discards.some((tile) => tile.id === gateDiscard.id), true);
 
-  // 关门完成后，之后才出现的牌不能改变这位玩家的“关门前牌河”快照；
-  // 其他尚未关门的玩家仍要继续记录这张牌。
+  // 关门完成后也要继续维护整局牌河；若之后拆对换听重新关门，
+  // 这张牌必须继续被识别为臭牌。
   const postCloseDiscard = makeTile('wan', 7, 0);
   game['recordResolvedDiscard'](postCloseDiscard);
-  assert.equal(runtime.discardedBeforeClose.includes(postCloseDiscard.key), false);
+  assert.equal(runtime.discardedBeforeClose.includes(postCloseDiscard.key), true);
   assert.equal(game.seats[1]!.discardedBeforeClose.includes(postCloseDiscard.key), true);
 });
 
@@ -444,6 +446,10 @@ test('锁定坎可升级：别人打第四张为送杠，自己摸第四张可�
   game.currentSeat = 1;
   const ziGang = game.availableFor(1).find((item) => item.kind === 'zi-gang' && item.key === 'tiao-1');
   assert.ok(ziGang);
+  const wrongTile = game.apply(1, { kind: 'zi-gang', key: 'tiao-1', tileId: makeTile('tiao', 1, 0).id }, 'zi-gang-wrong-tile', game.sequence);
+  assert.equal(wrongTile.ok, false);
+  assert.equal(game.seats[1]!.melds[0]?.type, 'kan');
+  assert.equal(game.seats[1]!.hand.length, 1);
   const result = game.apply(1, { kind: 'zi-gang', key: ziGang.key, tileId: ziGang.tileId }, 'zi-gang', game.sequence);
   assert.equal(result.ok, true, result.error);
   assert.equal(game.seats[1]!.melds.some((meld) => meld.type === 'zi-gang' && meld.tiles.length === 4), true);

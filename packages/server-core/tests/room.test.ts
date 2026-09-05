@@ -143,19 +143,29 @@ test('房主设置底分单价后同步到 ClientView', () => {
   assert.equal(view.pointRate, 0.2);
 });
 
-test('房间 ClientView 会同步玩家自定义头像与网名', () => {
+test('房间 ClientView 会同步玩家自定义头像、网名与个性签名', () => {
   const customAvatar = 'data:image/webp;base64,dGVzdC1hdmF0YXI=';
   const manager = new RoomManager();
-  const created = manager.create('云端雀士', socket(), false, 0.1, customAvatar, '大蒜宗师');
-  const joined = manager.join(created.room.code, '朋友', socket(), '🐱', '起手杠狂魔');
+  const created = manager.create('云端雀士', socket(), false, 0.1, customAvatar, '大蒜宗师', '运河雀王在此！');
+  const joined = manager.join(created.room.code, '朋友', socket(), 'guofeng_yushi', '起手杠狂魔', '不碰坎不上');
 
   assert.notEqual(typeof joined, 'string');
   const view = created.room.viewFor(created.player);
   assert.equal(view.players[0]?.nickname, '云端雀士');
   assert.equal(view.players[0]?.avatar, customAvatar);
   assert.equal(view.players[0]?.title, '大蒜宗师');
-  assert.equal(view.players[1]?.avatar, '🐱');
+  assert.equal(view.players[0]?.bio, '运河雀王在此！');
+  assert.equal(view.players[1]?.avatar, 'guofeng_yushi');
   assert.equal(view.players[1]?.title, '起手杠狂魔');
+  assert.equal(view.players[1]?.bio, '不碰坎不上');
+
+  // 更新资料同步
+  created.room.updatePlayerProfile(created.player, '云端雀皇', 'guofeng_mingling', '运河雀圣', '新签名：算绝千牌');
+  const updatedView = created.room.viewFor(created.player);
+  assert.equal(updatedView.players[0]?.nickname, '云端雀皇');
+  assert.equal(updatedView.players[0]?.avatar, 'guofeng_mingling');
+  assert.equal(updatedView.players[0]?.title, '运河雀圣');
+  assert.equal(updatedView.players[0]?.bio, '新签名：算绝千牌');
 });
 
 test('牌桌快捷互动由服务端广播，并使用房间内的真实账号身份', () => {
@@ -235,4 +245,82 @@ test('游戏开始后底分单价固定，不可中途修改', () => {
   assert.equal(created.room.pointRate, 0.2); // Still 0.2, unchanged!
   assert.equal(lastMessage?.type, 'error');
   assert.match(lastMessage?.message, /已固定/);
+});
+
+test('创建房间支持指定自定义人机数量 (例如2人机+1房主，预留1空位给朋友)', () => {
+  const manager = new RoomManager();
+  const hostWs = socket();
+  const created = manager.create('房主小王', hostWs, false, 0.1, undefined, undefined, undefined, 2);
+  assert.equal(created.room.phase, 'lobby');
+  assert.equal(created.room.occupied.length, 3); // 1 host + 2 bots
+  assert.equal(created.room.players[0]?.nickname, '房主小王');
+  assert.equal(created.room.players[0]?.isBot, false);
+  assert.equal(created.room.players[1]?.isBot, true);
+  assert.equal(created.room.players[1]?.ready, true);
+  assert.equal(created.room.players[2]?.isBot, true);
+  assert.equal(created.room.players[2]?.ready, true);
+  assert.equal(created.room.players[3], null); // Empty seat for friend!
+
+  // Friend joins seat 3
+  const friendWs = socket();
+  const joined = manager.join(created.room.code, '朋友小李', friendWs);
+  assert.notEqual(typeof joined, 'string');
+  if (typeof joined !== 'string') {
+    assert.equal(joined.player.seat, 3);
+    assert.equal(joined.player.isBot, false);
+  }
+  assert.equal(created.room.occupied.length, 4);
+
+  // Both humans ready up
+  created.player.ready = true;
+  if (typeof joined !== 'string') joined.player.ready = true;
+
+  // Game can start!
+  assert.equal(created.room.canStart(), true);
+  assert.equal(created.room.startGame(), null);
+  assert.equal(created.room.phase, 'playing');
+});
+
+test('房主在等待大厅可动态添加入座人机与移除人机', () => {
+  const manager = new RoomManager();
+  const hostWs = socket();
+  const created = manager.create('房主', hostWs, false);
+  assert.equal(created.room.occupied.length, 1);
+
+  // Host adds bot 1
+  handleMessage(manager, hostWs, { type: 'room:bot:add' });
+  assert.equal(created.room.occupied.length, 2);
+  assert.equal(created.room.players[1]?.isBot, true);
+
+  // Host adds bot 2
+  handleMessage(manager, hostWs, { type: 'room:bot:add' });
+  assert.equal(created.room.occupied.length, 3);
+  assert.equal(created.room.players[2]?.isBot, true);
+
+  // Host removes bot at seat 1
+  handleMessage(manager, hostWs, { type: 'room:bot:remove', seat: 1 });
+  assert.equal(created.room.occupied.length, 2);
+  assert.equal(created.room.players[1], null);
+  assert.equal(created.room.players[2]?.isBot, true);
+
+  // Host removes last bot without specifying seat
+  handleMessage(manager, hostWs, { type: 'room:bot:remove' });
+  assert.equal(created.room.occupied.length, 1);
+  assert.equal(created.room.players[2], null);
+
+  // Non-host cannot add or remove bots
+  const guestWs = socket();
+  const joinedGuest = manager.join(created.room.code, '访客', guestWs);
+  assert.notEqual(typeof joinedGuest, 'string');
+  let errorMsg: any = null;
+  const guestSocket = {
+    readyState: 1,
+    send(d: string) { errorMsg = JSON.parse(d); },
+  } as unknown as WebSocket;
+  (manager as any).bySocket = (ws: any) => {
+    if (ws === guestSocket) return { room: created.room, player: (joinedGuest as any).player };
+    return null;
+  };
+  handleMessage(manager, guestSocket as any, { type: 'room:bot:add' });
+  assert.match(errorMsg?.message, /只有房主/);
 });
