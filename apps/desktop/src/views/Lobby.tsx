@@ -377,7 +377,7 @@ export function Lobby({
       <footer className="hall-footer-dock">
         <div className="dock-left">
           <button type="button" className="dock-link-btn" onClick={onSettings} title={serverUrl}>
-            ⚙️ 网络设置
+            ⚙️ 游戏设置
           </button>
         </div>
 

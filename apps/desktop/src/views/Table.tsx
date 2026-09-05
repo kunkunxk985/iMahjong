@@ -890,14 +890,6 @@ export function Table({
       ) : null}
       {showSettings ? (
         <SettingsModal
-          serverUrl={(() => {
-            try {
-              return localStorage.getItem('pizhou_server_url') || '';
-            } catch {
-              return '';
-            }
-          })()}
-          onSave={() => {}}
           onClose={() => setShowSettings(false)}
         />
       ) : null}

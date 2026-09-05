@@ -47,14 +47,6 @@ function initialNickname(): string {
   return `玩家${String(Math.floor(Math.random() * 90) + 10)}`;
 }
 
-function savedOverrideUrl(): string {
-  try {
-    return localStorage.getItem('pizhou.serverUrl') || '';
-  } catch {
-    return '';
-  }
-}
-
 export function App() {
   const [nickname, setNicknameState] = useState(initialNickname);
   const [auth, setAuth] = useState<{ token: string | null; user: UserProfile | null }>(() => getStoredAuth());
@@ -67,7 +59,6 @@ export function App() {
 
   const [localUrl, setLocalUrl] = useState('');
   const [localUrlReady, setLocalUrlReady] = useState(false);
-  const [overrideUrl, setOverrideUrl] = useState(savedOverrideUrl);
   const [soloIntent, setSoloIntent] = useState(false);
   const [mode, setMode] = useState<Mode>('home');
   const [networkStatus, setNetworkStatus] = useState<NetworkStatus>('connecting');
@@ -131,13 +122,6 @@ export function App() {
 
   useEffect(() => {
     let active = true;
-    const envWsUrl = import.meta.env.VITE_WS_URL;
-    if (envWsUrl) {
-      setLocalUrl(envWsUrl);
-      setLocalUrlReady(true);
-      return undefined;
-    }
-
     const localUrlApi = window.pizhou?.getLocalServerUrl;
     if (!localUrlApi) {
       setLocalUrl(DEFAULT_WS_URL);
@@ -158,7 +142,7 @@ export function App() {
 
   const targetUrl = soloIntent
     ? (localUrl || DEFAULT_WS_URL)
-    : (overrideUrl.trim() || DEFAULT_WS_URL);
+    : DEFAULT_WS_URL;
   const urlReady = soloIntent ? localUrlReady : true;
 
   // Background refresh profile if token exists
@@ -167,7 +151,7 @@ export function App() {
     if (!targetUrl) return;
     const currentAuth = getStoredAuth();
     if (currentAuth.token) {
-      apiGetProfile(targetUrl, currentAuth.token)
+      apiGetProfile(DEFAULT_WS_URL, currentAuth.token)
         .then((user) => {
           if (!active) return;
           setAuth({ token: currentAuth.token, user });
@@ -184,7 +168,7 @@ export function App() {
     return () => {
       active = false;
     };
-  }, [targetUrl]);
+  }, []);
 
   useEffect(() => {
     if (!urlReady || !targetUrl) return undefined;
@@ -251,7 +235,7 @@ export function App() {
   const handleLogout = () => {
     const activeToken = auth.token;
     if (activeToken) {
-      void apiLogout(clientRef.current?.url || targetUrl, activeToken).catch(() => {});
+      void apiLogout(DEFAULT_WS_URL, activeToken).catch(() => {});
     }
     clientRef.current?.unbindUser();
     saveStoredAuth(null, null);
@@ -269,7 +253,7 @@ export function App() {
       return false;
     }
     if (networkStatus !== 'open') {
-      setError('还没有连上牌桌服务器，请检查服务器地址');
+      setError('还没有连上牌桌服务器，请检查网络连接后重试');
       return false;
     }
     setError('');
@@ -348,21 +332,10 @@ export function App() {
     clientRef.current?.inviteFriend(toUserId, view.roomCode);
   };
 
-  const saveServerUrl = (value: string) => {
-    const next = value.trim();
-    setOverrideUrl(next);
-    try {
-      localStorage.setItem('pizhou.serverUrl', next);
-    } catch {
-      // Ignore storage failures; the current session still works.
-    }
-    setSettingsOpen(false);
-    setError('');
-  };
-
   const inGame = Boolean(view && (view.phase === 'playing' || view.phase === 'settlement'));
   const inWaitingRoom = Boolean(mode === 'online' && view?.phase === 'lobby');
-  const displayUrl = clientRef.current?.url || targetUrl;
+  // Account/profile/history APIs always use the cloud, even during local practice.
+  const displayUrl = DEFAULT_WS_URL;
   const soloBusy = soloIntent && networkStatus !== 'open';
 
   return (
@@ -501,7 +474,7 @@ export function App() {
 
         {rulesOpen ? <RulesModal onClose={() => setRulesOpen(false)} /> : null}
         {settingsOpen ? (
-          <SettingsModal serverUrl={overrideUrl} onSave={saveServerUrl} onClose={() => setSettingsOpen(false)} />
+          <SettingsModal onClose={() => setSettingsOpen(false)} />
         ) : null}
         {error && inGame ? <div className="toast">{error}</div> : null}
       </div>

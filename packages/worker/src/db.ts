@@ -77,7 +77,10 @@ export interface FriendRequestRow {
 }
 
 const PASSWORD_HASH_PREFIX = 'pbkdf2-sha256';
-const PASSWORD_HASH_ITERATIONS = 120_000;
+// Cloudflare Workers Web Crypto rejects PBKDF2 iteration counts above 100,000.
+// Keep new hashes at the platform ceiling so account creation and guest login
+// work in production as well as in the Node-based test environment.
+const PASSWORD_HASH_ITERATIONS = 100_000;
 const PASSWORD_SALT_BYTES = 16;
 const LEGACY_PASSWORD_SALT = 'pizhou_salt_v1';
 
@@ -149,7 +152,7 @@ async function verifyPassword(
   const parts = storedHash.split('$');
   if (parts.length !== 4) return { valid: false, needsUpgrade: false };
   const iterations = Number(parts[1]);
-  if (!Number.isInteger(iterations) || iterations < 10_000 || iterations > 1_000_000) {
+  if (!Number.isInteger(iterations) || iterations < 10_000 || iterations > 100_000) {
     return { valid: false, needsUpgrade: false };
   }
 

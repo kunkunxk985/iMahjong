@@ -1,5 +1,17 @@
 # 邳州麻将：服务器云端部署与公网联机指南
 
+## 当前 Cloudflare 部署
+
+- 客户端默认地址：`wss://imahjong.kunkunxk985.workers.dev`。
+- `imahjong` 是公开入口，通过 Service Binding 将 HTTP 和 WebSocket 请求原样交给 `pizhou-mahjong-server`。
+- 原服务继续拥有 `PizhouHubDO` 数据库；不要删除原服务、重建命名空间或改变 `global_pizhou_hub`，否则可能无法访问原账号数据。
+- 旧地址仍兼容旧版客户端。这里只更换公开入口，不迁移数据库、不修复已有登录故障。
+- 完整部署：`npm run deploy:cf`；只部署入口：`npm run deploy:gateway -w @pizhou/worker`。
+- 客户端固定连接此云端入口，不再提供自定义服务器输入，旧地址缓存不生效。已安装 App 需更新打包版本。单机练习保留内置本地服务，账号、资料、战绩仍走固定云端。
+- 发布客户端前：`npm run verify`；Mac 客户端用 `npm run package:mac`，Windows 客户端用 `npm run package:win`。
+
+以下为独立服务器的备选部署方式，并非当前 Cloudflare 部署步骤。
+
 本文档提供三种将游戏服务器部署到云服务器（阿里云 / 腾讯云 / 华为云 / AWS / 自建 VPS）的方法。
 
 ---

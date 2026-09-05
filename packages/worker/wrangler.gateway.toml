@@ -1,0 +1,9 @@
+name = "imahjong"
+main = "src/gateway.ts"
+compatibility_date = "2024-09-01"
+workers_dev = true
+
+# Keep the existing Worker and its Durable Object namespace as the data authority.
+[[services]]
+binding = "GAME_SERVICE"
+service = "pizhou-mahjong-server"

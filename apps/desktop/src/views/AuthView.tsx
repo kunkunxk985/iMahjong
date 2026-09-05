@@ -260,7 +260,7 @@ export function AuthView({ serverUrl, onSuccess, onRules, onSettings }: AuthView
           )}
           {onSettings && (
             <button type="button" className="btn-link" onClick={onSettings}>
-              ⚙️ 网络设置
+              ⚙️ 游戏设置
             </button>
           )}
         </div>
