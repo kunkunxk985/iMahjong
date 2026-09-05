@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Audio Asset Generation Script for Pizhou Mahjong
+ * Audio Asset Generation Script for iMahjong
  *
  * Generates:
  * 1. 16 Physical SFX WAV files (natural sampled acoustic physics synthesis) in apps/desktop/public/assets/audio/sfx/
@@ -27,7 +27,7 @@ mkdirSync(sfxDir, { recursive: true });
 mkdirSync(mandarinDir, { recursive: true });
 mkdirSync(pizhouDir, { recursive: true });
 
-console.log('=== Pizhou Mahjong Audio Asset Generator ===');
+console.log('=== iMahjong Audio Asset Generator ===');
 console.log(`SFX Target:      ${sfxDir}`);
 console.log(`Mandarin Target: ${mandarinDir}`);
 console.log(`Pizhou Target:   ${pizhouDir}`);

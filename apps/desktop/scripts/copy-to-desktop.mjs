@@ -19,7 +19,7 @@ if (fs.existsSync(releaseDir) && fs.existsSync(desktopDir)) {
       execSync(`rm -rf "${destApp}" && cp -R "${srcApp}" "${destApp}"`);
       console.log(`✓ 已成功将最新 .app 应用覆盖生成到桌面: ${destApp}`);
 
-      const destMacZip = path.join(desktopDir, '邳州麻将-Mac版.zip');
+      const destMacZip = path.join(desktopDir, 'iMahjong-Mac版.zip');
       execSync(`rm -f "${destMacZip}" && cd "${macDir}" && zip -r -q -y "${destMacZip}" "${appFile}"`);
       console.log(`✓ 已成功将 Mac 独立压缩包生成到桌面: ${destMacZip}`);
     }
@@ -29,7 +29,7 @@ if (fs.existsSync(releaseDir) && fs.existsSync(desktopDir)) {
   const winZip = fs.readdirSync(releaseDir).find((item) => item.includes('win') && item.endsWith('.zip'));
   if (winZip) {
     const srcWinZip = path.join(releaseDir, winZip);
-    const destWinZip = path.join(desktopDir, '邳州麻将-Windows版.zip');
+    const destWinZip = path.join(desktopDir, 'iMahjong-Windows版.zip');
     fs.copyFileSync(srcWinZip, destWinZip);
     console.log(`✓ 已成功将 Windows 独立免安装版压缩包生成到桌面: ${destWinZip}`);
   }
@@ -37,7 +37,7 @@ if (fs.existsSync(releaseDir) && fs.existsSync(desktopDir)) {
   // 3. Clean up any obsolete .dmg on desktop if present
   const desktopFiles = fs.readdirSync(desktopDir);
   for (const file of desktopFiles) {
-    if (file.startsWith('邳州麻将') && file.endsWith('.dmg')) {
+    if (file.startsWith('iMahjong') && file.endsWith('.dmg')) {
       try {
         fs.unlinkSync(path.join(desktopDir, file));
         console.log(`✓ 已清理旧的 DMG 文件: ${file}`);

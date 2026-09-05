@@ -1,8 +1,8 @@
 {
-  "name": "pizhou-mahjong-demo",
+  "name": "imahjong",
   "private": true,
   "version": "0.1.0",
-  "description": "邳州麻将四人联机桌面 Demo",
+  "description": "iMahjong 邳州麻将四人联机桌面应用",
   "workspaces": [
     "apps/*",
     "packages/*"

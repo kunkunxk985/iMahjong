@@ -1,4 +1,4 @@
-# Multi-stage production build for Pizhou Mahjong Game Server
+# Multi-stage production build for iMahjong Game Server
 FROM node:20-alpine AS builder
 
 WORKDIR /app

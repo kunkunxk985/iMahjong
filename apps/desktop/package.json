@@ -2,8 +2,8 @@
   "name": "@pizhou/desktop",
   "version": "0.1.0",
   "private": true,
-  "author": "Pizhou Mahjong",
-  "description": "邳州麻将桌面版",
+  "author": "iMahjong",
+  "description": "iMahjong 邳州麻将桌面版",
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "node scripts/dev.mjs",
@@ -35,7 +35,7 @@
   },
   "build": {
     "appId": "com.pizhou.mahjong.demo",
-    "productName": "邳州麻将",
+    "productName": "iMahjong",
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "release",

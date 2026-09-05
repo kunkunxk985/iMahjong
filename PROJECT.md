@@ -1,4 +1,4 @@
-# Project: Pizhou Mahjong Production Overhaul & Aesthetic Rebirth
+# Project: iMahjong · Pizhou Mahjong Production Overhaul & Aesthetic Rebirth
 
 ## Architecture
 - **Layer Boundaries**:
