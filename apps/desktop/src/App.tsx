@@ -3,6 +3,7 @@ import {
   DEFAULT_AVATAR,
   DEFAULT_TITLE,
   DEFAULT_WS_URL,
+  SERVER_PORT,
   type ClientView,
   type FriendInvite,
   type GameChatMessage,
@@ -26,6 +27,8 @@ import { Table } from './views/Table';
 import { WaitingRoom } from './views/WaitingRoom';
 
 type Mode = 'home' | 'local' | 'online';
+
+const FALLBACK_LOCAL_WS_URL = `ws://127.0.0.1:${SERVER_PORT}`;
 
 function celebrationKey(view: ClientView): string | null {
   if (!view.settlement) return null;
@@ -124,14 +127,14 @@ export function App() {
     let active = true;
     const localUrlApi = window.pizhou?.getLocalServerUrl;
     if (!localUrlApi) {
-      setLocalUrl(DEFAULT_WS_URL);
+      setLocalUrl(FALLBACK_LOCAL_WS_URL);
       setLocalUrlReady(true);
       return undefined;
     }
 
     void localUrlApi().then((url) => {
       if (!active) return;
-      setLocalUrl(url || DEFAULT_WS_URL);
+      setLocalUrl(url || '');
       setLocalUrlReady(true);
     });
 
@@ -295,6 +298,22 @@ export function App() {
     requestedModeRef.current = 'local';
     pendingSoloRef.current = true;
     setSoloIntent(true);
+    // Re-check on demand. Startup can race a stale process or a temporarily
+    // occupied port; the main process is allowed to recover and retry now.
+    const localServerRequest = window.pizhou?.getLocalServerUrl?.();
+    if (!localServerRequest) {
+      setLocalUrl(FALLBACK_LOCAL_WS_URL);
+      setLocalUrlReady(true);
+    } else void localServerRequest.then((url) => {
+      if (url) {
+        setLocalUrl(url);
+        setLocalUrlReady(true);
+        return;
+      }
+      pendingSoloRef.current = false;
+      setSoloIntent(false);
+      setError('本机牌局服务没有启动成功，请关闭旧的 iMahjong 窗口后重试');
+    });
     if (networkStatus === 'open' && isLoopbackWs(clientRef.current?.url ?? '')) {
       pendingSoloRef.current = false;
       clientRef.current?.createRoom(
