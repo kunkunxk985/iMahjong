@@ -5,7 +5,7 @@ import {
   type Tile,
 } from '@pizhou/shared';
 import { relativeSeat } from '../table/BoardSeats';
-import { createTileMesh, TILE_H, TILE_W } from './TileGeometry';
+import { TileMeshFactory, TILE_H, TILE_W } from './TileGeometry';
 
 export interface Scene3DCallbacks {
   onSelectTile?: (tileId: string) => void;
@@ -35,6 +35,9 @@ export class MahjongScene3D {
   private callbacks: Scene3DCallbacks = {};
   private animationFrameId = 0;
   private isDestroyed = false;
+  private tiles = new TileMeshFactory();
+  private lastView: ClientView | null = null;
+  private removeListeners: (() => void) | null = null;
 
   constructor(container: HTMLElement, callbacks: Scene3DCallbacks = {}) {
     this.container = container;
@@ -46,7 +49,7 @@ export class MahjongScene3D {
 
     // Camera: ergonomic mahjong perspective looking down at table center
     const aspect = container.clientWidth / container.clientHeight || 16 / 9;
-    this.camera = new THREE.PerspectiveCamera(38, aspect, 0.1, 1000);
+    this.camera = new THREE.PerspectiveCamera(this.fovForAspect(aspect), aspect, 0.1, 1000);
     this.camera.position.set(0, 36, 29);
     this.camera.lookAt(0, -1, 3.5);
 
@@ -128,7 +131,8 @@ export class MahjongScene3D {
       metalness: 0.12,
     });
     const rail = new THREE.Mesh(railGeo, railMat);
-    rail.position.y = -0.65;
+    // Keep the rail top below the felt; coplanar surfaces flicker across the table.
+    rail.position.y = -0.95;
     rail.receiveShadow = true;
     this.tableGroup.add(rail);
 
@@ -194,15 +198,31 @@ export class MahjongScene3D {
       const h = this.container.clientHeight;
       if (w === 0 || h === 0) return;
       this.camera.aspect = w / h;
+      this.camera.fov = this.fovForAspect(w / h);
       this.camera.updateProjectionMatrix();
       this.renderer.setSize(w, h);
     };
 
     window.addEventListener('resize', onResize);
+    this.removeListeners = () => {
+      el.removeEventListener('mousemove', onPointerMove);
+      el.removeEventListener('click', onClick);
+      el.removeEventListener('mouseleave', onPointerLeave);
+      window.removeEventListener('resize', onResize);
+    };
+  }
+
+  private fovForAspect(aspect: number): number {
+    // Preserve the hand's horizontal framing in narrower desktop windows.
+    return THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(38 / 2)) * Math.max(1, (16 / 9) / aspect)));
   }
 
   public update(view: ClientView, selectedId: string | null): void {
     this.selectedTileId = selectedId;
+    // Selection and hover do not change the server view or require new meshes.
+    if (this.lastView === view) return;
+    this.lastView = view;
+    this.hoveredMesh = null;
 
     // Clear old dynamic meshes
     while (this.handsGroup.children.length > 0) {
@@ -218,7 +238,7 @@ export class MahjongScene3D {
     this.handTileMeshes = [];
 
     const mySeat = view.mySeat;
-    const me = view.players[mySeat];
+    const me = view.players.find((player) => player.seat === mySeat);
 
     // 1. Render Own Hand (Bottom)
     if (me && isPrivatePlayerView(me)) {
@@ -229,7 +249,7 @@ export class MahjongScene3D {
     view.players.forEach((player) => {
       if (player.seat === mySeat) return;
       const rel = relativeSeat(player.seat, mySeat);
-      const count = isPrivatePlayerView(player) ? player.hand.length : 13;
+      const count = isPrivatePlayerView(player) ? player.hand.length : player.handCount;
       this.renderOpponentHand(rel, count);
     });
 
@@ -255,7 +275,7 @@ export class MahjongScene3D {
     const startX = -totalWidth / 2;
 
     hand.forEach((tile, index) => {
-      const mesh = createTileMesh(tile);
+      const mesh = this.tiles.createTileMesh(tile);
       const isSelected = selectedId === tile.id;
 
       // Base standing position: tilted backward 18 degrees, perpendicular to camera
@@ -287,7 +307,7 @@ export class MahjongScene3D {
     const startOffset = -totalWidth / 2;
 
     for (let i = 0; i < count; i += 1) {
-      const mesh = createTileMesh(null, true);
+      const mesh = this.tiles.createTileMesh(null, true);
       mesh.scale.set(oppScale, oppScale, oppScale);
       const offset = startOffset + i * spacing;
 
@@ -322,7 +342,7 @@ export class MahjongScene3D {
       const row = Math.floor(index / cols);
       const col = index % cols;
 
-      const mesh = createTileMesh(tile);
+      const mesh = this.tiles.createTileMesh(tile);
       mesh.scale.set(riverScale, riverScale, riverScale);
       const isLast = tile.id === lastDiscardId;
 
@@ -358,7 +378,7 @@ export class MahjongScene3D {
     let meldOffset = 0;
     melds.forEach((meld) => {
       meld.tiles?.forEach((tile: Tile, tIndex: number) => {
-        const mesh = createTileMesh(tile);
+        const mesh = this.tiles.createTileMesh(tile);
         mesh.scale.set(meldScale, meldScale, meldScale);
         mesh.rotation.set(-Math.PI / 2, 0, 0);
 
@@ -421,12 +441,30 @@ export class MahjongScene3D {
   }
 
   public destroy(): void {
+    if (this.isDestroyed) return;
     this.isDestroyed = true;
+    this.removeListeners?.();
+    this.removeListeners = null;
     cancelAnimationFrame(this.animationFrameId);
+    this.tableGroup.traverse((object) => {
+      if (object instanceof THREE.Mesh) {
+        object.geometry.dispose();
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        materials.forEach((material: THREE.Material) => material.dispose());
+      }
+    });
+    this.scene.traverse((object) => {
+      if (object instanceof THREE.DirectionalLight) object.shadow.dispose();
+    });
+    this.tiles.dispose();
+    this.scene.clear();
+    this.handTileMeshes = [];
+    this.hoveredMesh = null;
+    this.lastView = null;
     this.renderer.dispose();
+    this.renderer.forceContextLoss();
     if (this.container.contains(this.renderer.domElement)) {
       this.container.removeChild(this.renderer.domElement);
     }
   }
 }
-

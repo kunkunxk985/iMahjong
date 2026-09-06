@@ -63,6 +63,7 @@ export class GameClient {
     }
     this.ws = ws;
     this.lastServerActivity = Date.now();
+    this.watchdog = setInterval(() => this.checkWatchdog(), 5000);
     ws.onopen = () => {
       if (this.ws !== ws) return;
       this.retries = 0;
@@ -104,6 +105,10 @@ export class GameClient {
       try {
         message = JSON.parse(String(event.data)) as S2CMessage;
       } catch {
+        this.handlers.onError('服务器返回了无法识别的消息');
+        return;
+      }
+      if (!message || typeof message !== 'object' || typeof message.type !== 'string') {
         this.handlers.onError('服务器返回了无法识别的消息');
         return;
       }
@@ -283,16 +288,16 @@ export class GameClient {
   }
 
   private checkWatchdog(): void {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    if (!this.ws) return;
     if (Date.now() - this.lastServerActivity > 25_000) {
-      this.handlers.onError('网络连接响应超时，正在自动重连...', 'watchdog-timeout');
-      if (this.ws) {
-        try {
-          this.ws.close();
-        } catch {
-          // Ignore
-        }
-      }
+      // Retire the socket ourselves: a half-open connection may never emit close.
+      this.disconnect(false);
+      this.handlers.onStatus('closed');
+      this.handlers.onError(
+        this.pendingReconnect ? '网络连接响应超时，正在自动重连...' : '网络连接响应超时，请重新连接服务器',
+        'watchdog-timeout',
+      );
+      this.scheduleReconnect();
     }
   }
 

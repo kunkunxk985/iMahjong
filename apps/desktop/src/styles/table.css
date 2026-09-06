@@ -2114,12 +2114,23 @@
 .mahjong-board.is-3d-mode .board-table-geometry,
 .mahjong-board.is-3d-mode .board-corner,
 .mahjong-board.is-3d-mode .board-discard-layer,
-.mahjong-board.is-3d-mode .board-hand-area,
+.mahjong-board.is-3d-mode .board-own-hand,
+.mahjong-board.is-3d-mode .board-own-melds,
+.mahjong-board.is-3d-mode .board-hand-area::before,
+.mahjong-board.is-3d-mode .board-hand-area::after,
 .mahjong-board.is-3d-mode .board-opponent-melds,
-.mahjong-board.is-3d-mode .board-seat-top .concealed-hand,
-.mahjong-board.is-3d-mode .board-seat-left .concealed-hand,
-.mahjong-board.is-3d-mode .board-seat-right .concealed-hand {
+.mahjong-board.is-3d-mode .board-concealed {
   display: none !important;
+}
+
+/* Keep actions and listening hints available above the interactive 3D canvas. */
+.mahjong-board.is-3d-mode .board-hand-area {
+  pointer-events: none;
+}
+
+.mahjong-board.is-3d-mode .board-action-area,
+.mahjong-board.is-3d-mode .tenpai-bar {
+  pointer-events: auto;
 }
 
 .board-icon-button.board-3d-btn {
@@ -2218,4 +2229,3 @@
     font-size: 28px;
   }
 }
-
