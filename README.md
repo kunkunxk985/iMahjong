@@ -22,6 +22,10 @@ npm test
 # 完整验证：类型检查、规则测试、联机流程和桌面构建
 npm run verify
 
+# 3D 牌桌实际渲染回归：操作回调、按钮可见性、视角切换和 GPU 资源释放
+# 需要本机 Electron 运行依赖；可用 TABLE3D_SCREENSHOT_DIR 指定截图目录
+npm run test:3d -w @pizhou/desktop
+
 # 启动桌面端（会自带本机牌局服务，单机不必再开一份）
 npm run dev
 # 或

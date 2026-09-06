@@ -8,6 +8,8 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "test:3d": "node tests/run-table3d.mjs",
     "clean": "node scripts/clean.mjs",
     "build": "node scripts/build.mjs",
     "package:win": "npm run build && electron-builder --win zip --x64 && node scripts/copy-win-to-desktop.mjs",

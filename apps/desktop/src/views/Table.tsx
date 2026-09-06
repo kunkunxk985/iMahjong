@@ -463,13 +463,15 @@ export function Table({
   const hasClosedOpponent = Boolean(view.players.some((p) => p.seat !== view.mySeat && p.closed));
   const inXiangRiskPhase = Boolean(hasClosedOpponent && !me?.closed);
 
-  const discard = () => {
-    if (!selectedId || !canDiscard) return;
-    const tile = myHand.find((t) => t.id === selectedId);
-    if (tile) noteDiscardSource(tile.id);
-    onAction({ kind: 'discard', tileId: selectedId });
+  const discardTile = (tileId: string | null) => {
+    if (!tileId || !canDiscard) return;
+    const tile = myHand.find((t) => t.id === tileId);
+    if (!tile) return;
+    noteDiscardSource(tile.id);
+    onAction({ kind: 'discard', tileId: tile.id });
     setSelectedId(null);
   };
+  const discard = () => discardTile(selectedId);
 
   const handleAction = (action: AvailableAction | GameAction) => {
     if (action.kind === 'discard') {
@@ -644,12 +646,7 @@ export function Table({
           view={view}
           selectedTileId={selectedId}
           onSelectTile={(tileId) => setSelectedId(tileId)}
-          onDiscardTile={(tileId) => {
-            setSelectedId(tileId);
-            if (canDiscard) {
-              discard();
-            }
-          }}
+          onDiscardTile={discardTile}
           onTileHover={(tileKey, tileId) => {
             setHoveredTileKey(tileKey);
             setHoveredTileId(tileId);
@@ -844,18 +841,13 @@ export function Table({
                 }}
                 onClick={() => {
                   if (selectedId === tile.id && canDiscard) {
-                    noteDiscardSource(tile.id);
-                    onAction({ kind: 'discard', tileId: tile.id });
-                    setSelectedId(null);
+                    discardTile(tile.id);
                   } else {
                     setSelectedId(tile.id);
                   }
                 }}
                 onDoubleClick={() => {
-                  if (!canDiscard) return;
-                  noteDiscardSource(tile.id);
-                  onAction({ kind: 'discard', tileId: tile.id });
-                  setSelectedId(null);
+                  discardTile(tile.id);
                 }}
               />
             ))}

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import type { ClientView } from '@pizhou/shared';
 import { MahjongScene3D } from './MahjongScene3D';
 
@@ -19,14 +19,19 @@ export function Table3DView({
 }: Table3DViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<MahjongScene3D | null>(null);
+  const callbacksRef = useRef({ onSelectTile, onDiscardTile, onTileHover });
+
+  useLayoutEffect(() => {
+    callbacksRef.current = { onSelectTile, onDiscardTile, onTileHover };
+  }, [onSelectTile, onDiscardTile, onTileHover]);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
     const scene = new MahjongScene3D(containerRef.current, {
-      onSelectTile,
-      onDiscardTile,
-      onTileHover,
+      onSelectTile: (tileId) => callbacksRef.current.onSelectTile(tileId),
+      onDiscardTile: (tileId) => callbacksRef.current.onDiscardTile(tileId),
+      onTileHover: (tileKey, tileId) => callbacksRef.current.onTileHover?.(tileKey, tileId),
     });
     sceneRef.current = scene;
 
