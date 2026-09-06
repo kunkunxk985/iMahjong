@@ -24,6 +24,9 @@ function startLocalServer(): Promise<LocalServer | null> {
       return server;
     })
     .catch((error) => {
+      // Do not cache a transient port/startup failure forever. The renderer
+      // retries this IPC call when the player explicitly starts solo mode.
+      localServerPromise = null;
       // The renderer can still connect to a manually configured remote server.
       console.error('本机牌局服务启动失败，仍可使用远程服务器：', error);
       return null;
