@@ -20,6 +20,14 @@ export class MahjongScene3D {
   private scene: THREE.Scene;
   private environmentTarget: THREE.WebGLRenderTarget | null = null;
   private textureLoader = new THREE.TextureLoader();
+  /**
+   * Every texture this scene created, so destroy() can release them.
+   *
+   * Textures are referenced from materials rather than from the geometry walk in
+   * destroy(), so without this registry the felt/wood surface maps survive every
+   * 3D remount. felt-normal.png alone is ~760KB of GPU memory.
+   */
+  private ownedTextures: THREE.Texture[] = [];
   private camera: THREE.PerspectiveCamera;
   private raycaster = new THREE.Raycaster();
   private mouse = new THREE.Vector2(-999, -999);
@@ -155,6 +163,7 @@ export class MahjongScene3D {
     texture.magFilter = THREE.LinearFilter;
     texture.generateMipmaps = true;
     texture.anisotropy = Math.min(16, this.renderer.capabilities.getMaxAnisotropy());
+    this.ownedTextures.push(texture);
     return texture;
   }
 
@@ -514,9 +523,18 @@ export class MahjongScene3D {
       }
     });
     this.scene.traverse((object) => {
-      if (object instanceof THREE.DirectionalLight) object.shadow.dispose();
+      if (object instanceof THREE.DirectionalLight) {
+        object.shadow.map?.dispose();
+        object.shadow.map = null;
+        object.shadow.dispose();
+      }
     });
     this.tiles.dispose();
+    // TileMeshFactory.dispose() releases its own cached tile textures; these are
+    // the table surface maps (felt colour/normal/roughness + wood grain), which
+    // hang off materials and are missed by the geometry walk above.
+    for (const texture of this.ownedTextures) texture.dispose();
+    this.ownedTextures = [];
     // The PMREM environment render target is not part of the scene graph, so
     // scene.clear() will not release its GPU memory. The 3D regression test
     // asserts retired WebGL contexts are freed, so release it explicitly.

@@ -497,12 +497,21 @@ export function Table({
       discard();
       return;
     }
-    if (action.kind === 'close-gate' && action.tileId) {
-      noteDiscardSource(action.tileId);
+    // 关门动作只有候选列表 tileIds，没有具体 tileId；点击路径
+    // （ActionBar.onClick）会挑一个，键盘路径不会，于是 tileId 为undefined
+    // 被服务端判为非法操作。这里统一补全，两条路径共用同一套选择逻辑。
+    let targetTileId = action.tileId;
+    if (action.kind === 'close-gate' && !targetTileId) {
+      targetTileId = (selectedId && action.tileIds?.includes(selectedId))
+        ? selectedId
+        : action.tileIds?.[0];
+    }
+    if (action.kind === 'close-gate' && targetTileId) {
+      noteDiscardSource(targetTileId);
     }
     onAction({
       kind: action.kind,
-      tileId: action.tileId,
+      tileId: targetTileId,
       tileIds: action.tileIds,
       key: action.key,
     });
@@ -579,6 +588,14 @@ export function Table({
         e.preventDefault();
         if (canDiscard && selectedId) {
           discard();
+          // 关键：出牌后必须 return到底。此前这里只 return 在 if 内部，
+          // 但discard() 会把 selectedId 清成 null，服务端回包前再按一次空格
+          // 就会穿透到下面的"自动认领"分支，直接替玩家提交了 hu。
+          // 出牌是玩家的决定，不能被第二次按键代替。
+          return;
+        }
+        if (canDiscard) {
+          // 该出牌但没有选中牌：不替玩家做主张，等他选牌。
           return;
         }
         if (view.availableActions.length > 0) {
@@ -865,9 +882,9 @@ export function Table({
                     setSelectedId(tile.id);
                   }
                 }}
-                onDoubleClick={() => {
-                  discardTile(tile.id);
-                }}
+                // 不再有 onDoubleClick：onClick 已经实现了"再点一次即出牌"，
+                // 双击会走 click→click→dblclick 三条路径，对同一张牌发出两次
+                // discard，第二次被服务端判为"操作已过期"，玩家会看到莫名报错。
               />
             ))}
           </div>

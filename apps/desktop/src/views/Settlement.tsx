@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { isPrivatePlayerView, type BaoZhuangReason, type ClientView, type Settlement } from '@pizhou/shared';
 import { Melds } from '../components/Melds';
 import { TileView } from '../components/TileView';
@@ -190,7 +190,24 @@ export function SettlementModal({
   }, [toastMsg]);
 
   // Match History Save
+  //
+  // 这个 effect 依赖 settlement 对象，而每次 WebSocket 广播都是新的 JSON 对象，
+  // 所以同一局会重复触发。历史记录靠 record.id 去重，因此 id 必须是**稳定键**；
+  // 早先用 Date.now() 导致每��渲染都是新 id，去重失效、同一局被写入多次
+  // （本地多条 + 重复上传云端，污染排行榜）。
+  const savedKeyRef = useRef<string | null>(null);
   useEffect(() => {
+    // 稳定键：房号 + 局号 + 赢家 + 胡牌类型。同一局无论渲染多少次都是同一个 id。
+    const stableId = [
+      view.roomCode || '888888',
+      view.round ?? 0,
+      settlement.winnerSeat ?? 'draw',
+      settlement.winType,
+      settlement.liuju ? 'liuju' : 'hu',
+    ].join('-');
+    if (savedKeyRef.current === stableId) return;
+    savedKeyRef.current = stableId;
+
     const now = new Date();
     const dateStr = `${now.getMonth() + 1}月${now.getDate()}日 ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     const myScoreObj = settlement.scores.find((s) => s.seat === view.mySeat);
@@ -198,7 +215,7 @@ export function SettlementModal({
     const myIsWinner = view.mySeat === settlement.winnerSeat;
 
     const record = {
-      id: `${view.roomCode || '888888'}-${settlement.winnerSeat ?? 'draw'}-${Date.now()}`,
+      id: stableId,
       mode: gameMode,
       timestamp: Date.now(),
       dateStr,

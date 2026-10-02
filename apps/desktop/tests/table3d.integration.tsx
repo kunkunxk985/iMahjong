@@ -89,6 +89,15 @@ async function run() {
   check(!document.querySelector('canvas'), 'canvas leaked after switching to 2D');
   check(counts.get('resize'), 'resize listener was not released');
   check(retired.renderer.info.memory.geometries === 0, 'GPU geometries leaked');
+  // geometry 之外还要查 texture：绒布/木纹贴图由 loadSurfaceTexture 创建，
+  // 不挂在场景图的 geometry/material 遍历里，漏掉会随每次切换累积。
+  // Baseline: a scene built before any surface texture was loaded still holds
+  // one internal texture. Assert we do not exceed that, not absolute zero.
+  window.__texCount = retired.renderer.info.memory.textures;
+  check(
+    retired.renderer.info.memory.textures <= 1,
+    `GPU textures leaked (${retired.renderer.info.memory.textures} > baseline 1)`,
+  );
   check(retired.renderer.getContext().isContextLost(), 'retired WebGL context was not released');
   check(visible('.board-own-hand'), '2D hand did not return');
 
@@ -98,6 +107,13 @@ async function run() {
   toggle();
   await pause();
   check(scene !== retired && document.querySelectorAll('canvas').length === 1, 'scene did not remount cleanly');
-  return { checks, selectionUpdates: 100, rebuiltHandMeshes: 0, retiredGpuGeometries: 0, retiredWebGLContextReleased: true };
+  return {
+    checks,
+    selectionUpdates: 100,
+    rebuiltHandMeshes: 0,
+    retiredGpuGeometries: retired.renderer.info.memory.geometries,
+    retiredGpuTextures: retired.renderer.info.memory.textures,
+    retiredWebGLContextReleased: true,
+  };
 }
 Object.assign(window, { runTable3DChecks: run, showClassic: async () => { toggle(); await pause(); } });
