@@ -73,13 +73,6 @@
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
 }
 
-.guofeng-subtitle {
-  font-size: 9.5px;
-  color: #d4af37;
-  letter-spacing: 2px;
-  font-weight: 600;
-  opacity: 0.9;
-}
 
 .guofeng-ping-pill {
   display: inline-flex;
@@ -126,43 +119,10 @@
 }
 
 /* Gold Currency Pill */
-.guofeng-currency-pill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 16px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(40, 26, 8, 0.85) 0%, rgba(20, 14, 4, 0.9) 100%);
-  border: 1px solid rgba(245, 158, 11, 0.5);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(254, 240, 138, 0.3);
-  cursor: default;
-  transition: all 0.25s ease;
-}
 
-.guofeng-currency-pill:hover {
-  border-color: rgba(254, 240, 138, 0.8);
-  box-shadow: 0 2px 14px rgba(245, 158, 11, 0.4), inset 0 1px 1px rgba(254, 240, 138, 0.5);
-}
 
-.currency-gold-coin {
-  font-size: 16px;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
-}
 
-.currency-amount {
-  font-family: "DIN Alternate", "PingFang SC", sans-serif;
-  font-size: 15px;
-  font-weight: 800;
-  color: #fef08a;
-  letter-spacing: 0.5px;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
-}
 
-.currency-unit {
-  font-size: 11px;
-  color: #fbbf24;
-  font-weight: 500;
-}
 
 /* Player Mini Profile Preview Capsule */
 .guofeng-dossier-capsule {
@@ -266,193 +226,33 @@
    2. Main Stage & Mode Selection Cards
    ────────────────────────────────────────────────────────────────────────── */
 
-.guofeng-mode-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(16px, 1.8vw, 24px);
-  width: 100%;
-  max-width: min(880px, 55vw);
-}
 
-.guofeng-mode-card {
-  position: relative;
-  overflow: hidden;
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(8, 35, 23, 0.88) 0%, rgba(4, 18, 12, 0.92) 100%);
-  border: 1.5px solid rgba(212, 175, 55, 0.35);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.12);
-  padding: clamp(20px, 2vw, 26px) clamp(20px, 2.2vw, 26px);
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.32s cubic-bezier(0.16, 1, 0.3, 1);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: clamp(180px, 22vh, 225px);
-}
 
-.guofeng-mode-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 18px;
-  padding: 1.5px;
-  background: linear-gradient(135deg, rgba(254, 240, 138, 0.4), transparent 50%, rgba(212, 175, 55, 0.2));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
 
-.guofeng-mode-card:hover {
-  transform: translateY(-6px) scale(1.02);
-  border-color: rgba(254, 240, 138, 0.8);
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.8), 0 0 28px rgba(212, 175, 55, 0.4);
-}
 
-.guofeng-mode-card:active {
-  transform: translateY(-1px) scale(0.995);
-}
 
-.guofeng-mode-card.disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  pointer-events: none;
-}
 
 /* Specific Card Themes */
-.guofeng-mode-card.card-solo:hover {
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(34, 197, 94, 0.3);
-}
 
-.guofeng-mode-card.card-create:hover {
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(234, 179, 8, 0.35);
-}
 
-.guofeng-mode-card.card-join:hover {
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(59, 130, 246, 0.3);
-}
 
-.guofeng-mode-card.card-match:hover {
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(168, 85, 247, 0.3);
-}
 
 /* Card Header */
-.card-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
 
-.card-badge-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 9px;
-  border-radius: 10px;
-  letter-spacing: 0.5px;
-}
 
-.card-badge-pill.emerald {
-  background: rgba(21, 128, 61, 0.35);
-  color: #86efac;
-  border: 1px solid rgba(34, 197, 94, 0.4);
-}
 
-.card-badge-pill.amber {
-  background: rgba(180, 83, 9, 0.35);
-  color: #fde047;
-  border: 1px solid rgba(234, 179, 8, 0.4);
-}
 
-.card-badge-pill.sapphire {
-  background: rgba(30, 64, 175, 0.35);
-  color: #93c5fd;
-  border: 1px solid rgba(59, 130, 246, 0.4);
-}
 
-.card-badge-pill.purple {
-  background: rgba(107, 33, 168, 0.35);
-  color: #d8b4fe;
-  border: 1px solid rgba(168, 85, 247, 0.4);
-}
 
-.card-en-sub {
-  font-size: 9px;
-  font-weight: 700;
-  color: rgba(212, 175, 55, 0.6);
-  letter-spacing: 1.5px;
-}
 
 /* Gold-Leaf Emboss Card Title */
-.gold-emboss-title {
-  font-size: 24px;
-  font-family: var(--serif, "SongTi SC", "STKaiti", "Noto Serif SC", serif);
-  font-weight: 900;
-  letter-spacing: 1.5px;
-  margin: 0 0 6px 0;
-  background: linear-gradient(135deg, #ffffff 0%, #fef08a 50%, #d4af37 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
-}
 
-.card-desc-text {
-  font-size: 12.5px;
-  color: #94a3b8;
-  line-height: 1.55;
-  margin: 0 0 16px 0;
-}
 
 /* Button-in-Button CTA */
-.card-cta-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 10px;
-  border-top: 1px solid rgba(212, 175, 55, 0.15);
-}
 
-.card-cta-text {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #f1f5f9;
-  letter-spacing: 0.5px;
-}
 
-.card-cta-circle {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(212, 175, 55, 0.2);
-  border: 1px solid rgba(212, 175, 55, 0.45);
-  color: #fef08a;
-  display: grid;
-  place-items: center;
-  font-size: 13px;
-  transition: all 0.25s ease;
-}
 
-.guofeng-mode-card:hover .card-cta-circle {
-  background: #d4af37;
-  color: #051a11;
-  transform: translateX(4px);
-  box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
-}
 
-.card-bg-watermark {
-  position: absolute;
-  right: 12px;
-  bottom: 8px;
-  font-size: 64px;
-  opacity: 0.06;
-  pointer-events: none;
-  font-family: serif;
-}
 
 /* ──────────────────────────────────────────────────────────────────────────
    3. Refined 6-Digit Segmented PIN Room Join Panel
@@ -744,32 +544,8 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 28px rgba(245, 158, 11, 0.45);
 }
 
-.mvp-crest-badge {
-  position: absolute;
-  top: -12px;
-  padding: 3px 12px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-  border: 1.5px solid #fef08a;
-  color: #fffbeb;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 1px;
-  box-shadow: 0 2px 10px rgba(217, 119, 6, 0.6);
-}
 
 /* Rank Medals */
-.podium-rank-badge {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-family: var(--serif, "SongTi SC", "STKaiti", serif);
-  font-size: 16px;
-  font-weight: 900;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
 
 .podium-rank-badge.rank-1 {
   background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
@@ -894,10 +670,6 @@
   color: #94a3b8;
 }
 
-.podium-hu-detail {
-  font-size: 11px;
-  color: #cbd5e1;
-}
 
 /* ──────────────────────────────────────────────────────────────────────────
    5. Poster Preview Modal

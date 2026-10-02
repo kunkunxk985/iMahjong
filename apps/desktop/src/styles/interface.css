@@ -1,11 +1,4 @@
 /* Lobby Tabs & Panels */
-.tab-bar {
-  display: flex;
-  gap: 10px;
-  margin: 10px 0 16px;
-  border-bottom: 1px solid rgba(201, 162, 39, 0.25);
-  padding-bottom: 10px;
-}
 .tab-btn {
   flex: 1;
   background: rgba(8, 28, 22, 0.6);
@@ -30,37 +23,11 @@
   box-shadow: 0 0 10px rgba(201, 162, 39, 0.15);
 }
 
-.field-label {
-  display: block;
-  font-size: 13px;
-  color: #e8dcb0;
-  margin-bottom: 4px;
-}
 
-.join-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
-.join-row input {
-  flex: 1;
-  font-size: 16px;
-  letter-spacing: 0.25em;
-  text-align: center;
-  margin-top: 0;
-}
 .join-row .btn-action {
   min-width: 100px;
 }
 
-.server-status-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 14px;
-  font-size: 12px;
-  color: #a4b8af;
-}
 .net-dot {
   width: 8px;
   height: 8px;
@@ -77,12 +44,6 @@
 }
 .net-dot.closed {
   background: #e05252;
-}
-.net-text {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .btn-link {
   background: none;
@@ -1547,25 +1508,6 @@
 
 /* ─── Mute Button ─────────────────────────────────────────── */
 
-.mute-btn {
-  appearance: none;
-  border: 1px solid rgba(201, 162, 39, 0.35);
-  background: rgba(6, 24, 20, 0.45);
-  color: #f3e4b4;
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  border-radius: 4px;
-  font-size: 16px;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
-  padding: 0;
-}
-.mute-btn:hover {
-  border-color: var(--gold-soft);
-  background: rgba(201, 162, 39, 0.12);
-}
 .mute-btn.muted {
   color: #ff9999;
   border-color: rgba(255, 153, 153, 0.35);
@@ -2417,26 +2359,8 @@
   line-height: 1.5;
 }
 
-.baozhuang-breakdown-row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 4px;
-}
 
-.baozhuang-sub-pill {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(248, 113, 113, 0.45);
-  color: #fed7aa;
-}
 
-.baozhuang-sub-pill.hun {
-  border-color: #facc15;
-  color: #fef08a;
-}
 
 .baozhuang-sub-pill.safe {
   border-color: #34d399;
@@ -2472,51 +2396,11 @@
   color: #fca5a5;
 }
 
-.player-note-badge {
-  display: block;
-  font-size: 10px;
-  font-weight: 600;
-  margin-top: 3px;
-  padding: 1px 6px;
-  border-radius: 4px;
-  width: fit-content;
-  white-space: nowrap;
-}
 
-.player-note-badge.winner-hun {
-  background: rgba(234, 179, 8, 0.2);
-  color: #fef08a;
-  border: 1px solid rgba(234, 179, 8, 0.4);
-}
 
-.player-note-badge.loser-hun {
-  background: rgba(239, 68, 68, 0.15);
-  color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
 
-.player-note-badge.baozhuang-payer {
-  background: rgba(220, 38, 38, 0.3);
-  color: #fee2e2;
-  border: 1px solid #ef4444;
-}
 
-.player-note-badge.baozhuang-exempt {
-  background: rgba(16, 185, 129, 0.2);
-  color: #a7f3d0;
-  border: 1px solid rgba(16, 185, 129, 0.4);
-}
 
-.ledger-baozhuang-notice {
-  margin-bottom: 12px;
-  padding: 10px 14px;
-  background: rgba(127, 29, 29, 0.35);
-  border: 1px dashed #f87171;
-  border-radius: 8px;
-  font-size: 12px;
-  color: #fecaca;
-  line-height: 1.6;
-}
 
 /* ─── Quick Chat & In-Game Emote Bubbles ────────────────────── */
 
@@ -2862,14 +2746,6 @@
 
 .auth-hero-eyebrow,
 .auth-card-kicker,
-.lobby-kicker {
-  margin: 0;
-  color: #e8cf7a;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
 
 .auth-hero-panel h2 {
   margin: 12px 0 16px;
@@ -3016,86 +2892,22 @@
 .mode-big-card:focus-visible,
 .hall-rules-btn:focus-visible,
 .hall-friends-btn:focus-visible,
-.hall-logout-btn:focus-visible {
-  outline: 2px solid #fde047;
-  outline-offset: 3px;
-}
 
-.lobby-hall {
-  padding: clamp(18px, 3vw, 34px);
-  background:
-    radial-gradient(circle at 50% 28%, rgba(24, 100, 73, 0.32), transparent 38%),
-    radial-gradient(circle at 8% 90%, rgba(194, 139, 28, 0.1), transparent 28%),
-    linear-gradient(135deg, #061712 0%, #0b2a20 48%, #06140f 100%);
-}
 
 .lobby-hall::before,
-.lobby-hall::after {
-  content: '';
-  position: absolute;
-  pointer-events: none;
-}
 
-.lobby-hall::before {
-  inset: 0;
-  opacity: 0.2;
-  background-image: linear-gradient(120deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
-  background-size: 72px 72px;
-  mask-image: radial-gradient(circle at 50% 46%, #000, transparent 72%);
-}
 
-.lobby-hall::after {
-  top: 50%;
-  left: 50%;
-  width: min(720px, 64vw);
-  height: min(720px, 64vw);
-  border: 1px solid rgba(232, 207, 122, 0.08);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 0 30px rgba(232, 207, 122, 0.018), 0 0 90px rgba(24, 120, 87, 0.18);
-}
 
 .lobby-hall .hall-nav-bar,
-.lobby-hall .tier-card {
-  position: relative;
-  z-index: 1;
-  max-width: 920px;
-}
 
-.lobby-hall .hall-nav-bar {
-  margin-bottom: 18px;
-}
 
-.lobby-hall .hall-user-pill {
-  appearance: none;
-  color: inherit;
-  font-family: inherit;
-}
 
-.lobby-hall .tier-card {
-  width: min(920px, calc(100vw - 48px));
-  padding: 30px 32px 22px;
-  border-color: rgba(254, 240, 138, 0.4);
-  background: linear-gradient(145deg, rgba(12, 37, 27, 0.96), rgba(5, 20, 15, 0.92));
-  box-shadow:
-    0 30px 80px rgba(0, 0, 0, 0.56),
-    0 0 46px rgba(250, 204, 21, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    inset 0 0 36px rgba(0, 0, 0, 0.3);
-}
 
 .lobby-hall .mode-select-panel {
   gap: 22px;
   padding: 2px 0 4px;
 }
 
-.lobby-kicker {
-  display: block;
-  margin-bottom: 9px;
-  color: rgba(232, 207, 122, 0.72);
-  font-size: 10px;
-  letter-spacing: 0.24em;
-}
 
 .lobby-hall .mode-select-intro h2 {
   font-size: 26px;
@@ -3107,23 +2919,8 @@
   letter-spacing: 0.04em;
 }
 
-.lobby-hall .online-panel-header {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  min-height: 34px;
-  justify-content: initial;
-}
 
-.lobby-hall .online-panel-header h2 {
-  grid-column: 2;
-  flex: none;
-}
 
-.lobby-hall .back-btn {
-  position: static;
-  grid-column: 1;
-  justify-self: start;
-}
 
 .lobby-hall .mode-cards-grid {
   gap: 18px;
@@ -3243,42 +3040,9 @@
   transform: translate(2px, -2px);
 }
 
-.lobby-trust-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  padding-top: 2px;
-  color: rgba(203, 213, 225, 0.58);
-  font-size: 11px;
-  letter-spacing: 0.02em;
-}
 
-.lobby-trust-row span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
 
-.lobby-trust-row i {
-  display: grid;
-  place-items: center;
-  width: 16px;
-  height: 16px;
-  border: 1px solid rgba(74, 222, 128, 0.35);
-  border-radius: 50%;
-  color: #86efac;
-  font-size: 10px;
-  font-style: normal;
-}
 
-.lobby-hall .hall-footer {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top-color: rgba(255, 255, 255, 0.1);
-}
 
 .lobby-hall .error {
   margin: 12px 0 0;

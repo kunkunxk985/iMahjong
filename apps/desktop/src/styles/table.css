@@ -362,11 +362,6 @@
   border-color: rgba(239, 68, 68, 0.3);
 }
 
-.board-tool-icon {
-  width: 17px;
-  height: 17px;
-  display: block;
-}
 
 .board-icon-button:hover {
   color: #fff4d0;
@@ -412,44 +407,12 @@
 /* ─── Discard Rivers: Perfectly Symmetrical 4-Quadrant Ring (四向等距对称牌河) ─── */
 
 /* Top river: exactly north of compass, with comfortable breathing room */
-.board-discard-top {
-  top: calc(var(--table-center-y, 48%) - clamp(168px, 19.5vh, 215px));
-  left: 50%;
-  right: auto;
-  bottom: auto;
-  width: min(440px, 34vw);
-  transform: translate(-50%, -50%);
-}
 
 /* Bottom river: comfortably south of compass, clear of both compass console and hand action area */
-.board-discard-bottom {
-  top: calc(var(--table-center-y, 48%) + clamp(140px, 16.5vh, 175px));
-  left: 50%;
-  right: auto;
-  bottom: auto;
-  width: min(440px, 34vw);
-  transform: translate(-50%, -50%);
-}
 
 /* Left river: exactly west of compass, vertically aligned with table center */
-.board-discard-left {
-  top: var(--table-center-y, 48%);
-  left: calc(50% - clamp(180px, 16vw, 230px));
-  right: auto;
-  bottom: auto;
-  width: clamp(80px, 7vw, 110px);
-  transform: translate(-50%, -50%);
-}
 
 /* Right river: exactly east of compass, vertically aligned with table center */
-.board-discard-right {
-  top: var(--table-center-y, 48%);
-  left: calc(50% + clamp(180px, 16vw, 230px));
-  right: auto;
-  bottom: auto;
-  width: clamp(80px, 7vw, 110px);
-  transform: translate(-50%, -50%);
-}
 
 .board-discard-grid {
   position: relative;
@@ -640,67 +603,24 @@
 }
 
 /* 1. Top Player: Positioned to the left of top hand tiles, horizontal and parallel to hand tiles */
-.board-player-top {
-  top: clamp(66px, 8.2vh, 84px);
-  right: calc(50% + clamp(210px, 20vw, 275px));
-  left: auto;
-  transform: none;
-  transform-origin: right center;
-}
 
 .board-player-top.is-current {
   transform: scale(1.03);
 }
 
 /* 2. Bottom Player: Cleanly anchored at bottom left corner, spacious and never overlapping hand */
-.board-player-bottom {
-  bottom: 18px;
-  left: clamp(20px, 2.5vw, 40px);
-  right: auto;
-  transform: none;
-}
 
 .board-player-bottom.is-current {
   transform: translateY(-2px) scale(1.03);
 }
 
 /* 3. Left Player: Vertical plaque, long edge hugging left screen edge, parallel to left hand rack */
-.board-player-left {
-  top: clamp(80px, 14vh, 130px);
-  left: clamp(14px, 1.4vw, 22px);
-  right: auto;
-  bottom: auto;
-  transform: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: clamp(58px, 4.4vw, 68px);
-  min-width: 0 !important;
-  padding: 8px 6px 10px;
-  gap: 6px;
-  border-radius: 10px;
-}
 
 .board-player-left.is-current {
   transform: scale(1.03);
 }
 
 /* 4. Right Player: Vertical plaque, long edge hugging right screen edge, parallel to right hand rack */
-.board-player-right {
-  bottom: clamp(90px, 16vh, 145px);
-  right: clamp(14px, 1.4vw, 22px);
-  left: auto;
-  top: auto;
-  transform: none;
-  display: flex;
-  flex-direction: column-reverse;
-  align-items: center;
-  width: clamp(58px, 4.4vw, 68px);
-  min-width: 0 !important;
-  padding: 8px 6px 10px;
-  gap: 6px;
-  border-radius: 10px;
-}
 
 .board-player-right.is-current {
   transform: scale(1.03);
@@ -758,10 +678,6 @@
 }
 
 /* Turn badges for plaques */
-.board-player-top .board-turn-pill {
-  top: auto;
-  bottom: -9px;
-}
 
 /* ─── Streamlined Avatar & Meta inside Plaque ───────────────── */
 
@@ -972,26 +888,12 @@
 }
 
 /* Top concealed: 3D standing rack parallel with top player avatar */
-.board-concealed-top {
-  top: clamp(66px, 8.2vh, 84px);
-  left: 50%;
-  transform: translateX(-50%);
-}
 
 .board-concealed-top .board-concealed-tile {
   margin-left: -1px;
 }
 
 /* Left concealed: 3D standing rack, vertically centered with table center */
-.board-concealed-left {
-  top: var(--table-center-y, 48%);
-  left: clamp(28px, 2.8vw, 48px);
-  transform: translateY(-50%) rotate(90deg);
-  transform-origin: center center;
-  display: flex;
-  flex-direction: row;
-  gap: 0;
-}
 
 .board-concealed-left .board-concealed-tile {
   margin-left: -1px;
@@ -999,15 +901,6 @@
 }
 
 /* Right concealed: 3D standing rack, vertically centered with table center (Exact mirror) */
-.board-concealed-right {
-  top: var(--table-center-y, 48%);
-  right: clamp(28px, 2.8vw, 48px);
-  transform: translateY(-50%) rotate(-90deg);
-  transform-origin: center center;
-  display: flex;
-  flex-direction: row;
-  gap: 0;
-}
 
 .board-concealed-right .board-concealed-tile {
   margin-left: -1px;
