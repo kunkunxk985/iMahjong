@@ -137,15 +137,8 @@ export function Table({
     }
   });
 
-  // 确保首次加载或异常状态下自动恢复到 100% 可玩的经典 2.5D 高清质感视界
-  useEffect(() => {
-    try {
-      if (localStorage.getItem('pizhou_render_mode') !== '2d') {
-        localStorage.setItem('pizhou_render_mode', '2d');
-        setIs3DMode(false);
-      }
-    } catch {}
-  }, []);
+  // 渲染模式由用户在牌桌上切换并持久化，启动时不再强制回退到 2D。
+  // 旧实现在挂载时无条件写回 '2d'，导致用户选了 3D 后刷新就被悄悄重置。
 
   const [hoveredTileKey, setHoveredTileKey] = useState<string | null>(null);
   const [hoveredTileId, setHoveredTileId] = useState<string | null>(null);

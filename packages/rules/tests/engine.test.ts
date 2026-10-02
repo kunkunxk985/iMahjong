@@ -78,6 +78,49 @@ test('起手杠可以直接胡', () => {
   assert.equal(game.settlement?.winnerSeat, 0);
 });
 
+/**
+ * 杠上开花（暗杠 → 补牌 → 自摸胡）必须按普通自摸计分。
+ *
+ * 回归背景：declareHu 曾经用 `!firstDiscardDone && hadOpeningKong` 判断
+ * 起手杠胡，但 hadOpeningKong 在任何"首张前暗杠"后都为真，而杠上开花正是
+ * 首张前暗杠后补牌自摸，于是被误判成起手杠胡。qidong 分支用
+ * selfKongs:true 强行计坎且跳过拆法优选，比普通自摸多算胡数。
+ */
+function placeGangHuaWall(): Tile[] {
+  // 补牌是 wall.pop()，把成胡的 tiao-9 放在牌墙末尾即可。
+  const deck = createPizhouDeck();
+  const replacement = makeTile('tiao', 9, 0);
+  return [...deck.filter((tile) => tile.id !== replacement.id), replacement];
+}
+
+test('杠上开花按普通自摸结算，不走起手杠胡', () => {
+  const game = new PizhouGame({ dealer: 0, wall: placeGangHuaWall() });
+  // 直接给 dealer 摆好起手暗杠的牌，暗杠后补牌自摸成胡：
+  //   暗杠 dragon-1 x4 -> 露 1 组；补摸 tiao-9 后手牌为
+  //   wan-9 x2 | tong-1,2,3 | tong-4,5,6 | tiao-7,8,9 = 3 组顺子 + 一对 + 已露暗杠。
+  const hand = [
+    makeTile('tong', 1, 0), makeTile('tong', 2, 0), makeTile('tong', 3, 0),
+    makeTile('tong', 4, 0), makeTile('tong', 5, 0), makeTile('tong', 6, 0),
+    makeTile('wan', 9, 0), makeTile('wan', 9, 1),
+    makeTile('tiao', 7, 0), makeTile('tiao', 8, 0),
+    makeTile('dragon', 1, 0), makeTile('dragon', 1, 1),
+    makeTile('dragon', 1, 2), makeTile('dragon', 1, 3),
+  ];
+  game.seats[0]!.hand = hand;
+  assert.equal(game.phase, 'self-turn');
+  assert.equal(game.availableFor(0).some((item) => item.kind === 'an-gang'), true);
+
+  const kong = game.apply(0, { kind: 'an-gang', key: 'dragon-1' }, 'ganghua-kong', game.sequence);
+  assert.equal(kong.ok, true, kong.error);
+
+  const selfDraw = game.apply(0, { kind: 'hu' }, 'ganghua-hu', game.sequence);
+  assert.equal(selfDraw.ok, true, selfDraw.error);
+  assert.equal(game.settlement?.selfDraw, true);
+  // 关键断言：杠上开花按房规走普通自摸，不是起手杠胡。
+  assert.notEqual(game.settlement?.winType, 'qidong-gang-hu');
+  assert.equal(game.settlement?.winType, 'ping-hu');
+});
+
 test('对家和下家不能吃', () => {
   const game = new PizhouGame({ dealer: 0 });
   const discard = makeTile('wan', 5, 0);

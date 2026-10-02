@@ -1,0 +1,90 @@
+/* Quiet presentation for the lobby, profile and round results. */
+.hall.lobby-grand-stage { background: #112820; }
+.hall .lobby-bg-artwork { opacity: .08; animation: none; }
+.hall .lobby-brand-hero, .hall .lobby-modes-console { animation: none; opacity: 1; }
+.hall .lobby-vignette-overlay { background: transparent; }
+.hall .guofeng-nav-bar { background: #142d24; box-shadow: none; border-bottom: 1px solid #314b40; }
+.hall .guofeng-title, .hall .lobby-hero-title, .hall .title-gold { background: none; color: #eee9da; -webkit-text-fill-color: currentColor; text-shadow: none; filter: none; }
+.hall .guofeng-seal, .hall .guofeng-dossier-capsule, .hall .guofeng-avatar-ring { box-shadow: none; }
+.hall .guofeng-ping-dot { animation: none; box-shadow: none; }
+.hall .lobby-hero-title { font-size: clamp(48px, 6vw, 76px); }
+.hall .hero-charms-row { color: #b3c5b9; text-shadow: none; font-size: 14px; }
+.hall .guofeng-dossier-rank { display: none; }
+.quiet-mode-list { width: 100%; display: flex; flex-direction: column; }
+.quiet-mode { appearance: none; display: flex; align-items: center; justify-content: space-between; width: 100%; text-align: left; padding: 26px 20px; background: transparent; color: #eee9da; border: 0; border-bottom: 1px solid #3b5145; border-radius: 0; cursor: pointer; transition: background .15s ease-out; }
+.quiet-mode > span:first-child { display: flex; flex-direction: column; gap: 8px; }
+.quiet-mode strong { font-size: 26px; font-weight: 600; }
+.quiet-mode > span > span { font-size: 14px; color: #b3c5b9; }
+.quiet-mode:hover:not(:disabled) { background: #203d30; }
+.quiet-mode:disabled { opacity: .5; cursor: default; }
+/* Error feedback. Lobby.tsx renders .lobby-error-toast but nothing ever styled
+   it, so a failed room join silently did nothing. Match the quiet palette and
+   keep it a single readable line rather than a decorative banner. */
+.lobby-error-toast {
+  display: block;
+  width: min(440px, 44vw);
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #f2d9d4;
+  background: #3a1f1c;
+  border: 1px solid #7c4a42;
+  border-radius: 4px;
+}
+.lobby-error-toast:empty { display: none; }
+
+.quiet-ranking { align-self: flex-end; margin-top: 22px; padding: 10px; color: #b3c5b9; background: transparent; border: 0; cursor: pointer; }
+.quiet-mode:focus-visible, .quiet-ranking:focus-visible { outline: 2px solid #d1bd8d; outline-offset: 3px; }
+.overlay > .modal.profile-modal.luxury-dossier, .settlement.quiet-settlement { background: #142b23; border: 1px solid #42594c; box-shadow: 0 18px 60px #0006; animation: none; }
+.profile-modal .quiet-avatar-options > summary { cursor: pointer; font-size: 14px; color: #d3d8ca; padding: 8px 0 16px; }
+.profile-modal .dossier-deck-tabs { border: 0; border-radius: 0; background: transparent; }
+.profile-modal .dossier-bio { min-height: 88px; }
+.profile-modal .dossier-input { border-color: #526959; font-size: 15px; color: #eee9da; }
+.profile-modal select.dossier-input { width: 100%; height: 43px; }
+.profile-modal .guofeng-card.active { filter: none; }
+.profile-modal .dossier-footer .dossier-save-btn { background: #b9c8ae; color: #142b23; border: 0; box-shadow: none; }
+.profile-modal.luxury-dossier .gold-line, .quiet-settlement .gold-line { display: none; }
+.profile-modal .dossier-title, .profile-modal .card-nickname, .quiet-settlement .settlement-header h2 { background: none; -webkit-text-fill-color: currentColor; color: #eee9da; text-shadow: none; filter: none; font-weight: 600; letter-spacing: 0; }
+.profile-modal .dossier-layout { grid-template-columns: 190px minmax(0, 1fr); gap: 28px; }
+.profile-modal .dossier-id-card { background: transparent; box-shadow: none; border: 0; border-radius: 0; padding: 20px 0; }
+.profile-modal .dossier-id-card::before { display: none; }
+.profile-modal .avatar-gold-halo { box-shadow: none; border: 1px solid #647768; background: transparent; }
+.profile-modal .card-quote { border: 0; background: transparent; color: #b3c5b9; font-size: 14px; }
+.profile-modal .dossier-title-badge, .profile-modal .dossier-title-chip { box-shadow: none; background: transparent; color: #d3d8ca; border-color: #42594c; }
+.profile-modal .deck-tab-btn { font-size: 14px; text-shadow: none; }
+.profile-modal .deck-tab-btn.active { background: #2a4537; color: #eee9da; box-shadow: none; }
+.profile-modal .deck-field-label { font-size: 14px; color: #d3d8ca; }
+.profile-modal .guofeng-card { background: transparent; box-shadow: none; border-color: transparent; }
+.profile-modal .guofeng-card.active, .profile-modal .dossier-title-chip.active { border-color: #b8a777; background: #2a4537; }
+.profile-modal .guofeng-title { color: #d3d8ca; text-shadow: none; font-weight: 400; }
+.profile-modal .dossier-save-btn { background: #b9c8ae; color: #142b23; border: 0; box-shadow: none; text-shadow: none; }
+.quiet-settlement .settlement-header { padding-top: 8px; }
+.quiet-settlement .settlement-tabs .tab-btn { font-size: 14px; box-shadow: none; text-shadow: none; }
+.quiet-settlement .settlement-tabs .tab-btn.active { background: #2a4537; color: #eee9da; }
+.quiet-settlement .shenghun-settlement { display: flex; flex-direction: column; gap: 20px; }
+.quiet-settlement .shenghun-podium-grid { order: -1; gap: 0; }
+.quiet-settlement .podium-player-card, .quiet-settlement .podium-player-card.rank-1, .quiet-settlement .podium-player-card:hover { background: transparent; border: 0; border-radius: 0; box-shadow: none; transform: none; padding: 24px 12px; gap: 12px; }
+.quiet-settlement .podium-player-card + .podium-player-card { border-left: 1px solid #3b5145; }
+.quiet-settlement .podium-avatar-wrap, .quiet-settlement .podium-player-card.rank-1 .podium-avatar-wrap { box-shadow: none; border-color: #647768; }
+.quiet-settlement .podium-player-name { font-size: 16px; color: #eee9da; text-shadow: none; }
+.quiet-settlement .podium-score-delta { font-size: 32px; font-variant-numeric: tabular-nums; text-shadow: none; filter: none; background: none; -webkit-text-fill-color: currentColor; }
+.quiet-settlement .podium-score-delta.positive { color: #b8d6a8; }
+.quiet-settlement .podium-score-delta.negative { color: #e6ada1; }
+.quiet-settlement .podium-mini-tag { background: transparent; border: 0; color: #c4cdbd; box-shadow: none; }
+.quiet-settlement .podium-tags-row { min-height: 20px; }
+.quiet-settlement .winning-hand-tray { background: transparent; border: 0; border-top: 1px solid #3b5145; border-radius: 0; box-shadow: none; padding: 16px 0; }
+.quiet-settlement summary { cursor: pointer; color: #c4cdbd; font-size: 14px; }
+.quiet-settlement .winning-tray-header { margin-top: 16px; }
+.quiet-settlement .settlement-baozhuang-card { background: #273b2e; border: 1px solid #647055; box-shadow: none; }
+.quiet-settlement .baozhuang-icon { display: none; }
+.quiet-settlement .settlement-actions .btn-action { background: transparent; border: 1px solid #526959; color: #d3d8ca; box-shadow: none; text-shadow: none; font-size: 14px; }
+.quiet-settlement .settlement-actions .primary { background: #b9c8ae; border-color: #b9c8ae; color: #142b23; }
+.quiet-settlement.is-overview .settlement-profile-button { display: none; }
+@media (max-width: 720px) {
+  .profile-modal .dossier-layout { grid-template-columns: 1fr; overflow-y: auto; }
+  .profile-modal .dossier-id-card { display: none; }
+  .quiet-settlement .shenghun-podium-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .quiet-settlement .podium-player-card:nth-child(3) { border-left: 0; }
+  .quiet-mode { padding: 18px 12px; }
+}

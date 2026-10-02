@@ -653,7 +653,11 @@ export class PizhouGame {
     if (!canHuTiles(concealed, runtime.melds.length) && !specialBaoZhuangHu) {
       return { ok: false, error: '还不能胡牌', changed: false };
     }
-    const winType: WinType = !this.firstDiscardDone && this.hadOpeningKong ? 'qidong-gang-hu' : 'ping-hu';
+    // 房规：杠上开花按普通自摸。真正的"起手杠胡"只在 qidong 阶段由
+    // declareQidongHu() 结算（该阶段由 openQidongWindow 只在开局首张前开）。
+    // 这里不能复用 hadOpeningKong：它在任何首张前暗杠后都为真，而杠上开花
+    // 同样是"首张前暗杠 + 补牌自摸"，会被误判成起手杠胡并按暗杠计分。
+    const winType: WinType = 'ping-hu';
 
     if (!selfDraw && claimedTile) {
       const fromSeat = this.lastDiscard?.fromSeat ?? this.pending?.fromSeat;
