@@ -205,11 +205,13 @@ class TestClient {
 
 test('服务端重启崩溃恢复与全视角对齐验证', async () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pizhou-crash-test-'));
-  const port = 8840;
   const store = new DiskRoomStore({ dirPath: tempDir });
 
   // 1. 启动第一个服务实例
-  const server1 = await startMahjongServer({ port, host: '127.0.0.1', store, log: false });
+  // port: 0 让系统分配空闲端口。硬编码 8840 会让测试在端口被占用时
+  // 以与被测逻辑无关的原因失败（曾经真的失败过：残留的 node --test 进程占着端口）。
+  const server1 = await startMahjongServer({ port: 0, host: '127.0.0.1', store, log: false });
+  const port = server1.port;
 
   let roomCode = '';
   let tokens: string[] = [];
@@ -293,8 +295,8 @@ test('服务端重启崩溃恢复与全视角对齐验证', async () => {
 });
 
 test('安全与频控：WebSocket 大数据包拒绝与建房限频', async () => {
-  const port = 8841;
-  const server = await startMahjongServer({ port, host: '127.0.0.1', log: false });
+  const server = await startMahjongServer({ port: 0, host: '127.0.0.1', log: false });
+  const port = server.port;
 
   try {
     const client = new TestClient(`ws://127.0.0.1:${port}`);
@@ -372,8 +374,8 @@ test('心跳超时扫描广播 player:disconnected 并关闭僵死套接字', ()
 });
 
 test('GameClient 客户端重连与 100% 桌面全状态对齐', async () => {
-  const port = 8842;
-  const server = await startMahjongServer({ port, host: '127.0.0.1', log: false });
+  const server = await startMahjongServer({ port: 0, host: '127.0.0.1', log: false });
+  const port = server.port;
 
   let client: GameClient | null = null;
   try {

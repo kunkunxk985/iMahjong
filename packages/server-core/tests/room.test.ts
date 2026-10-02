@@ -100,6 +100,62 @@ test('大厅房主离开后转移房主，最后一人离开后删除房间', ()
   assert.equal(manager.get(created.room.code), undefined);
 });
 
+/**
+ * 重连窗口是 30 分钟（RECONNECT_WINDOW_MS）。窗口内必须能重连并清掉
+ * offlineAt；超过窗口必须明确拒绝，否则已下线的座位会被无限期保留，
+ * 房间永远等不满 4 人。
+ */
+test('重连窗口：30 分钟内可重连，超时后拒绝', () => {
+  // 窗口判定在 Room.reconnect（可注入 now），RoomManager.reconnect 不接受时间参数。
+  const manager = new RoomManager();
+  const created = manager.create('玩家', socket());
+  const room = manager.rooms.get(created.room.code)!;
+  const player = room.findByToken(created.player.token)!;
+
+  const t0 = 1_000_000;
+  room.markOffline(player, t0);
+  assert.equal(player.offlineAt, t0, '掉线应记录 offlineAt');
+
+  // 窗口内（29 分钟）必须成功，并清掉 offlineAt
+  const withinSocket = socket();
+  const withinError = room.reconnect(player, withinSocket, t0 + 29 * 60 * 1000);
+  assert.equal(withinError, null, `29 分钟内应可重连，实际错误：${String(withinError)}`);
+  assert.equal(player.ws, withinSocket);
+  assert.equal(player.offlineAt, null, '重连成功后应清掉 offlineAt');
+
+  // 再掉线，超过窗口（31 分钟）必须拒绝，且不改动玩家状态
+  room.markOffline(player, t0);
+  const lateSocket = socket();
+  const lateError = room.reconnect(player, lateSocket, t0 + 31 * 60 * 1000);
+  assert.equal(lateError, '重连已超过30分钟', '超过 30 分钟应拒绝重连');
+  assert.notEqual(player.ws, lateSocket, '被拒绝时不应换上新连接');
+  assert.equal(player.offlineAt, t0, '被拒绝时应保留 offlineAt');
+
+  // 边界：恰好 30 分钟仍应允许（判定是严格大于）
+  const edgeSocket = socket();
+  assert.equal(room.reconnect(player, edgeSocket, t0 + 30 * 60 * 1000), null);
+});
+
+test('重连成功后座位不新增、不重复', () => {
+  const manager = new RoomManager();
+  const firstSocket = socket();
+  const created = manager.create('玩家', firstSocket);
+  const room = manager.rooms.get(created.room.code)!;
+  const seatsBefore = room.occupied.map((p) => p.seat);
+
+  manager.dropSocket(firstSocket);
+  const again = socket();
+  manager.reconnect(created.room.code, created.player.token, again);
+  manager.reconnect(created.room.code, created.player.token, socket());
+
+  assert.deepEqual(room.occupied.map((p) => p.seat), seatsBefore, '重连不应改变座位数');
+  assert.equal(
+    room.occupied.filter((p) => p.token === created.player.token).length,
+    1,
+    '同一 token 只能占一个座位',
+  );
+});
+
 test('断线后可凭 token 回到原座位', () => {
   const manager = new RoomManager();
   const firstSocket = socket();
