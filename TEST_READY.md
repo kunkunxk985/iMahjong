@@ -110,6 +110,6 @@ No external databases or cloud emulators are required. All tests are self-contai
 2. **TypeScript Compilation**:
    - `npm run typecheck` → 0 type errors.
 3. **Workspace Unit Test Suite**:
-   - `npm test` → 121 tests pass across `@pizhou/rules` (97 tests), `@pizhou/server-core` (12 tests), and `@pizhou/worker` (12 tests).
+   - `npm test` → 230 tests pass: `@pizhou/desktop` (8), `@pizhou/rules` (100), `@pizhou/server-core` (26), `@pizhou/worker` (12), plus the root suite `npm run test:root` (84 — E2E tiers, audio, shared/rank, accountStore).
 4. **Application Code Modification**:
    - Zero application source code modified (`apps/**` and `packages/**` remain pristine).

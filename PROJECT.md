@@ -88,7 +88,7 @@
 - `packages/shared/src/`: `rank.ts`, `types.ts`, `events.ts`
 - `apps/desktop/src/api/`: `auth.ts`
 - `apps/desktop/src/storage/`: `history.ts`
-- `apps/desktop/src/components/`: `GuofengAvatar.tsx`, `AvatarView.tsx`, `ProfileModal.tsx`, `PlayerCardPopover.tsx`, `ActionSplash.tsx`
+- `apps/desktop/src/components/`: `GuofengAvatar.tsx`, `AvatarView.tsx`, `ProfileModal.tsx`, `ActionSplash.tsx`
 - `apps/desktop/src/views/`: `Lobby.tsx`, `Settlement.tsx`, `Table.tsx`
 - `apps/desktop/src/styles/`: `core.css`, `table.css`, `interface.css`, `lobby.css`
 - `apps/desktop/src/utils/`: `canvasPoster.ts`
