@@ -133,22 +133,15 @@ export function Lobby({
           <div className="guofeng-seal" aria-hidden="true">邳</div>
           <div className="guofeng-brand-text">
             <span className="guofeng-title">邳州麻将</span>
-            <span className="guofeng-subtitle">PIZHOU MAHJONG</span>
+
           </div>
-          <div className="guofeng-ping-pill" title="服务器网络质量">
+          <div className="guofeng-ping-pill" title="服务器连接状态">
             <span className={`guofeng-ping-dot ${networkStatus}`} aria-hidden="true" />
-            <span>{networkStatus === 'open' ? '18ms · 极速' : networkStatus === 'connecting' ? '连接中' : '离线'}</span>
+            <span>{networkStatus === 'open' ? '已连接' : networkStatus === 'connecting' ? '连接中' : '离线'}</span>
           </div>
         </div>
 
         <div className="guofeng-header-actions">
-          {/* Gold Currency Pill */}
-          <div className="guofeng-currency-pill" title="雀庄筹码积分">
-            <span className="currency-gold-coin" aria-hidden="true">💰</span>
-            <span className="currency-amount">{user ? '8,880' : '1,000'}</span>
-            <span className="currency-unit">雀币</span>
-          </div>
-
           {onOpenFriends && (
             <button
               type="button"
@@ -156,7 +149,7 @@ export function Lobby({
               onClick={onOpenFriends}
               title="好友列表与在线牌友"
             >
-              <span aria-hidden="true">👥</span>
+
               <span>好友</span>
             </button>
           )}
@@ -166,7 +159,7 @@ export function Lobby({
             type="button"
             className="guofeng-dossier-capsule"
             onClick={onOpenProfile}
-            title="查看与编辑雀士名片及成就"
+            title="编辑个人资料"
           >
             <span className="guofeng-avatar-ring">
               <AvatarView avatar={user?.avatar} alt="雀士头像" />
@@ -193,12 +186,6 @@ export function Lobby({
       <main className="lobby-main-layout">
         {/* Left Side: Majestic Cultural Title & Philosophy */}
         <aside className="lobby-brand-hero">
-          <div className="hero-origin-ribbon">
-            <span className="ribbon-spark">✦</span>
-            <span>江淮雀道 · 地道家乡牌馆</span>
-            <span className="ribbon-spark">✦</span>
-          </div>
-
           <h1 className="lobby-hero-title">
             邳州<span className="title-gold">麻将</span>
           </h1>
@@ -215,105 +202,24 @@ export function Lobby({
         {/* Right Side: Luxurious Game Mode Console */}
         <section className="lobby-modes-console">
           {activePanel === 'cards' ? (
-            <div className="guofeng-mode-grid">
-              {/* Card 1: 单机练习 */}
-              <div
-                role="button"
-                tabIndex={0}
-                className={`guofeng-mode-card card-solo ${soloBusy ? 'disabled' : ''}`}
-                onClick={() => !soloBusy && onStartLocal()}
-                onKeyDown={(e) => e.key === 'Enter' && !soloBusy && onStartLocal()}
-              >
-                <div>
-                  <div className="card-header-row">
-                    <span className="card-badge-pill emerald">单机练习 · 秒进对局</span>
-                    <span className="card-en-sub">SOLO PRACTICE</span>
-                  </div>
-                  <h2 className="gold-emboss-title">{soloBusy ? '正在开局…' : '单机演练'}</h2>
-                  <p className="card-desc-text">3 名智能 AI 雀友陪练，零等待秒开局，磨砺关门与自杠牌技</p>
-                </div>
-                <div className="card-cta-bar">
-                  <span className="card-cta-text">{soloBusy ? '开局中…' : '立即单机开局'}</span>
-                  <span className="card-cta-circle">→</span>
-                </div>
-                <div className="card-bg-watermark" aria-hidden="true">🤖</div>
-              </div>
-
-              {/* Card 2: 创建好友房 */}
-              <div
-                role="button"
-                tabIndex={0}
-                className={`guofeng-mode-card card-create ${!onlineReady ? 'disabled' : ''}`}
-                onClick={() => onlineReady && setShowCreateModal(true)}
-                onKeyDown={(e) => e.key === 'Enter' && onlineReady && setShowCreateModal(true)}
-              >
-                <div>
-                  <div className="card-header-row">
-                    <span className="card-badge-pill amber">专属私密 · 房号直连</span>
-                    <span className="card-en-sub">CREATE ROOM</span>
-                  </div>
-                  <h2 className="gold-emboss-title">创建房间</h2>
-                  <p className="card-desc-text">一键生成专属 6 位数字房号，邀请牌友线上两两对账对决</p>
-                </div>
-                <div className="card-cta-bar">
-                  <span className="card-cta-text">创建 6 位好友房</span>
-                  <span className="card-cta-circle">→</span>
-                </div>
-                <div className="card-bg-watermark" aria-hidden="true">🀄</div>
-              </div>
-
-              {/* Card 3: 加入房间 */}
-              <div
-                role="button"
-                tabIndex={0}
-                className={`guofeng-mode-card card-join ${!onlineReady ? 'disabled' : ''}`}
-                onClick={() => onlineReady && setActivePanel('join')}
-                onKeyDown={(e) => e.key === 'Enter' && onlineReady && setActivePanel('join')}
-              >
-                <div>
-                  <div className="card-header-row">
-                    <span className="card-badge-pill sapphire">输入房号 · 快速入座</span>
-                    <span className="card-en-sub">JOIN ROOM</span>
-                  </div>
-                  <h2 className="gold-emboss-title">加入房间</h2>
-                  <p className="card-desc-text">输入好友分享的 6 位方格朱砂印鉴房号，即刻入席对战</p>
-                </div>
-                <div className="card-cta-bar">
-                  <span className="card-cta-text">输入 6 位房号</span>
-                  <span className="card-cta-circle">→</span>
-                </div>
-                <div className="card-bg-watermark" aria-hidden="true">🚪</div>
-              </div>
-
-              {/* Card 4: 雀友风云榜 */}
-              <div
-                role="button"
-                tabIndex={0}
-                className="guofeng-mode-card card-match"
-                onClick={() => (onOpenLeaderboard ? onOpenLeaderboard() : onOpenProfile())}
-                onKeyDown={(e) => e.key === 'Enter' && (onOpenLeaderboard ? onOpenLeaderboard() : onOpenProfile())}
-              >
-                <div>
-                  <div className="card-header-row">
-                    <span className="card-badge-pill purple">熟人雀庄 · 全员风云榜</span>
-                    <span className="card-en-sub">LEADERBOARD</span>
-                  </div>
-                  <h2 className="gold-emboss-title">雀友风云榜</h2>
-                  <p className="card-desc-text">汇集所有现存牌友战绩，实时查看净胜积分、胜率及活跃局数排名</p>
-                </div>
-                <div className="card-cta-bar">
-                  <span className="card-cta-text">查看雀友排名</span>
-                  <span className="card-cta-circle">→</span>
-                </div>
-                <div className="card-bg-watermark" aria-hidden="true">🏆</div>
-              </div>
+            <div className="quiet-mode-list">
+              <button type="button" className="quiet-mode" disabled={soloBusy} onClick={onStartLocal}>
+                <span><strong>{soloBusy ? '正在开局…' : '单机练习'}</strong><span>与 3 位电脑牌友对局</span></span><span aria-hidden="true">→</span>
+              </button>
+              <button type="button" className="quiet-mode" disabled={!onlineReady} onClick={() => setShowCreateModal(true)}>
+                <span><strong>创建房间</strong><span>开一桌，邀请朋友</span></span><span aria-hidden="true">→</span>
+              </button>
+              <button type="button" className="quiet-mode" disabled={!onlineReady} onClick={() => setActivePanel('join')}>
+                <span><strong>加入房间</strong><span>输入朋友分享的 6 位房号</span></span><span aria-hidden="true">→</span>
+              </button>
+              <button type="button" className="quiet-ranking" onClick={onOpenLeaderboard || onOpenProfile}>查看雀友榜</button>
             </div>
           ) : (
             /* Refined 6-Digit Segmented PIN Room Join Panel */
             <div className="guofeng-join-panel">
               <div className="join-panel-header">
                 <div>
-                  <h2 className="join-panel-title">方格朱砂印鉴 · 房号入席</h2>
+                  <h2 className="join-panel-title">加入房间</h2>
                   <span className="join-panel-hint">请输入房主分享的 6 位数字房号，支持直接粘贴</span>
                 </div>
                 <button
@@ -377,17 +283,17 @@ export function Lobby({
       <footer className="hall-footer-dock">
         <div className="dock-left">
           <button type="button" className="dock-link-btn" onClick={onSettings} title={serverUrl}>
-            ⚙️ 游戏设置
+            设置
           </button>
         </div>
 
         <div className="dock-right">
           <button type="button" className="dock-link-btn" onClick={() => setShowHistory(true)}>
-            📜 战绩牌谱
+            战绩
           </button>
           <span className="dock-sep">/</span>
           <button type="button" className="dock-link-btn" onClick={onRules}>
-            📖 规则详解
+            规则
           </button>
         </div>
       </footer>

@@ -86,14 +86,6 @@ interface ProfileModalProps {
   onLogout?: () => void;
 }
 
-const MOTTO_PRESETS = [
-  '不碰坎不上，单钓不换张！',
-  '运河起巨浪，飘荤定乾坤！',
-  '两对关门，断人退路！',
-  '起手四张，杠上开花！',
-  '算无遗策，落子生风！',
-];
-
 export function ProfileModal({
   serverUrl = '',
   token = null,
@@ -240,13 +232,6 @@ export function ProfileModal({
     return list;
   }, [leaderboard, leaderboardSort]);
 
-  const myRank = React.useMemo(() => {
-    const idx = sortedLeaderboard.findIndex((e) => e.userId === effectiveUser.userId);
-    return idx >= 0 ? idx + 1 : 1;
-  }, [sortedLeaderboard, effectiveUser.userId]);
-
-  const myTotalScore = onlineStats.totalScore + localStats.totalScore;
-
   // Derived Achievements
   const achievements = evaluateAchievements(combinedMatches as EnrichedMatchRecord[], {
     avatar,
@@ -346,10 +331,10 @@ export function ProfileModal({
         {/* Dossier Header */}
         <div className="dossier-header">
           <div className="dossier-title-wrap">
-            <span className="dossier-icon">🪪</span>
+
             <div>
-              <h2 className="dossier-title">邳州雀士 · 身份手账名片</h2>
-              <p className="dossier-subtitle">PIZHOU MAHJONG PASSPORT & IDENTITY DOSSIER</p>
+              <h2 className="dossier-title">个人资料</h2>
+
             </div>
           </div>
           <button type="button" className="dossier-close-btn" onClick={onClose} title="关闭名片">
@@ -363,13 +348,6 @@ export function ProfileModal({
         <div className="dossier-layout">
           {/* Left Pane: 3D Prestige Identity Card */}
           <aside className="dossier-id-card">
-            <div className="card-top-seal">
-              <span className="seal-origin">江苏 · 邳州</span>
-              <span className={`status-stamp ${effectiveUser.isGuest ? 'guest' : 'verified'}`}>
-                {effectiveUser.isGuest ? '⚡ 游客' : '👑 正式雀士'}
-              </span>
-            </div>
-
             <div className="card-avatar-pod">
               <div className="avatar-gold-halo">
                 <AvatarView avatar={avatar} alt="雀士形象" size={72} />
@@ -383,16 +361,8 @@ export function ProfileModal({
               <h3 className="card-nickname" title={nickname}>
                 {nickname || effectiveUser.username}
               </h3>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', margin: '4px 0 8px' }}>
-                <span style={{ fontSize: '11px', color: '#fef08a', fontWeight: 'bold', background: 'rgba(202, 138, 4, 0.25)', border: '1px solid rgba(250, 204, 21, 0.3)', padding: '2px 8px', borderRadius: '10px' }}>
-                  🏆 雀庄第 {myRank} 位
-                </span>
-                <span style={{ fontSize: '11px', color: myTotalScore >= 0 ? '#4ade80' : '#f87171', background: 'rgba(255, 255, 255, 0.08)', padding: '2px 8px', borderRadius: '10px', fontWeight: '600' }}>
-                  净胜 {myTotalScore > 0 ? `+${myTotalScore}` : myTotalScore} 分
-                </span>
-              </div>
               <div className="card-no-row">
-                <span className="card-no-label">雀士卡号</span>
+                <span className="card-no-label">ID</span>
                 <span className="card-no-code">#{displayCardNo}</span>
                 <button
                   type="button"
@@ -405,29 +375,8 @@ export function ProfileModal({
               </div>
             </div>
 
-            <blockquote className="card-quote">
-              “{bio || '不碰坎不上，单钓不换张！'}”
-            </blockquote>
+            {bio && <blockquote className="card-quote">{bio}</blockquote>}
 
-            {/* Quick Stat Ribbon */}
-            <div className="card-stat-ribbon">
-              <div className="ribbon-item">
-                <span className="ribbon-label">联机场次</span>
-                <strong className="ribbon-value">{matchHistory.online.length}</strong>
-              </div>
-              <div className="ribbon-item">
-                <span className="ribbon-label">综合胜率</span>
-                <strong className="ribbon-value highlight">
-                  {onlineStats.winRate ? `${Math.round(onlineStats.winRate)}%` : '0%'}
-                </strong>
-              </div>
-              <div className="ribbon-item">
-                <span className="ribbon-label">成就达成</span>
-                <strong className="ribbon-value" style={{ color: '#38bdf8' }}>
-                  {unlockedAchievementsCount}/15
-                </strong>
-              </div>
-            </div>
           </aside>
 
           {/* Right Pane: 5-Tab Operation Deck */}
@@ -438,35 +387,35 @@ export function ProfileModal({
                 className={`deck-tab-btn ${tab === 'look' ? 'active' : ''}`}
                 onClick={() => setTab('look')}
               >
-                🎨 形象
+                资料
               </button>
               <button
                 type="button"
                 className={`deck-tab-btn ${tab === 'stats' ? 'active' : ''}`}
                 onClick={() => setTab('stats')}
               >
-                📊 战绩
+                战绩
               </button>
               <button
                 type="button"
                 className={`deck-tab-btn ${tab === 'leaderboard' ? 'active' : ''}`}
                 onClick={() => setTab('leaderboard')}
               >
-                🏆 雀友榜
+                雀友榜
               </button>
               <button
                 type="button"
                 className={`deck-tab-btn ${tab === 'achievements' ? 'active' : ''}`}
                 onClick={() => setTab('achievements')}
               >
-                🎖️ 成就
+                成就
               </button>
               <button
                 type="button"
                 className={`deck-tab-btn ${tab === 'security' ? 'active' : ''}`}
                 onClick={() => setTab('security')}
               >
-                🔐 账号
+                账号
               </button>
             </nav>
 
@@ -475,23 +424,23 @@ export function ProfileModal({
               {tab === 'look' && (
                 <div className="deck-pane look-pane">
                   {/* Avatar Picker Header & Mode Toggle */}
-                  <div className="form-section">
+                  <details className="form-section quiet-avatar-options"><summary>更换头像</summary>
                     <div className="section-head-row">
-                      <label className="deck-field-label" style={{ margin: 0 }}>雀士专属形象</label>
+                      <label className="deck-field-label" style={{ margin: 0 }}>头像</label>
                       <div className="sub-pill-toggle">
                         <button
                           type="button"
                           className={avatarTab === 'guofeng' ? 'active' : ''}
                           onClick={() => setAvatarTab('guofeng')}
                         >
-                          🎋 12款国风
+                          预设头像
                         </button>
                         <button
                           type="button"
                           className={avatarTab === 'custom' ? 'active' : ''}
                           onClick={() => setAvatarTab('custom')}
                         >
-                          📷 本地上传
+                          上传头像
                         </button>
                       </div>
                     </div>
@@ -549,13 +498,13 @@ export function ProfileModal({
                         {avatarError && <p className="avatar-error" style={{ color: '#ef4444', fontSize: '11px', marginTop: '6px' }}>{avatarError}</p>}
                       </div>
                     )}
-                  </div>
+                  </details>
 
                   {/* 2-Column Row: Nickname & Title */}
                   <div className="dossier-two-col">
                     <div className="form-section">
                       <div className="field-label-row">
-                        <label className="deck-field-label">牌桌昵称</label>
+                        <label className="deck-field-label">昵称</label>
                         <span className="field-count">{nickname.length}/{NICKNAME_MAX}</span>
                       </div>
                       <input
@@ -564,34 +513,25 @@ export function ProfileModal({
                         value={nickname}
                         onChange={(e) => setNickname(e.target.value)}
                         maxLength={NICKNAME_MAX}
-                        placeholder="输入你的牌桌昵称"
+                        placeholder="输入你的昵称"
                       />
                     </div>
 
                     <div className="form-section">
                       <div className="field-label-row">
-                        <label className="deck-field-label">佩戴称号</label>
-                        <span className="field-count" style={{ color: '#fef08a' }}>{title}</span>
+                        <label className="deck-field-label">称号</label>
+
                       </div>
-                      <div className="dossier-title-scroll-row">
-                        {unlockedTitles.map((t) => (
-                          <button
-                            key={t}
-                            type="button"
-                            className={`dossier-title-chip ${title === t ? 'active' : ''}`}
-                            onClick={() => setTitle(t)}
-                          >
-                            {t}
-                          </button>
-                        ))}
-                      </div>
+                      <select className="input-field dossier-input" aria-label="称号" value={title} onChange={(event) => setTitle(event.target.value)}>
+                        {unlockedTitles.map((item) => <option key={item} value={item}>{item}</option>)}
+                      </select>
                     </div>
                   </div>
 
                   {/* Personal Bio / Motto */}
                   <div className="form-section">
                     <div className="field-label-row">
-                      <label className="deck-field-label">牌桌座右铭</label>
+                      <label className="deck-field-label">签名</label>
                       <span className="field-count">{bio.length}/{BIO_MAX}</span>
                     </div>
                     <textarea
@@ -600,21 +540,9 @@ export function ProfileModal({
                       onChange={(e) => setBio(e.target.value)}
                       maxLength={BIO_MAX}
                       rows={2}
-                      placeholder="写下一句专属你的出牌座右铭"
+                      placeholder="写点关于自己的话"
                     />
-                    <div className="motto-quick-row">
-                      <span className="motto-hint">快捷座右铭：</span>
-                      {MOTTO_PRESETS.slice(0, 3).map((motto) => (
-                        <button
-                          key={motto}
-                          type="button"
-                          className="motto-pill"
-                          onClick={() => setBio(motto)}
-                        >
-                          {motto}
-                        </button>
-                      ))}
-                    </div>
+
                   </div>
                 </div>
               )}
@@ -783,7 +711,7 @@ export function ProfileModal({
                       return (
                         <div key={fan.label} style={{ marginBottom: '8px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '3px' }}>
-                            <span style={{ color: '#e2e8f0' }}>{fan.label} <small style={{ color: '#64748b' }}>({fan.desc})</small></span>
+                            <span style={{ color: '#e2e8f0' }}>{fan.label} </span>
                             <span style={{ color: fan.color, fontWeight: 'bold' }}>{fan.count} 局 ({percent}%)</span>
                           </div>
                           <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
@@ -793,7 +721,7 @@ export function ProfileModal({
                                 height: '100%',
                                 background: fan.color,
                                 borderRadius: '3px',
-                                transition: 'width 0.4s ease',
+
                               }}
                             />
                           </div>
@@ -1040,13 +968,13 @@ export function ProfileModal({
                                   ✓ 已达成
                                 </span>
                                 {isTitleEquipped ? (
-                                  <span style={{ fontSize: '10px', color: '#fbbf24' }}>已佩戴称号</span>
+                                  <span style={{ fontSize: '10px', color: '#fbbf24' }}>已称号</span>
                                 ) : (
                                   <button
                                     type="button"
                                     onClick={() => {
                                       setTitle(item.achievement.rewardTitle);
-                                      setNotice(`已佩戴称号【${item.achievement.rewardTitle}】`);
+                                      setNotice(`已称号【${item.achievement.rewardTitle}】`);
                                       setTimeout(() => setNotice(null), 1500);
                                     }}
                                     style={{
@@ -1059,7 +987,7 @@ export function ProfileModal({
                                       cursor: 'pointer',
                                     }}
                                   >
-                                    佩戴称号
+                                    称号
                                   </button>
                                 )}
                               </div>
@@ -1163,7 +1091,7 @@ export function ProfileModal({
             disabled={saving || uploadingAvatar || Boolean(avatarError)}
             onClick={handleSave}
           >
-            {saving ? '正在同步云端...' : '✨ 保存名片并同步云端'}
+            {saving ? '保存中…' : '保存修改'}
           </button>
           <button type="button" className="btn-action ghost dossier-cancel-btn" onClick={onClose}>
             关闭

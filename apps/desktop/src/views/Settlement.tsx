@@ -33,7 +33,6 @@ const DRAW_LABEL: Record<string, string> = {
   wall: '牌墙摸完流局',
 };
 
-const PODIUM_RANK_NAMES = ['🥇 壹', '🥈 贰', '🥉 叁', '肆'];
 
 function ReplayHands({ view, settlement }: { view: ClientView; settlement: Settlement }) {
   return (
@@ -358,7 +357,7 @@ export function SettlementModal({
 
   return (
     <div className="overlay">
-      <div className="settlement ledger-modal">
+      <div className={`settlement ledger-modal quiet-settlement ${activeTab === 'podium' ? 'is-overview' : ''}`}>
         <div className="gold-line" />
 
         <header className="settlement-header">
@@ -383,14 +382,14 @@ export function SettlementModal({
           <h2>{settlement.liuju ? '本局流局' : `${settlement.winnerNickname ?? '玩家'} 胡牌！`}</h2>
           <p className="sub">
             {WIN_LABEL[settlement.winType] ?? settlement.winType}
-            {settlement.selfDraw ? ' (自摸)' : ' (点炮)'}
+            {settlement.liuju ? '' : settlement.selfDraw ? ' · 自摸' : ' · 点炮'}
             {settlement.hunDi ? ' · 飘荤' : ''}
             {bao ? ` · ${bao}` : ''}
           </p>
           {drawText ? <p className="sub">{drawText}</p> : null}
 
           {/* Hun Di & Bao Zhuang Fund Highlight Badges */}
-          {(settlement.hunDi || settlement.baoZhuang) && !settlement.liuju ? (
+          {activeTab !== 'podium' && (settlement.hunDi || settlement.baoZhuang) && !settlement.liuju ? (
             <div className="settlement-fund-pills">
               {settlement.hunDi ? (
                 <div className="settlement-fund-pill hun-di">
@@ -415,7 +414,7 @@ export function SettlementModal({
             className={`tab-btn ${activeTab === 'podium' ? 'active' : ''}`}
             onClick={() => setActiveTab('podium')}
           >
-            🏆 荣耀战绩榜
+            本局结果
           </button>
           {!settlement.liuju ? (
             <>
@@ -424,14 +423,14 @@ export function SettlementModal({
                 className={`tab-btn ${activeTab === 'summary' ? 'active' : ''}`}
                 onClick={() => setActiveTab('summary')}
               >
-                📊 查胡收付账单
+                收付明细
               </button>
               <button
                 type="button"
                 className={`tab-btn ${activeTab === 'ledger' ? 'active' : ''}`}
                 onClick={() => setActiveTab('ledger')}
               >
-                {settlement.baoZhuang ? '🧾 包庄前查胡流水' : '🧾 6组两两查胡流水'}
+                {settlement.baoZhuang ? '包庄前流水' : '两两流水'}
               </button>
               {settlement.breakdown.length > 0 ? (
                 <button
@@ -439,7 +438,7 @@ export function SettlementModal({
                   className={`tab-btn ${activeTab === 'breakdown' ? 'active' : ''}`}
                   onClick={() => setActiveTab('breakdown')}
                 >
-                  🀄 牌面番数细则
+                  胡数明细
                 </button>
               ) : null}
             </>
@@ -449,7 +448,7 @@ export function SettlementModal({
             className={`tab-btn ${activeTab === 'replay' ? 'active' : ''}`}
             onClick={() => setActiveTab('replay')}
           >
-            🀄 牌局复盘
+            四家牌面
           </button>
         </div>
 
@@ -457,14 +456,14 @@ export function SettlementModal({
         {!settlement.liuju && roomRate > 0 ? (
           <div className="rate-toolbar" style={{ margin: '8px 0' }}>
             <div className="rate-presets">
-              <span className="rate-label">🔒 底分单价:</span>
-              <span className="rate-chip active locked">¥{roomRate} / 分 (开局已固定)</span>
+              <span className="rate-label">底分</span>
+              <span className="rate-chip active locked">¥{roomRate} / 分</span>
               <button
                 type="button"
                 className={`rate-chip ${showMoney ? 'active' : ''}`}
                 onClick={() => setShowMoney((prev) => !prev)}
               >
-                {showMoney ? '切换为仅看计分' : '切换为展示金额'}
+                {showMoney ? '只看分数' : '显示金额'}
               </button>
             </div>
           </div>
@@ -483,10 +482,10 @@ export function SettlementModal({
                   包庄代付: <b>{baoZhuangTotalPoints}分</b> {showMoney ? <b className="baozhuang-money-val">¥{baoZhuangTotalMoney}</b> : null}
                 </span>
               </div>
-              <p className="baozhuang-desc">
+              <details className="baozhuang-desc"><summary>包庄说明</summary><p>
                 {BAO_EXPLANATION[settlement.baoZhuang.reason]} 另外两家原本应向胡家支付给赢家的正向份额由【{getNickname(settlement.baoZhuang.payerSeat)}】代付；其他两两差胡仍照算{settlement.hunDi ? '；本局飘荤荤底（3份共90分）也全部由包庄者承担。' : '。'}
                 {chaHuPoints > 0 ? ` 查胡分差包赔: ${chaHuPoints}分${showMoney ? ` (¥${chaHuMoney})` : ''}。` : ''}
-              </p>
+              </p></details>
             </div>
           </div>
         ) : null}
@@ -496,8 +495,7 @@ export function SettlementModal({
           {activeTab === 'podium' ? (
             /* 1. Shenghun-Style Podium Cards & Winning Hand Domino Showcase */
             <div className="shenghun-settlement">
-              {/* Winning Hand Domino Decomposition Tray */}
-              <div className="winning-hand-tray">
+              <details className="winning-hand-tray"><summary>{settlement.liuju ? '查看流局说明' : '查看胡牌牌面'}</summary>
                 <div className="winning-tray-header">
                   <div className="winning-tray-title">
                     <span>🀄 {settlement.liuju ? '局终牌面展示' : `赢家胡牌面拆解 (${settlement.winnerNickname || '胡家'})`}</span>
@@ -546,7 +544,7 @@ export function SettlementModal({
                     {settlement.liuju ? '本局未形成有效胡牌，所有牌面已归档复盘。' : '牌面已归集两两对账账册。'}
                   </div>
                 )}
-              </div>
+              </details>
 
               {/* 4-Player Podium Cards Grid */}
               <div className="shenghun-podium-grid">
@@ -561,12 +559,7 @@ export function SettlementModal({
                       className={`podium-player-card rank-${rankIdx + 1} ${isMvp ? 'is-mvp' : ''}`}
                     >
                       {/* MVP Laurel Crest */}
-                      {isMvp ? <div className="mvp-crest-badge">👑 MVP 最佳雀士</div> : null}
 
-                      {/* Rank Medal */}
-                      <div className={`podium-rank-badge rank-${rankIdx + 1}`}>
-                        {PODIUM_RANK_NAMES[rankIdx] || String(rankIdx + 1)}
-                      </div>
 
                       {/* Avatar */}
                       <div className="podium-avatar-wrap">
@@ -601,11 +594,6 @@ export function SettlementModal({
                           {score.delta > 0 ? `+¥${deltaMoney}` : `¥${deltaMoney}`}
                         </div>
                       )}
-
-                      {/* Hu & Yao count */}
-                      <div className="podium-hu-detail">
-                        {score.hu}胡 · {score.yao}幺
-                      </div>
 
                       <div style={{ fontSize: '11px', color: '#94a3b8' }}>
                         累计: {score.total}分
@@ -756,20 +744,14 @@ export function SettlementModal({
           </button>
           <button
             type="button"
-            className="btn-action"
-            style={{
-              background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
-              border: '1px solid #fef08a',
-              color: '#fffbeb',
-              fontWeight: 800,
-            }}
+            className="btn-action ghost"
             disabled={isGeneratingPoster}
             onClick={handleGeneratePoster}
           >
-            {isGeneratingPoster ? '正在生成战报…' : '🎨 生成战报海报'}
+            {isGeneratingPoster ? '正在生成战报…' : '生成战报'}
           </button>
           <button type="button" className="btn-action ghost" onClick={() => setMinimized(true)}>
-            👁️ 查看牌桌
+            查看牌桌
           </button>
           {onLeave ? (
             <button type="button" className="btn-action ghost" onClick={onLeave}>

@@ -76,10 +76,31 @@ export function App() {
   const requestedModeRef = useRef<Mode>('home');
   const pendingSoloRef = useRef(false);
   const seenSettlementRef = useRef<string | null>(null);
+  const soloAttemptRef = useRef(0);
+  const soloFailureRef = useRef(false);
+  const soloTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearSoloTimer = () => {
+    if (soloTimerRef.current) clearTimeout(soloTimerRef.current);
+    soloTimerRef.current = null;
+  };
+  const failSolo = (attempt: number, message: string) => {
+    if (attempt !== soloAttemptRef.current) return;
+    soloAttemptRef.current++;
+    soloFailureRef.current = true;
+    clearSoloTimer();
+    pendingSoloRef.current = false;
+    requestedModeRef.current = 'home';
+    clientRef.current?.disconnect(false);
+    setSoloIntent(false);
+    setError(message);
+  };
 
   if (!clientRef.current) {
     clientRef.current = new GameClient({
       onView: (next) => {
+        clearSoloTimer();
+        soloFailureRef.current = false;
         setMode(requestedModeRef.current === 'local' ? 'local' : 'online');
         setView(next);
         const nextCelebrationKey = celebrationKey(next);
@@ -104,7 +125,12 @@ export function App() {
         setSettlement(nextSettlement);
         setError('');
       },
-      onError: (message) => setError(message),
+      onError: (message) => {
+        if (soloFailureRef.current && !isLoopbackWs(clientRef.current?.url ?? '')) return;
+        if (soloTimerRef.current && isLoopbackWs(clientRef.current?.url ?? '')) {
+          failSolo(soloAttemptRef.current, `${message}，请重新点击单机练习。`);
+        } else setError(message);
+      },
       onStatus: (status) => setNetworkStatus(status),
       onFriendInvited: (invite) => {
         setIncomingInvite(invite);
@@ -123,28 +149,8 @@ export function App() {
     });
   }
 
-  useEffect(() => {
-    let active = true;
-    const localUrlApi = window.pizhou?.getLocalServerUrl;
-    if (!localUrlApi) {
-      setLocalUrl(FALLBACK_LOCAL_WS_URL);
-      setLocalUrlReady(true);
-      return undefined;
-    }
-
-    void localUrlApi().then((url) => {
-      if (!active) return;
-      setLocalUrl(url || '');
-      setLocalUrlReady(true);
-    });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
   const targetUrl = soloIntent
-    ? (localUrl || DEFAULT_WS_URL)
+    ? localUrl
     : DEFAULT_WS_URL;
   const urlReady = soloIntent ? localUrlReady : true;
 
@@ -197,7 +203,11 @@ export function App() {
     }
   }, [auth.user]);
 
-  useEffect(() => () => clientRef.current?.disconnect(), []);
+  useEffect(() => () => {
+    soloAttemptRef.current++;
+    clearSoloTimer();
+    clientRef.current?.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!pendingSoloRef.current) return;
@@ -251,6 +261,7 @@ export function App() {
   };
 
   const requireOnline = (): boolean => {
+    soloFailureRef.current = false;
     if (!nickname.trim()) {
       setError('请先输入昵称');
       return false;
@@ -294,35 +305,30 @@ export function App() {
       setError('请先输入昵称');
       return;
     }
+    soloFailureRef.current = false;
     setError('');
+    const attempt = ++soloAttemptRef.current;
     requestedModeRef.current = 'local';
     pendingSoloRef.current = true;
+    setLocalUrlReady(false);
     setSoloIntent(true);
+    clearSoloTimer();
+    soloTimerRef.current = setTimeout(() => {
+      failSolo(attempt, '本地牌局启动超时，请重新点击单机练习。');
+    }, 15_000);
     // Re-check on demand. Startup can race a stale process or a temporarily
     // occupied port; the main process is allowed to recover and retry now.
-    const localServerRequest = window.pizhou?.getLocalServerUrl?.();
-    if (!localServerRequest) {
-      setLocalUrl(FALLBACK_LOCAL_WS_URL);
-      setLocalUrlReady(true);
-    } else void localServerRequest.then((url) => {
-      if (url) {
+    void Promise.resolve().then(() => window.pizhou?.getLocalServerUrl?.() ?? FALLBACK_LOCAL_WS_URL).then((url) => {
+      if (attempt !== soloAttemptRef.current) return;
+      if (url && isLoopbackWs(url)) {
         setLocalUrl(url);
         setLocalUrlReady(true);
         return;
       }
-      pendingSoloRef.current = false;
-      setSoloIntent(false);
-      setError('本机牌局服务没有启动成功，请关闭旧的 iMahjong 窗口后重试');
+      failSolo(attempt, '本地牌局服务启动失败，请重新点击单机练习。');
+    }).catch(() => {
+      failSolo(attempt, '无法连接本地牌局服务，请重新点击单机练习。');
     });
-    if (networkStatus === 'open' && isLoopbackWs(clientRef.current?.url ?? '')) {
-      pendingSoloRef.current = false;
-      clientRef.current?.createRoom(
-        nickname.trim(),
-        auth.user?.avatar || DEFAULT_AVATAR,
-        true,
-        auth.user?.title || DEFAULT_TITLE,
-      );
-    }
   };
 
   const sendAction = (action: GameAction) => {
@@ -331,6 +337,8 @@ export function App() {
   };
 
   const leave = () => {
+    soloAttemptRef.current++;
+    clearSoloTimer();
     pendingSoloRef.current = false;
     setSoloIntent(false);
     clientRef.current?.leave();
