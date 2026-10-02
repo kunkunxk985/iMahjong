@@ -26,7 +26,7 @@ import { DiscardFlightLayer, type DiscardFlight } from '../table/DiscardFlight';
 import { countVisibleTiles, TenpaiBar } from '../table/TenpaiBar';
 import { GameClock } from '../table/clock';
 import { CenterCompass } from '../table/CenterCompass';
-import { Table3DView } from '../table3d/Table3DView';
+
 
 interface TableProps {
   view: ClientView;
@@ -136,6 +136,22 @@ export function Table({
       return false;
     }
   });
+
+  // 3D 渲染器按需加载：three.js 约 600KB，静态导入会让只用 2D 的玩家
+  // 白白下载并解析一整份 3D 引擎。切到 3D 时才拉取，切换期间显示占位。
+  const [Table3DView, setTable3DView] = useState<typeof import('../table3d/Table3DView')['Table3DView'] | null>(null);
+
+  useEffect(() => {
+    if (!is3DMode || Table3DView) return;
+    let cancelled = false;
+    void import('../table3d/Table3DView').then((module) => {
+      if (!cancelled) setTable3DView(() => module.Table3DView);
+    }).catch(() => {
+      // 加载失败时退回 2D，而不是留一块空白区域。
+      if (!cancelled) setIs3DMode(false);
+    });
+    return () => { cancelled = true; };
+  }, [is3DMode, Table3DView]);
 
   // 渲染模式由用户在牌桌上切换并持久化，启动时不再强制回退到 2D。
   // 旧实现在挂载时无条件写回 '2d'，导致用户选了 3D 后刷新就被悄悄重置。
@@ -466,6 +482,16 @@ export function Table({
   };
   const discard = () => discardTile(selectedId);
 
+  // 选中的牌可能因为碰/杠/吃而离开手牌（例如用它去碰了），
+  // 此时 selectedId 会指向一张不存在的牌：出牌按钮仍是可点的，
+  // 但 discardTile 会因为找不到牌而静默返回，玩家点了没反应。
+  // 手牌变化后清掉悬空选择，按钮随之回到正确的禁用态。
+  useEffect(() => {
+    if (selectedId && !myHand.some((tile) => tile.id === selectedId)) {
+      setSelectedId(null);
+    }
+  }, [myHand, selectedId]);
+
   const handleAction = (action: AvailableAction | GameAction) => {
     if (action.kind === 'discard') {
       discard();
@@ -634,7 +660,7 @@ export function Table({
         <div key={view.currentSeat} className={`board-turn-glow is-${currentPosition}`} aria-hidden="true" />
       ) : null}
 
-      {is3DMode ? (
+      {is3DMode && Table3DView ? (
         <Table3DView
           view={view}
           selectedTileId={selectedId}
