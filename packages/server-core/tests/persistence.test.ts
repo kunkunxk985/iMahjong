@@ -15,6 +15,11 @@ import {
   deserializeRoom,
   startMahjongServer,
 } from '../src/index.ts';
+// 反向依赖：这是唯一一个 server-core 测试引用 apps/desktop 源码的地方。
+// 架构检查只扫 */src，因此不会拦它。它本质上是一个端到端集成测试
+// （用真实客户端验证服务端重启后的状态对齐），放在这里是因为它同时
+// 覆盖了 DiskRoomStore 与 GameClient 的组合行为。
+// 若将来 shared 里抽出可复用的协议客户端，应把它迁过去。
 import { GameClient } from '../../../apps/desktop/src/ws/client.ts';
 
 function dummySocket() {

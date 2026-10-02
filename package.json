@@ -21,7 +21,8 @@
     "package:win": "npm run package:win -w @pizhou/desktop",
     "package:mac": "npm run package:mac -w @pizhou/desktop",
     "deploy:cf": "npm run deploy -w @pizhou/worker",
-    "test": "npm run test --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present && npm run test:root",
+    "test:root": "node --import tsx --test \"tests/e2e/*.test.ts\" \"tests/challenger-*.test.ts\" \"packages/shared/test/*.test.ts\" \"packages/server-core/test/*.test.ts\"",
     "dev": "npm run dev:desktop"
   },
   "devDependencies": {
