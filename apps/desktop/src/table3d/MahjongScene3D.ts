@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import {
   isPrivatePlayerView,
   type ClientView,
@@ -17,6 +18,8 @@ export class MahjongScene3D {
   private container: HTMLElement;
   private renderer: THREE.WebGLRenderer;
   private scene: THREE.Scene;
+  private environmentTarget: THREE.WebGLRenderTarget | null = null;
+  private textureLoader = new THREE.TextureLoader();
   private camera: THREE.PerspectiveCamera;
   private raycaster = new THREE.Raycaster();
   private mouse = new THREE.Vector2(-999, -999);
@@ -79,12 +82,39 @@ export class MahjongScene3D {
   }
 
   private setupLighting(): void {
-    // Warm gentle ambient
-    const ambient = new THREE.AmbientLight(0xfff8ee, 1.4);
+    // Image-based lighting. Without this every PBR surface is lit by analytic
+    // lights alone, so the felt reads flat and the tiles lose the soft
+    // environment reflection that makes ivory look like ivory. PMREM-prefiltered
+    // so roughness responds correctly.
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    const room = new RoomEnvironment();
+    const envRT = pmrem.fromScene(room, 0.04);
+    this.scene.environment = envRT.texture;
+    // Keep a reference so the render target can be released on destroy.
+    this.environmentTarget = envRT;
+    pmrem.dispose();
+    // RoomEnvironment builds its own meshes. PMREMGenerator does not free the
+    // scene it was handed, so those geometries leak unless disposed here — the
+    // 3D regression test asserts zero geometries remain after teardown.
+    room.traverse((object) => {
+      if (object instanceof THREE.Mesh) {
+        object.geometry.dispose();
+        const mats = Array.isArray(object.material) ? object.material : [object.material];
+        mats.forEach((material: THREE.Material) => material.dispose());
+      }
+    });
+
+    // Depth: the felt should fall away toward the rails instead of ending at a
+    // hard silhouette. Fog also softens the far tile walls.
+    this.scene.fog = new THREE.Fog(0x07231a, 58, 120);
+
+    // Warm gentle ambient. Deliberately low now that IBL carries most of the
+    // fill; the directional lights below provide shape and shadows.
+    const ambient = new THREE.AmbientLight(0xfff8ee, 0.55);
     this.scene.add(ambient);
 
     // Main downward spotlight with soft shadow
-    const mainSpot = new THREE.DirectionalLight(0xfff6e5, 2.6);
+    const mainSpot = new THREE.DirectionalLight(0xfff6e5, 2.1);
     mainSpot.position.set(0, 38, 14);
     mainSpot.castShadow = true;
     mainSpot.shadow.mapSize.width = 2048;
@@ -110,25 +140,55 @@ export class MahjongScene3D {
     this.scene.add(rimLight);
   }
 
+  /**
+   * Loads a tiling surface texture with sRGB decode for colour maps and
+   * linear data for normal/roughness maps, plus mipmaps and anisotropy so it
+   * does not shimmer at the table's grazing angles.
+   */
+  private loadSurfaceTexture(path: string, repeat: number, srgb: boolean): THREE.Texture {
+    const texture = this.textureLoader.load(path);
+    texture.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(repeat, repeat);
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.generateMipmaps = true;
+    texture.anisotropy = Math.min(16, this.renderer.capabilities.getMaxAnisotropy());
+    return texture;
+  }
+
   private setupTable(): void {
-    // 3D Emerald Felt Playing Surface
-    const feltGeo = new THREE.CylinderGeometry(27.5, 27.5, 0.5, 64);
+    // Emerald felt. The project already ships a real 1024px felt photograph in
+    // public/assets/felt.jpg — it was only ever used by the old CSS table. Tiling
+    // it across the surface gives the woven texture and micro-sheen that a flat
+    // colour cannot, which is most of the distance to the reference look.
+    const feltGeo = new THREE.CylinderGeometry(27.5, 27.5, 0.5, 96);
     const feltMat = new THREE.MeshStandardMaterial({
-      color: 0x0c3b28, // Deep royal emerald felt
-      roughness: 0.88,
-      metalness: 0.02,
+      color: 0x2a8a63, // Multiplies the texture; carries the emerald hue
+      map: this.loadSurfaceTexture('./assets/felt.jpg', 4, true),
+      normalMap: this.loadSurfaceTexture('./assets/felt-normal.png', 4, false),
+      normalScale: new THREE.Vector2(0.35, 0.35),
+      roughnessMap: this.loadSurfaceTexture('./assets/felt-rough.png', 4, false),
+      roughness: 0.94,
+      metalness: 0.0,
+      envMapIntensity: 0.5,
     });
     const felt = new THREE.Mesh(feltGeo, feltMat);
     felt.position.y = -0.25;
     felt.receiveShadow = true;
     this.tableGroup.add(felt);
 
-    // Walnut Wooden Beveled Rail
-    const railGeo = new THREE.CylinderGeometry(29.2, 29.6, 1.3, 64);
+    // Walnut rail. Same story as the felt: a real wood photograph already ships
+    // in public/assets/wood.jpg. Tiled around the rail it gives the grain and
+    // the warm specular streak that a flat brown cannot.
+    const railGeo = new THREE.CylinderGeometry(29.2, 29.6, 1.3, 96);
     const railMat = new THREE.MeshStandardMaterial({
-      color: 0x1f1008, // Dark imperial walnut
-      roughness: 0.42,
-      metalness: 0.12,
+      color: 0x8a5a34, // Tints the wood toward imperial walnut
+      map: this.loadSurfaceTexture('./assets/wood.jpg', 6, true),
+      roughness: 0.38,
+      metalness: 0.06,
+      envMapIntensity: 0.7,
     });
     const rail = new THREE.Mesh(railGeo, railMat);
     // Keep the rail top below the felt; coplanar surfaces flicker across the table.
@@ -457,6 +517,12 @@ export class MahjongScene3D {
       if (object instanceof THREE.DirectionalLight) object.shadow.dispose();
     });
     this.tiles.dispose();
+    // The PMREM environment render target is not part of the scene graph, so
+    // scene.clear() will not release its GPU memory. The 3D regression test
+    // asserts retired WebGL contexts are freed, so release it explicitly.
+    this.environmentTarget?.dispose();
+    this.environmentTarget = null;
+    this.scene.environment = null;
     this.scene.clear();
     this.handTileMeshes = [];
     this.hoveredMesh = null;
