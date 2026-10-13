@@ -1,0 +1,8 @@
+{
+  "winner": { "count": 1231, "sha256": "4ae3e5a11b122ffbc61ae0cc87a5aaea026903ce4e8697761acac158efa8ab33" },
+  "hunDi": { "count": 1231, "sha256": "a5fcf18d0a7e476039e7ed407148e228f679495d81eacbf2ca2525e62afaf57d" },
+  "draw": { "count": 712, "sha256": "0c8dc6e4688964e930de8a1282b0cc72c0bd9a8dfd2faa9aec0333a730b4520b" },
+  "defaults": { "count": 321, "sha256": "fb31b142eb88174aea13b5028f01e1c0c18491a426c81cd64916c794fa5f0ec3" },
+  "ties": { "count": 1244, "sha256": "358f74d556ff7f7533d3655f61bff0570462367295c46c97292fb3de11a2a896" },
+  "tiles": { "count": 3866, "sha256": "7e155021be252ed5944c4e36c3fcac6ff306411d4e5b4a15f738d8af4b0890d6" }
+}

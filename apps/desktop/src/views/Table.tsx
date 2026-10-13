@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ACTION_TIMEOUT_MS,
   isPrivatePlayerView,
   tileLabel,
-  type AvailableAction,
   type ClientView,
   type GameChatMessage,
   type GameAction,
@@ -12,21 +11,21 @@ import {
 import { getDiscardTenpaiOptions, type DiscardTenpaiOption } from '@pizhou/rules';
 import { ActionBar } from '../components/ActionBar';
 import { ActionSplash } from '../components/ActionSplash';
-import { AvatarView } from '../components/AvatarView';
 import { Melds } from '../components/Melds';
-import { faceSrc, TileView } from '../components/TileView';
+import { TileView } from '../components/TileView';
 import { QuickChat } from '../components/QuickChat';
 import { ChatBubbleOverlay, type ActiveChatBubble } from '../components/ChatBubble';
 import { useSoundEffects } from '../audio/useSoundEffects';
-import { isMuted, toggleMute } from '../audio/sfx';
+import { isMuted } from '../audio/sfx';
 import { subscribeAudioSettings } from '../audio/settings';
 import { SettingsModal } from '../components/SettingsModal';
 import { BoardPlayer, ConcealedHand, DiscardRiver, relativeSeat } from '../table/BoardSeats';
-import { DiscardFlightLayer, type DiscardFlight } from '../table/DiscardFlight';
+import { DiscardFlightLayer } from '../table/DiscardFlight';
 import { countVisibleTiles, TenpaiBar } from '../table/TenpaiBar';
-import { GameClock } from '../table/clock';
+import { TableTopbar } from '../table/TableTopbar';
 import { CenterCompass } from '../table/CenterCompass';
-
+import { useTableInteraction } from '../table/useTableInteraction';
+import { useTableAnimations } from '../table/useTableAnimations';
 
 interface TableProps {
   view: ClientView;
@@ -39,66 +38,6 @@ interface TableProps {
   incomingChat?: GameChatMessage | null;
   networkStatus?: 'connecting' | 'open' | 'closed';
   practice?: boolean;
-}
-
-type BoardIconName = 'rules' | 'settings' | 'chat' | 'sound' | 'muted' | 'leave';
-
-function BoardIcon({ name }: { name: BoardIconName }) {
-  const common = {
-    className: 'board-tool-icon',
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    strokeWidth: 1.8,
-    strokeLinecap: 'round' as const,
-    strokeLinejoin: 'round' as const,
-    'aria-hidden': true,
-  };
-
-  if (name === 'settings') {
-    return (
-      <svg {...common}>
-        <circle cx="12" cy="12" r="3.2" />
-        <path d="M19.2 13.4v-2.8l-2-.7a7 7 0 0 0-.7-1.6l.9-1.9-2-2-1.9.9a7 7 0 0 0-1.6-.7l-.7-2H8.4l-.7 2a7 7 0 0 0-1.6.7l-1.9-.9-2 2 .9 1.9a7 7 0 0 0-.7 1.6l-2 .7v2.8l2 .7a7 7 0 0 0 .7 1.6l-.9 1.9 2 2 1.9-.9a7 7 0 0 0 1.6.7l.7 2h2.8l.7-2a7 7 0 0 0 1.6-.7l1.9.9 2-2-.9-1.9a7 7 0 0 0 .7-1.6z" />
-      </svg>
-    );
-  }
-  if (name === 'rules') {
-    return (
-      <svg {...common}>
-        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-      </svg>
-    );
-  }
-  if (name === 'chat') {
-    return (
-      <svg {...common}>
-        <path d="M5.2 17.7 3 21l.6-4.8A8.2 8.2 0 1 1 7 19" />
-        <path d="M8 10h8M8 14h5" />
-      </svg>
-    );
-  }
-  if (name === 'sound') {
-    return (
-      <svg {...common}>
-        <path d="M5 10v4h3l4 3V7l-4 3H5z" />
-        <path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11" />
-      </svg>
-    );
-  }
-  if (name === 'muted') {
-    return (
-      <svg {...common}>
-        <path d="M5 10v4h3l4 3V7l-4 3H5zM16 10l5 5M21 10l-5 5" />
-      </svg>
-    );
-  }
-  return (
-    <svg {...common}>
-      <path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10" />
-    </svg>
-  );
 }
 
 function chatPosition(seat: number, mySeat: number): ActiveChatBubble['position'] {
@@ -121,13 +60,7 @@ export function Table({
   practice = false,
 }: TableProps) {
   const boardRef = useRef<HTMLDivElement | null>(null);
-  const pendingDiscardRef = useRef<{
-    tileId: string;
-    from: DOMRect;
-    face: string;
-    submittedSequence: number;
-  } | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+
   const [is3DMode, setIs3DMode] = useState<boolean>(() => {
     try {
       // 默认使用清晰、地道、稳定且具备 2.5D 实体玉石质感的竞技牌桌
@@ -156,9 +89,16 @@ export function Table({
   // 渲染模式由用户在牌桌上切换并持久化，启动时不再强制回退到 2D。
   // 旧实现在挂载时无条件写回 '2d'，导致用户选了 3D 后刷新就被悄悄重置。
 
+  const toggleRenderMode = () => {
+    setIs3DMode((prev) => {
+      const next = !prev;
+      try { localStorage.setItem('pizhou_render_mode', next ? '3d' : '2d'); } catch {}
+      return next;
+    });
+  };
+
   const [hoveredTileKey, setHoveredTileKey] = useState<string | null>(null);
   const [hoveredTileId, setHoveredTileId] = useState<string | null>(null);
-  const [enteringId, setEnteringId] = useState<string | undefined>(undefined);
   const [muted, setMuted] = useState(isMuted());
   const [showSettings, setShowSettings] = useState(false);
 
@@ -170,11 +110,7 @@ export function Table({
   }, []);
   const [showQuickChat, setShowQuickChat] = useState(false);
   const [chatBubbles, setChatBubbles] = useState<ActiveChatBubble[]>([]);
-  const [discardFlight, setDiscardFlight] = useState<DiscardFlight | null>(null);
-  const [flyingDiscardId, setFlyingDiscardId] = useState<string | null>(null);
-  const flyingDiscardIdRef = useRef<string | null>(null);
-  const seenDiscardIdRef = useRef<string | null>(null);
-  const hasSeenDiscardRef = useRef(false);
+
   const seenIncomingChatRef = useRef<string | null>(null);
 
   const addChatBubble = useCallback((
@@ -238,177 +174,16 @@ export function Table({
   const myTurn = view.gamePhase === 'self-turn' && view.currentSeat === view.mySeat;
   const claiming = view.gamePhase === 'claim-window' && view.availableActions.some((item) => item.kind !== 'discard');
 
-  const noteDiscardSource = useCallback((tileId: string) => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const tile = myHand.find((item) => item.id === tileId);
-    const sourceElement = Array.from(
-      boardRef.current?.querySelectorAll<HTMLElement>('.board-own-hand .tile[data-tile-id]') ?? [],
-    ).find((element) => element.dataset.tileId === tileId);
-    const source = sourceElement?.getBoundingClientRect();
-    if (!tile || !source) return;
-    pendingDiscardRef.current = {
-      tileId,
-      from: source,
-      face: faceSrc(tile),
-      submittedSequence: view.sequence,
-    };
-    flyingDiscardIdRef.current = tileId;
-  }, [myHand, view.sequence]);
-
-  useLayoutEffect(() => {
-    const pending = pendingDiscardRef.current;
-    if (!pending || view.sequence <= pending.submittedSequence) return;
-    const currentMe = view.players.find((player) => player.seat === view.mySeat);
-    const myDiscardWasAccepted = Boolean(
-      currentMe && isPrivatePlayerView(currentMe) && !currentMe.hand.some((tile) => tile.id === pending.tileId),
-    );
-    if (!myDiscardWasAccepted) {
-      pendingDiscardRef.current = null;
-      return;
-    }
-    const target = Array.from(
-      boardRef.current?.querySelectorAll<HTMLElement>('[data-discard-tile-id]') ?? [],
-    ).find((element) => element.dataset.discardTileId === pending.tileId);
-    const boardRect = boardRef.current?.getBoundingClientRect();
-    if (!boardRect) return;
-    const fallbackTarget = new DOMRect(
-      boardRect.left + boardRect.width / 2 - 18,
-      boardRect.top + boardRect.height * 0.65 - 26,
-      36,
-      52,
-    );
-
-    setFlyingDiscardId(target ? pending.tileId : null);
-    flyingDiscardIdRef.current = target ? pending.tileId : null;
-    setDiscardFlight({
-      flightId: view.sequence,
-      from: pending.from,
-      to: target?.getBoundingClientRect() ?? fallbackTarget,
-      face: pending.face,
-    });
-    pendingDiscardRef.current = null;
-  }, [view.players, view.mySeat, view.sequence]);
-
-  // Opponent discards do not have a local hand element we can measure before
-  // the server update.  Once the authoritative discard lands in the view,
-  // animate it from that seat's concealed rack into the matching river cell.
-  // The first snapshot is intentionally ignored so reconnecting mid-hand does
-  // not replay an old discard as if it were a new move.
-  useLayoutEffect(() => {
-    const discard = view.lastDiscard;
-    const discardId = discard?.tile.id ?? null;
-
-    if (!hasSeenDiscardRef.current) {
-      hasSeenDiscardRef.current = true;
-      seenDiscardIdRef.current = discardId;
-      return;
-    }
-
-    if (!discardId) {
-      seenDiscardIdRef.current = null;
-      return;
-    }
-    if (!discard) return;
-    if (discardId === seenDiscardIdRef.current) return;
-    seenDiscardIdRef.current = discardId;
-
-    // Manual discards already use the exact hand-tile origin captured by
-    // noteDiscardSource().  Skip them here to avoid rendering two flights.
-    if (discard.fromSeat === view.mySeat || view.settlement) return;
-
-    const board = boardRef.current;
-    if (!board) return;
-
-    const relative = relativeSeat(discard.fromSeat, view.mySeat);
-    const position = relative === 0
-      ? 'bottom'
-      : relative === 1
-        ? 'right'
-        : relative === 2
-          ? 'top'
-          : 'left';
-    const sourceGroup = board.querySelector<HTMLElement>(`.board-concealed-${position}`);
-    const sourceElement = sourceGroup?.querySelector<HTMLElement>('.board-concealed-tile') ?? sourceGroup;
-    const source = sourceElement?.getBoundingClientRect();
-    const target = Array.from(
-      board.querySelectorAll<HTMLElement>('[data-discard-tile-id]'),
-    ).find((element) => element.dataset.discardTileId === discardId);
-    if (!source || !target) return;
-
-    flyingDiscardIdRef.current = discardId;
-    setFlyingDiscardId(discardId);
-    setDiscardFlight({
-      flightId: view.sequence,
-      from: source,
-      to: target.getBoundingClientRect(),
-      face: faceSrc(discard.tile),
-    });
-  }, [view.lastDiscard?.tile.id, view.lastDiscard?.fromSeat, view.mySeat, view.sequence, view.settlement]);
-
-  const finishDiscardFlight = useCallback(() => {
-    setDiscardFlight(null);
-    setFlyingDiscardId(null);
-    flyingDiscardIdRef.current = null;
-  }, []);
-
-  // Track previous lastDrawnId to detect new draws for entering animation
-  const prevDrawnRef = useRef<string | undefined>(undefined);
-  useEffect(() => {
-    // Only react to an actual NEW drawn tile; never clear early on unrelated
-    // view.sequence bumps, or the 0.48s arc gets cut off mid-flight.
-    if (!lastDrawnId || lastDrawnId === prevDrawnRef.current) return;
-    setEnteringId(lastDrawnId);
-    prevDrawnRef.current = lastDrawnId;
-    // Keep the class until draw-arc-in (0.2s) fully finishes
-    const timer = setTimeout(() => setEnteringId(undefined), 220);
-    return () => clearTimeout(timer);
-  }, [lastDrawnId]);
-
-  const myHandIds = myHand.map((t) => t.id).join(',');
-  // ── Smooth hand re-sorting: FLIP-slide tiles whose position changed ──
-  const handRectsRef = useRef<Map<string, DOMRect>>(new Map());
-  useLayoutEffect(() => {
-    const row = boardRef.current?.querySelector<HTMLElement>('.board-own-hand');
-    if (!row) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const els = Array.from(row.querySelectorAll<HTMLElement>('.tile[data-tile-id]'));
-    const prev = handRectsRef.current;
-    const next = new Map<string, DOMRect>();
-    const animations: Array<{ el: HTMLElement; dx: number }> = [];
-
-    // Read phase: measure all rects without layout thrashing
-    for (const el of els) {
-      const key = el.dataset.tileId!;
-      const rect = el.getBoundingClientRect();
-      next.set(key, rect);
-      const old = prev.get(key);
-      if (old && !el.classList.contains('entering')) {
-        const dx = old.left - rect.left;
-        if (dx !== 0 && Math.abs(dx) < 400) {
-          animations.push({ el, dx });
-        }
-      }
-    }
-    handRectsRef.current = next;
-
-    // Animate phase: batch start GPU-accelerated transforms
-    for (const { el, dx } of animations) {
-      el.animate(
-        [
-          { transform: `translate3d(${dx}px, 0, 0)` },
-          { transform: 'translate3d(0, 0, 0)' },
-        ],
-        { duration: 160, easing: 'cubic-bezier(0.2, 0.9, 0.25, 1)' },
-      );
-    }
-  }, [myHandIds]);
+  const { enteringId, noteDiscardSource, discardFlight, flyingDiscardId, flyingDiscardIdRef, finishDiscardFlight }
+    = useTableAnimations(boardRef, view, myHand, lastDrawnId);
 
   // Sound effects hook
   useSoundEffects(view);
 
-  useEffect(() => {
-    if (lastDrawnId && canDiscard) setSelectedId(lastDrawnId);
-  }, [lastDrawnId, canDiscard, view.sequence]);
+  const { selectedId, setSelectedId, discardTile, discard, handleAction } = useTableInteraction({
+    hand: myHand, lastDrawnId, canDiscard, sequence: view.sequence,
+    actions: view.availableActions, onAction, noteDiscardSource,
+  });
 
   const byRel = useMemo(() => {
     const map: Record<number, (typeof view.players)[number] | undefined> = {};
@@ -472,165 +247,6 @@ export function Table({
   const hasClosedOpponent = Boolean(view.players.some((p) => p.seat !== view.mySeat && p.closed));
   const inXiangRiskPhase = Boolean(hasClosedOpponent && !me?.closed);
 
-  const discardTile = (tileId: string | null) => {
-    if (!tileId || !canDiscard) return;
-    const tile = myHand.find((t) => t.id === tileId);
-    if (!tile) return;
-    noteDiscardSource(tile.id);
-    onAction({ kind: 'discard', tileId: tile.id });
-    setSelectedId(null);
-  };
-  const discard = () => discardTile(selectedId);
-
-  // 选中的牌可能因为碰/杠/吃而离开手牌（例如用它去碰了），
-  // 此时 selectedId 会指向一张不存在的牌：出牌按钮仍是可点的，
-  // 但 discardTile 会因为找不到牌而静默返回，玩家点了没反应。
-  // 手牌变化后清掉悬空选择，按钮随之回到正确的禁用态。
-  useEffect(() => {
-    if (selectedId && !myHand.some((tile) => tile.id === selectedId)) {
-      setSelectedId(null);
-    }
-  }, [myHand, selectedId]);
-
-  const handleAction = (action: AvailableAction | GameAction) => {
-    if (action.kind === 'discard') {
-      discard();
-      return;
-    }
-    // 关门动作只有候选列表 tileIds，没有具体 tileId；点击路径
-    // （ActionBar.onClick）会挑一个，键盘路径不会，于是 tileId 为undefined
-    // 被服务端判为非法操作。这里统一补全，两条路径共用同一套选择逻辑。
-    let targetTileId = action.tileId;
-    if (action.kind === 'close-gate' && !targetTileId) {
-      targetTileId = (selectedId && action.tileIds?.includes(selectedId))
-        ? selectedId
-        : action.tileIds?.[0];
-    }
-    if (action.kind === 'close-gate' && targetTileId) {
-      noteDiscardSource(targetTileId);
-    }
-    onAction({
-      kind: action.kind,
-      tileId: targetTileId,
-      tileIds: action.tileIds,
-      key: action.key,
-    });
-  };
-
-  // Keyboard navigation & shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement ||
-        e.ctrlKey ||
-        e.metaKey ||
-        e.altKey
-      ) {
-        return;
-      }
-
-      const key = e.key;
-      let cardIndex: number | null = null;
-      if (key >= '1' && key <= '9') {
-        cardIndex = Number(key) - 1;
-      } else if (key === '0') {
-        cardIndex = 9;
-      } else if (key === '-') {
-        cardIndex = 10;
-      } else if (key === '=') {
-        cardIndex = 11;
-      }
-
-      if (cardIndex !== null && cardIndex < myHand.length) {
-        e.preventDefault();
-        const targetTile = myHand[cardIndex];
-        if (targetTile) {
-          setSelectedId(targetTile.id);
-        }
-        return;
-      }
-
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        if (myHand.length === 0) return;
-        if (!selectedId) {
-          const def = lastDrawnId ? myHand.find((t) => t.id === lastDrawnId) : myHand[myHand.length - 1];
-          if (def) setSelectedId(def.id);
-        } else {
-          const currIdx = myHand.findIndex((t) => t.id === selectedId);
-          if (currIdx > 0) {
-            setSelectedId(myHand[currIdx - 1]!.id);
-          } else {
-            setSelectedId(myHand[myHand.length - 1]!.id);
-          }
-        }
-        return;
-      }
-
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        if (myHand.length === 0) return;
-        if (!selectedId) {
-          setSelectedId(myHand[0]!.id);
-        } else {
-          const currIdx = myHand.findIndex((t) => t.id === selectedId);
-          if (currIdx >= 0 && currIdx < myHand.length - 1) {
-            setSelectedId(myHand[currIdx + 1]!.id);
-          } else {
-            setSelectedId(myHand[0]!.id);
-          }
-        }
-        return;
-      }
-
-      if (e.key === ' ' || e.key === 'Enter') {
-        e.preventDefault();
-        if (canDiscard && selectedId) {
-          discard();
-          // 关键：出牌后必须 return到底。此前这里只 return 在 if 内部，
-          // 但discard() 会把 selectedId 清成 null，服务端回包前再按一次空格
-          // 就会穿透到下面的"自动认领"分支，直接替玩家提交了 hu。
-          // 出牌是玩家的决定，不能被第二次按键代替。
-          return;
-        }
-        if (canDiscard) {
-          // 该出牌但没有选中牌：不替玩家做主张，等他选牌。
-          return;
-        }
-        if (view.availableActions.length > 0) {
-          const hu = view.availableActions.find((a) => a.kind === 'hu');
-          if (hu) {
-            handleAction(hu);
-            return;
-          }
-          const nonPass = view.availableActions.filter((a) => a.kind !== 'pass' && a.kind !== 'discard');
-          if (nonPass.length === 1) {
-            handleAction(nonPass[0]!);
-            return;
-          }
-        }
-        return;
-      }
-
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        if (selectedId) {
-          setSelectedId(null);
-          return;
-        }
-        const pass = view.availableActions.find((a) => a.kind === 'pass');
-        if (pass) {
-          handleAction(pass);
-          return;
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [myHand, selectedId, lastDrawnId, canDiscard, view.availableActions, view.sequence]);
-
   const timeoutSeconds = practice ? 18 : ACTION_TIMEOUT_MS / 1000;
   const phaseText =
     view.gamePhase === 'qidong'
@@ -690,98 +306,12 @@ export function Table({
         />
       ) : null}
 
-      <header className="board-topbar">
-        <div className="board-room-info">
-          {onRules ? (
-            <button type="button" className="board-icon-button" onClick={onRules} aria-label="打开规则">
-              <BoardIcon name="rules" />
-            </button>
-          ) : null}
-          <span className="board-room-label">牌局</span>
-          <strong>{practice ? '单机练习' : view.roomCode}</strong>
-          {(view.pointRate ?? 0) > 0 ? (
-            <span className="board-rate-pill" title={`本局底分单价：¥${view.pointRate}/分`}>
-              💰 ¥{view.pointRate}/分
-            </span>
-          ) : null}
-        </div>
-        <div className="board-top-tools">
-          <button
-            type="button"
-            className={`board-icon-button board-3d-btn ${is3DMode ? 'active' : ''}`}
-            onClick={() => {
-              setIs3DMode((prev) => {
-                const next = !prev;
-                try {
-                  localStorage.setItem('pizhou_render_mode', next ? '3d' : '2d');
-                } catch {}
-                return next;
-              });
-            }}
-            title={is3DMode ? '当前：真 3D 物理视角 (点击切换 2D)' : '当前：经典 2D 视角 (点击切换 3D)'}
-            aria-label="切换 3D/2D 渲染模式"
-          >
-            <span style={{ fontSize: '11px', fontWeight: 800, color: is3DMode ? 'var(--table-brass-bright, #e2c27c)' : '#94a3b8' }}>
-              {is3DMode ? '3D' : '2D'}
-            </span>
-          </button>
-          <GameClock />
-          {onOpenProfile ? (
-            <button
-              type="button"
-              className="board-profile-button"
-              onClick={onOpenProfile}
-              title="打开我的账号资料"
-              aria-label="打开我的账号资料"
-            >
-              <AvatarView
-                avatar={me?.isBot ? '陪' : me?.avatar}
-                className="board-profile-avatar"
-                alt="我的头像"
-              />
-              <span className="board-profile-label">{me?.nickname ?? '我的资料'}</span>
-            </button>
-          ) : null}
-          <button
-            type="button"
-            className="board-icon-button"
-            onClick={() => setShowQuickChat((prev) => !prev)}
-            title="快捷互动与表情"
-            aria-label="快捷互动与表情"
-          >
-            <BoardIcon name="chat" />
-          </button>
-          <button
-            type="button"
-            className="board-icon-button"
-            onClick={() => {
-              if (onSettings) onSettings();
-              else setShowSettings(true);
-            }}
-            title="游戏与声音设置"
-            aria-label="游戏与声音设置"
-          >
-            <BoardIcon name="settings" />
-          </button>
-          <button
-            type="button"
-            className="board-icon-button"
-            onClick={() => {
-              const next = toggleMute();
-              setMuted(next);
-            }}
-            title={muted ? '取消静音' : '静音'}
-            aria-label={muted ? '取消静音' : '静音'}
-          >
-            <BoardIcon name={muted ? 'muted' : 'sound'} />
-          </button>
-          {onLeave ? (
-            <button type="button" className="board-exit-button" onClick={onLeave} aria-label="回大厅">
-              <BoardIcon name="leave" />
-            </button>
-          ) : null}
-        </div>
-      </header>
+      <TableTopbar
+        view={view} me={me} practice={practice} is3DMode={is3DMode} muted={muted}
+        onRules={onRules} onSettings={onSettings} onLeave={onLeave} onOpenProfile={onOpenProfile}
+        toggleRenderMode={toggleRenderMode} setShowQuickChat={setShowQuickChat}
+        setShowSettings={setShowSettings} setMuted={setMuted}
+      />
 
       {networkStatus && networkStatus !== 'open' ? (
         <div className="board-network">

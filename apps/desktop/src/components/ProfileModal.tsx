@@ -1,13 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  AVATAR_DATA_URL_MAX_LENGTH,
-  BIO_MAX,
-  isImageAvatar,
-  NICKNAME_MAX,
-  PRESET_AVATARS,
   PRESET_TITLES,
-  GUOFENG_AVATAR_PRESETS,
-  ACHIEVEMENT_CATEGORIES,
   evaluateAchievements,
   calculateCareerStats,
   type UserProfile,
@@ -20,60 +13,13 @@ import { apiGetLeaderboard, apiGetMatches, apiUpdateProfile, saveStoredAuth } fr
 import { getMatchHistory } from '../storage/history';
 import { AccountSecurityModal } from './AccountSecurityModal';
 import { AvatarView } from './AvatarView';
-import { GuofengAvatar } from './GuofengAvatar';
-
-const AVATAR_IMAGE_SIZE = 96;
-const MAX_SOURCE_AVATAR_BYTES = 8 * 1024 * 1024;
-
-async function encodeAvatarFile(file: File): Promise<string> {
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-    throw new Error('头像仅支持 JPG、PNG 或 WebP 图片');
-  }
-  if (file.size > MAX_SOURCE_AVATAR_BYTES) {
-    throw new Error('图片不能超过 8MB');
-  }
-
-  const objectUrl = URL.createObjectURL(file);
-  try {
-    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const element = new Image();
-      element.onload = () => resolve(element);
-      element.onerror = () => reject(new Error('图片读取失败，请换一张试试'));
-      element.src = objectUrl;
-    });
-    const width = image.naturalWidth || image.width;
-    const height = image.naturalHeight || image.height;
-    if (!width || !height) throw new Error('图片尺寸无效，请换一张试试');
-
-    const canvas = document.createElement('canvas');
-    canvas.width = AVATAR_IMAGE_SIZE;
-    canvas.height = AVATAR_IMAGE_SIZE;
-    const context = canvas.getContext('2d');
-    if (!context) throw new Error('当前环境不支持头像处理');
-
-    const scale = Math.max(AVATAR_IMAGE_SIZE / width, AVATAR_IMAGE_SIZE / height);
-    const drawWidth = width * scale;
-    const drawHeight = height * scale;
-    context.clearRect(0, 0, AVATAR_IMAGE_SIZE, AVATAR_IMAGE_SIZE);
-    context.drawImage(
-      image,
-      (AVATAR_IMAGE_SIZE - drawWidth) / 2,
-      (AVATAR_IMAGE_SIZE - drawHeight) / 2,
-      drawWidth,
-      drawHeight,
-    );
-
-    const webpProbe = canvas.toDataURL('image/webp', 0.82);
-    const mime = webpProbe.startsWith('data:image/webp') ? 'image/webp' : 'image/jpeg';
-    for (const quality of [0.82, 0.72, 0.62, 0.52]) {
-      const encoded = canvas.toDataURL(mime, quality);
-      if (isImageAvatar(encoded) && encoded.length <= AVATAR_DATA_URL_MAX_LENGTH) return encoded;
-    }
-    throw new Error('头像压缩后仍然过大，请换一张图片');
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
-}
+import { ProfileLookTab } from './profile/ProfileLookTab';
+import { ProfileStatsTab } from './profile/ProfileStatsTab';
+import { ProfileLeaderboardTab } from './profile/ProfileLeaderboardTab';
+import { ProfileAchievementsTab } from './profile/ProfileAchievementsTab';
+import { ProfileSecurityTab } from './profile/ProfileSecurityTab';
+import { encodeAvatarFile } from './profile/avatarImage';
+import { sortLeaderboard } from './profile/profileModel';
 
 interface ProfileModalProps {
   serverUrl?: string;
@@ -218,19 +164,7 @@ export function ProfileModal({
     };
   }, [serverUrl, effectiveUser.userId, onlineStats.totalMatches, localStats.totalMatches]);
 
-  const sortedLeaderboard = React.useMemo(() => {
-    const list = [...leaderboard];
-    if (leaderboardSort === 'score') {
-      list.sort((a, b) => b.totalScore - a.totalScore || b.wins - a.wins);
-    } else if (leaderboardSort === 'winRate') {
-      list.sort((a, b) => b.winRate - a.winRate || b.totalMatches - a.totalMatches);
-    } else if (leaderboardSort === 'matches') {
-      list.sort((a, b) => b.totalMatches - a.totalMatches || b.wins - a.wins);
-    } else if (leaderboardSort === 'maxWin') {
-      list.sort((a, b) => b.maxWinScore - a.maxWinScore || b.totalScore - a.totalScore);
-    }
-    return list;
-  }, [leaderboard, leaderboardSort]);
+  const sortedLeaderboard = React.useMemo(() => sortLeaderboard(leaderboard, leaderboardSort), [leaderboard, leaderboardSort]);
 
   // Derived Achievements
   const achievements = evaluateAchievements(combinedMatches as EnrichedMatchRecord[], {
@@ -238,12 +172,6 @@ export function ProfileModal({
     bio,
     nickname,
   });
-  const unlockedAchievementsCount = achievements.filter((a) => a.unlocked).length;
-
-  // Filtered Achievements
-  const filteredAchievements = achievementFilter === 'all'
-    ? achievements
-    : achievements.filter((a) => a.achievement.category === achievementFilter);
 
   // Collect unlocked reward titles to let players equip them
   const unlockedTitles = Array.from(
@@ -316,12 +244,6 @@ export function ProfileModal({
 
   // Safe display ID
   const displayCardNo = effectiveUser.userId.slice(-6).toUpperCase();
-
-  // Circular gauge calculations
-  const winRate = activeStats.winRate || 0;
-  const radius = 38;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (Math.min(100, Math.max(0, winRate)) / 100) * circumference;
 
   return (
     <div className="overlay" onClick={onClose}>
@@ -422,662 +344,37 @@ export function ProfileModal({
             <div className="deck-scroll-content">
               {/* TAB 1: 形象与个性 */}
               {tab === 'look' && (
-                <div className="deck-pane look-pane">
-                  {/* Avatar Picker Header & Mode Toggle */}
-                  <details className="form-section quiet-avatar-options"><summary>更换头像</summary>
-                    <div className="section-head-row">
-                      <label className="deck-field-label" style={{ margin: 0 }}>头像</label>
-                      <div className="sub-pill-toggle">
-                        <button
-                          type="button"
-                          className={avatarTab === 'guofeng' ? 'active' : ''}
-                          onClick={() => setAvatarTab('guofeng')}
-                        >
-                          预设头像
-                        </button>
-                        <button
-                          type="button"
-                          className={avatarTab === 'custom' ? 'active' : ''}
-                          onClick={() => setAvatarTab('custom')}
-                        >
-                          上传头像
-                        </button>
-                      </div>
-                    </div>
-
-                    {avatarTab === 'guofeng' ? (
-                      /* 12 Curated Guofeng Avatars Grid: 6 columns x 2 rows, NO SCROLLBAR */
-                      <div className="guofeng-avatar-matrix">
-                        {GUOFENG_AVATAR_PRESETS.map((preset) => {
-                          const isSelected = avatar === preset.id;
-                          return (
-                            <div
-                              key={preset.id}
-                              className={`guofeng-card ${isSelected ? 'active' : ''}`}
-                              onClick={() => setAvatar(preset.id)}
-                              title={`${preset.name} · ${preset.desc}`}
-                            >
-                              <div className="guofeng-avatar-wrap">
-                                <GuofengAvatar id={preset.id} size={42} />
-                                {isSelected && <span className="guofeng-check">✓</span>}
-                              </div>
-                              <span className="guofeng-title">{preset.name.slice(0, 2)}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      /* Custom Upload & Legacy Emoji Picker */
-                      <div style={{ padding: '8px 0' }}>
-                        <div className="dossier-avatar-picker">
-                          {PRESET_AVATARS.map((emoji) => (
-                            <button
-                              key={emoji}
-                              type="button"
-                              className={`dossier-avatar-chip ${avatar === emoji ? 'active' : ''}`}
-                              onClick={() => setAvatar(emoji)}
-                              title={`选用 ${emoji} 头像`}
-                            >
-                              {emoji}
-                            </button>
-                          ))}
-                          <label
-                            className={`dossier-avatar-upload ${isImageAvatar(avatar) ? 'active' : ''} ${uploadingAvatar ? 'is-loading' : ''}`}
-                            title="上传本地自定义头像"
-                          >
-                            <input
-                              type="file"
-                              accept="image/jpeg,image/png,image/webp"
-                              onChange={handleAvatarFile}
-                              disabled={uploadingAvatar}
-                            />
-                            <span>{uploadingAvatar ? '…' : '📷'}</span>
-                            <small>上传</small>
-                          </label>
-                        </div>
-                        {avatarError && <p className="avatar-error" style={{ color: '#ef4444', fontSize: '11px', marginTop: '6px' }}>{avatarError}</p>}
-                      </div>
-                    )}
-                  </details>
-
-                  {/* 2-Column Row: Nickname & Title */}
-                  <div className="dossier-two-col">
-                    <div className="form-section">
-                      <div className="field-label-row">
-                        <label className="deck-field-label">昵称</label>
-                        <span className="field-count">{nickname.length}/{NICKNAME_MAX}</span>
-                      </div>
-                      <input
-                        type="text"
-                        className="input-field dossier-input"
-                        value={nickname}
-                        onChange={(e) => setNickname(e.target.value)}
-                        maxLength={NICKNAME_MAX}
-                        placeholder="输入你的昵称"
-                      />
-                    </div>
-
-                    <div className="form-section">
-                      <div className="field-label-row">
-                        <label className="deck-field-label">称号</label>
-
-                      </div>
-                      <select className="input-field dossier-input" aria-label="称号" value={title} onChange={(event) => setTitle(event.target.value)}>
-                        {unlockedTitles.map((item) => <option key={item} value={item}>{item}</option>)}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Personal Bio / Motto */}
-                  <div className="form-section">
-                    <div className="field-label-row">
-                      <label className="deck-field-label">签名</label>
-                      <span className="field-count">{bio.length}/{BIO_MAX}</span>
-                    </div>
-                    <textarea
-                      className="input-field dossier-input dossier-bio"
-                      value={bio}
-                      onChange={(e) => setBio(e.target.value)}
-                      maxLength={BIO_MAX}
-                      rows={2}
-                      placeholder="写点关于自己的话"
-                    />
-
-                  </div>
-                </div>
+                <ProfileLookTab avatar={avatar} nickname={nickname} title={title} bio={bio}
+                  avatarTab={avatarTab} uploadingAvatar={uploadingAvatar} avatarError={avatarError}
+                  unlockedTitles={unlockedTitles} setAvatar={setAvatar} setNickname={setNickname}
+                  setTitle={setTitle} setBio={setBio} setAvatarTab={setAvatarTab} handleAvatarFile={handleAvatarFile} />
               )}
 
               {/* TAB 2: 生涯战绩 */}
               {tab === 'stats' && (
-                <div className="deck-pane stats-pane">
-                  {/* Mode Selector Pill */}
-                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
-                    <div style={{ display: 'inline-flex', background: 'rgba(0,0,0,0.4)', padding: '3px', borderRadius: '20px', border: '1px solid rgba(250, 204, 21, 0.25)' }}>
-                      <button
-                        type="button"
-                        onClick={() => setStatsMode('online')}
-                        style={{
-                          padding: '4px 18px',
-                          borderRadius: '16px',
-                          fontSize: '12px',
-                          fontWeight: statsMode === 'online' ? 'bold' : 'normal',
-                          background: statsMode === 'online' ? 'linear-gradient(180deg, #ca8a04 0%, #854d0e 100%)' : 'transparent',
-                          color: statsMode === 'online' ? '#fff' : '#94a3b8',
-                          border: 'none',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        🌐 4人联机实战
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setStatsMode('local')}
-                        style={{
-                          padding: '4px 18px',
-                          borderRadius: '16px',
-                          fontSize: '12px',
-                          fontWeight: statsMode === 'local' ? 'bold' : 'normal',
-                          background: statsMode === 'local' ? 'linear-gradient(180deg, #059669 0%, #064e3b 100%)' : 'transparent',
-                          color: statsMode === 'local' ? '#fff' : '#94a3b8',
-                          border: 'none',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        🤖 单机人机演练
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Highlights Row with Circular Win-Rate Gauge */}
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '130px 1fr',
-                      gap: '14px',
-                      background: 'rgba(8, 28, 20, 0.75)',
-                      border: '1px solid rgba(250, 204, 21, 0.3)',
-                      borderRadius: '12px',
-                      padding: '12px',
-                      marginBottom: '14px',
-                      alignItems: 'center',
-                    }}
-                  >
-                    {/* SVG Circular Win Rate Gauge */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <div style={{ position: 'relative', width: '84px', height: '84px' }}>
-                        <svg viewBox="0 0 100 100" width="84" height="84" style={{ transform: 'rotate(-90deg)' }}>
-                          <circle
-                            cx="50"
-                            cy="50"
-                            r={radius}
-                            fill="none"
-                            stroke="rgba(255, 255, 255, 0.1)"
-                            strokeWidth="8"
-                          />
-                          <circle
-                            cx="50"
-                            cy="50"
-                            r={radius}
-                            fill="none"
-                            stroke="#facc15"
-                            strokeWidth="8"
-                            strokeDasharray={circumference}
-                            strokeDashoffset={strokeDashoffset}
-                            strokeLinecap="round"
-                            style={{ transition: 'stroke-dashoffset 0.5s ease' }}
-                          />
-                        </svg>
-                        <div
-                          style={{
-                            position: 'absolute',
-                            inset: 0,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <span style={{ fontSize: '18px', fontWeight: '800', color: '#fef08a' }}>
-                            {Math.round(winRate)}%
-                          </span>
-                          <span style={{ fontSize: '9px', color: '#94a3b8' }}>胜率</span>
-                        </div>
-                      </div>
-                      <span style={{ fontSize: '10px', color: '#cbd5e1', marginTop: '4px' }}>
-                        {activeStats.wins}胜 {activeStats.losses}负 {activeStats.draws}平
-                      </span>
-                    </div>
-
-                    {/* Quick Metric Tiles */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-                      <div className="stat-metric-box" style={{ padding: '6px' }}>
-                        <span className="metric-num">{activeStats.totalMatches}</span>
-                        <span className="metric-desc">总对局数</span>
-                      </div>
-                      <div className="stat-metric-box" style={{ padding: '6px' }}>
-                        <span className={`metric-num ${activeStats.totalScore >= 0 ? 'pos' : 'neg'}`}>
-                          {activeStats.totalScore > 0 ? `+${activeStats.totalScore}` : activeStats.totalScore}
-                        </span>
-                        <span className="metric-desc">累计净差分</span>
-                      </div>
-                      <div className="stat-metric-box" style={{ padding: '6px' }}>
-                        <span className="metric-num highlight">{activeStats.maxHu}</span>
-                        <span className="metric-desc">单局最高胡</span>
-                      </div>
-                      <div className="stat-metric-box" style={{ padding: '6px' }}>
-                        <span className="metric-num" style={{ color: '#38bdf8' }}>+{activeStats.maxWinScore}</span>
-                        <span className="metric-desc">最高单局赢分</span>
-                      </div>
-                      <div className="stat-metric-box" style={{ padding: '6px' }}>
-                        <span className="metric-num" style={{ color: '#f43f5e' }}>{activeStats.winStreakMax}</span>
-                        <span className="metric-desc">历史最高连胜</span>
-                      </div>
-                      <div className="stat-metric-box" style={{ padding: '6px' }}>
-                        <span className="metric-num" style={{ color: '#a78bfa' }}>{activeStats.piaoHunCount}</span>
-                        <span className="metric-desc">飘荤盘数</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Fan Type Distribution Breakdown */}
-                  <div
-                    style={{
-                      background: 'rgba(6, 22, 16, 0.75)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                      borderRadius: '12px',
-                      padding: '12px 14px',
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#fef08a' }}>
-                        🀄 各番型结算频次分布 (Fan Type Breakdown)
-                      </span>
-                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-                        共计 {activeStats.wins} 次胜局结算
-                      </span>
-                    </div>
-
-                    {[
-                      { label: '点炮平胡', count: activeStats.fanDistribution.pingHu, color: '#94a3b8', desc: '基础点炮胡牌' },
-                      { label: '自摸大捷', count: activeStats.fanDistribution.ziMo, color: '#38bdf8', desc: '亲手摸取关键张' },
-                      { label: '起手暗杠', count: activeStats.fanDistribution.qiShouGangHu, color: '#f59e0b', desc: '开局四张杠牌即胡' },
-                      { label: '荤底飘荤', count: activeStats.fanDistribution.piaoHun, color: '#ef4444', desc: '纯清/四组单钓高番' },
-                      { label: '两对关门', count: activeStats.fanDistribution.guanMen, color: '#10b981', desc: '锁听绝张封关克敌' },
-                      { label: '包庄决胜', count: activeStats.fanDistribution.baoZhuang, color: '#ec4899', desc: '促成对手包香包庄' },
-                      { label: '流局荒牌', count: activeStats.fanDistribution.liuJu, color: '#64748b', desc: '牌墙摸尽平局收场' },
-                    ].map((fan) => {
-                      const totalBasis = Math.max(1, activeStats.totalMatches);
-                      const percent = Math.round((fan.count / totalBasis) * 100);
-                      return (
-                        <div key={fan.label} style={{ marginBottom: '8px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '3px' }}>
-                            <span style={{ color: '#e2e8f0' }}>{fan.label} </span>
-                            <span style={{ color: fan.color, fontWeight: 'bold' }}>{fan.count} 局 ({percent}%)</span>
-                          </div>
-                          <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
-                            <div
-                              style={{
-                                width: `${Math.min(100, percent)}%`,
-                                height: '100%',
-                                background: fan.color,
-                                borderRadius: '3px',
-
-                              }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                <ProfileStatsTab activeStats={activeStats} statsMode={statsMode} setStatsMode={setStatsMode} />
               )}
 
               {/* TAB 3: 雀友风云榜 */}
               {tab === 'leaderboard' && (
-                <div className="deck-pane leaderboard-pane">
-                  {/* Metric Filter Bar */}
-                  <div className="leaderboard-filter-bar">
-                    <button
-                      type="button"
-                      className={`filter-pill ${leaderboardSort === 'score' ? 'active' : ''}`}
-                      onClick={() => setLeaderboardSort('score')}
-                    >
-                      🪙 净胜积分
-                    </button>
-                    <button
-                      type="button"
-                      className={`filter-pill ${leaderboardSort === 'winRate' ? 'active' : ''}`}
-                      onClick={() => setLeaderboardSort('winRate')}
-                    >
-                      🎯 胜率榜
-                    </button>
-                    <button
-                      type="button"
-                      className={`filter-pill ${leaderboardSort === 'matches' ? 'active' : ''}`}
-                      onClick={() => setLeaderboardSort('matches')}
-                    >
-                      🀄 活跃榜
-                    </button>
-                    <button
-                      type="button"
-                      className={`filter-pill ${leaderboardSort === 'maxWin' ? 'active' : ''}`}
-                      onClick={() => setLeaderboardSort('maxWin')}
-                    >
-                      ⚡ 大赢家
-                    </button>
-                  </div>
-
-                  {/* Leaderboard List */}
-                  <div className="leaderboard-list">
-                    {sortedLeaderboard.length === 0 ? (
-                      <div className="leaderboard-empty">
-                        <span style={{ fontSize: '32px' }}>🀄</span>
-                        <span>暂无更多雀友战绩数据，多打几局来上榜吧！</span>
-                      </div>
-                    ) : (
-                      sortedLeaderboard.map((entry, index) => {
-                        const isMe = entry.userId === effectiveUser.userId;
-                        return (
-                          <div
-                            key={entry.userId}
-                            className={`leaderboard-item ${isMe ? 'is-me' : ''}`}
-                          >
-                            <div className="rank-badge-wrap">
-                              {index === 0 ? (
-                                <span className="medal-icon">🥇</span>
-                              ) : index === 1 ? (
-                                <span className="medal-icon">🥈</span>
-                              ) : index === 2 ? (
-                                <span className="medal-icon">🥉</span>
-                              ) : (
-                                <span className="rank-num">#{index + 1}</span>
-                              )}
-                            </div>
-
-                            <div className="player-avatar-cell">
-                              <AvatarView avatar={entry.avatar} alt={entry.nickname} size={38} />
-                            </div>
-
-                            <div className="player-meta-cell">
-                              <div className="player-name-row">
-                                <span className="player-nick">{entry.nickname || entry.username}</span>
-                                {isMe && <span className="me-tag">我</span>}
-                                {entry.title && <span className="player-title-tag">{entry.title}</span>}
-                              </div>
-                              <span className="player-bio-text">
-                                {entry.bio || '不碰坎不上，单钓不换张！'}
-                              </span>
-                            </div>
-
-                            <div className="player-stats-cell">
-                              {leaderboardSort === 'score' && (
-                                <>
-                                  <span
-                                    className={`primary-stat ${
-                                      entry.totalScore >= 0 ? 'pos-score' : 'neg-score'
-                                    }`}
-                                  >
-                                    {entry.totalScore > 0 ? `+${entry.totalScore}` : entry.totalScore} 分
-                                  </span>
-                                  <span className="sub-stat">
-                                    {entry.wins}胜 / {entry.totalMatches}局 ({Math.round(entry.winRate)}%)
-                                  </span>
-                                </>
-                              )}
-                              {leaderboardSort === 'winRate' && (
-                                <>
-                                  <span className="primary-stat highlight-stat">
-                                    {Math.round(entry.winRate)}% 胜率
-                                  </span>
-                                  <span className="sub-stat">
-                                    {entry.wins}胜 / 共{entry.totalMatches}局
-                                  </span>
-                                </>
-                              )}
-                              {leaderboardSort === 'matches' && (
-                                <>
-                                  <span className="primary-stat highlight-stat">
-                                    {entry.totalMatches} 局
-                                  </span>
-                                  <span className="sub-stat">
-                                    {entry.wins}胜 {entry.losses}负 (净胜 {entry.totalScore})
-                                  </span>
-                                </>
-                              )}
-                              {leaderboardSort === 'maxWin' && (
-                                <>
-                                  <span className="primary-stat pos-score">
-                                    +{entry.maxWinScore} 单局最高
-                                  </span>
-                                  <span className="sub-stat">
-                                    总净胜 {entry.totalScore} 分 / 最大番 {entry.maxHu || 0}
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
+                <ProfileLeaderboardTab sortedLeaderboard={sortedLeaderboard} userId={effectiveUser.userId}
+                  leaderboardSort={leaderboardSort} setLeaderboardSort={setLeaderboardSort} />
               )}
 
               {/* TAB 4: 成就阶梯 */}
               {tab === 'achievements' && (
-                <div className="deck-pane achievements-pane">
-                  {/* Achievement Filter Tabs */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                      <button
-                        type="button"
-                        onClick={() => setAchievementFilter('all')}
-                        style={{
-                          fontSize: '11px',
-                          padding: '3px 8px',
-                          borderRadius: '4px',
-                          border: 'none',
-                          cursor: 'pointer',
-                          background: achievementFilter === 'all' ? '#ca8a04' : 'rgba(255,255,255,0.06)',
-                          color: achievementFilter === 'all' ? '#fff' : '#94a3b8',
-                        }}
-                      >
-                        全部 ({achievements.length})
-                      </button>
-                      {(Object.keys(ACHIEVEMENT_CATEGORIES) as AchievementCategory[]).map((cat) => (
-                        <button
-                          key={cat}
-                          type="button"
-                          onClick={() => setAchievementFilter(cat)}
-                          style={{
-                            fontSize: '11px',
-                            padding: '3px 8px',
-                            borderRadius: '4px',
-                            border: 'none',
-                            cursor: 'pointer',
-                            background: achievementFilter === cat ? '#ca8a04' : 'rgba(255,255,255,0.06)',
-                            color: achievementFilter === cat ? '#fff' : '#94a3b8',
-                          }}
-                        >
-                          {ACHIEVEMENT_CATEGORIES[cat].icon} {ACHIEVEMENT_CATEGORIES[cat].name}
-                        </button>
-                      ))}
-                    </div>
-
-                    <span style={{ fontSize: '11px', color: '#fef08a', fontWeight: 'bold' }}>
-                      已达成 {unlockedAchievementsCount} / {achievements.length}
-                    </span>
-                  </div>
-
-                  {/* Achievement Cards Grid */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '280px', overflowY: 'auto' }}>
-                    {filteredAchievements.map((item) => {
-                      const isUnlocked = item.unlocked;
-                      const isTitleEquipped = title === item.achievement.rewardTitle;
-                      return (
-                        <div
-                          key={item.achievement.id}
-                          style={{
-                            background: isUnlocked
-                              ? 'linear-gradient(90deg, rgba(202, 138, 4, 0.15) 0%, rgba(6, 28, 20, 0.8) 100%)'
-                              : 'rgba(255, 255, 255, 0.03)',
-                            border: isUnlocked
-                              ? '1px solid rgba(250, 204, 21, 0.4)'
-                              : '1px solid rgba(255, 255, 255, 0.06)',
-                            borderRadius: '8px',
-                            padding: '8px 12px',
-                            display: 'grid',
-                            gridTemplateColumns: '36px 1fr auto',
-                            gap: '12px',
-                            alignItems: 'center',
-                          }}
-                        >
-                          {/* Icon */}
-                          <span style={{ fontSize: '24px', textAlign: 'center' }}>{item.achievement.icon}</span>
-
-                          {/* Info & Progress */}
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-                              <strong style={{ fontSize: '13px', color: isUnlocked ? '#fef08a' : '#cbd5e1' }}>
-                                {item.achievement.name}
-                              </strong>
-                              <span style={{ fontSize: '10px', color: '#94a3b8', background: 'rgba(0,0,0,0.3)', padding: '1px 6px', borderRadius: '4px' }}>
-                                称号：{item.achievement.rewardTitle}
-                              </span>
-                            </div>
-                            <p style={{ margin: '0 0 4px', fontSize: '11px', color: '#94a3b8' }}>
-                              {item.achievement.desc}
-                            </p>
-                            {/* Progress bar */}
-                            <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
-                              <div
-                                style={{
-                                  width: `${item.progressPercent}%`,
-                                  height: '100%',
-                                  background: isUnlocked ? '#22c55e' : '#eab308',
-                                }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Action / Status */}
-                          <div style={{ textAlign: 'right' }}>
-                            {isUnlocked ? (
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                                <span style={{ fontSize: '11px', color: '#4ade80', fontWeight: 'bold' }}>
-                                  ✓ 已达成
-                                </span>
-                                {isTitleEquipped ? (
-                                  <span style={{ fontSize: '10px', color: '#fbbf24' }}>已称号</span>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setTitle(item.achievement.rewardTitle);
-                                      setNotice(`已称号【${item.achievement.rewardTitle}】`);
-                                      setTimeout(() => setNotice(null), 1500);
-                                    }}
-                                    style={{
-                                      fontSize: '10px',
-                                      padding: '2px 8px',
-                                      background: 'rgba(250, 204, 21, 0.2)',
-                                      border: '1px solid #fbbf24',
-                                      color: '#fef08a',
-                                      borderRadius: '4px',
-                                      cursor: 'pointer',
-                                    }}
-                                  >
-                                    称号
-                                  </button>
-                                )}
-                              </div>
-                            ) : (
-                              <span style={{ fontSize: '11px', color: '#64748b' }}>
-                                {item.currentCount} / {item.targetCount}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                <ProfileAchievementsTab achievements={achievements} achievementFilter={achievementFilter}
+                  title={title} setAchievementFilter={setAchievementFilter} onEquipTitle={(rewardTitle) => {
+                    setTitle(rewardTitle);
+                    setNotice(`已称号【${rewardTitle}】`);
+                    setTimeout(() => setNotice(null), 1500);
+                  }} />
               )}
 
               {/* TAB 5: 账号安全 */}
               {tab === 'security' && (
-                <div className="deck-pane security-pane">
-                  {effectiveUser.isGuest ? (
-                    <div className="dossier-guest-banner">
-                      <div className="guest-banner-icon">⚡</div>
-                      <div className="guest-banner-text">
-                        <h4>当前为免密游客账号</h4>
-                        <p>换设备或清理缓存后数据可能会丢失，建议立即升级为正式账号永久绑定战绩。</p>
-                      </div>
-                      <button
-                        type="button"
-                        className="btn-action primary sm"
-                        onClick={() => setSecurityOpen(true)}
-                      >
-                        一键升级转正
-                      </button>
-                    </div>
-                  ) : null}
-
-                  <div className="dossier-security-list">
-                    <div className="security-row">
-                      <div className="security-meta">
-                        <span className="sec-label">登录账号</span>
-                        <strong className="sec-val">{effectiveUser.username}</strong>
-                      </div>
-                      <span className="sec-status-tag ok">正常使用中</span>
-                    </div>
-
-                    <div className="security-row">
-                      <div className="security-meta">
-                        <span className="sec-label">账号认证级别</span>
-                        <strong className="sec-val">{effectiveUser.isGuest ? '游客模式' : '云端正式雀士'}</strong>
-                      </div>
-                      {!effectiveUser.isGuest ? (
-                        <button
-                          type="button"
-                          className="btn-action ghost sm"
-                          onClick={() => setSecurityOpen(true)}
-                        >
-                          修改密码
-                        </button>
-                      ) : null}
-                    </div>
-
-                    <div className="security-row">
-                      <div className="security-meta">
-                        <span className="sec-label">多设备漫游凭据</span>
-                        <small className="sec-sub">支持换电脑输入卡号与密码无缝同步</small>
-                      </div>
-                      <button
-                        type="button"
-                        className="btn-action ghost sm"
-                        onClick={onOpenAuth}
-                      >
-                        切换账号
-                      </button>
-                    </div>
-
-                    <div className="security-row logout-row">
-                      <div className="security-meta">
-                        <span className="sec-label">退出登录</span>
-                        <small className="sec-sub">清除本机当前会话凭证，返回登录页面</small>
-                      </div>
-                      <button
-                        type="button"
-                        className="btn-action ghost sm danger"
-                        onClick={onLogout}
-                      >
-                        退出当前登录
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <ProfileSecurityTab effectiveUser={effectiveUser} onOpenSecurity={() => setSecurityOpen(true)}
+                  onOpenAuth={onOpenAuth} onLogout={onLogout} />
               )}
             </div>
           </section>
