@@ -1,4 +1,5 @@
 import type { MatchRecord, ModeStats } from './auth.ts';
+import { hasBaoZhuang, matchDelta } from './stats.ts';
 
 // ─── 1. 12 Curated Guofeng Avatars ───────────────────────────────────
 
@@ -453,7 +454,6 @@ export function calculateCareerStats(records: Array<MatchRecord | EnrichedMatchR
   for (const r of records) {
     const isWinner = Boolean(r.myIsWinner);
     const isLiuju = Boolean(r.liuju);
-    const enriched = r as EnrichedMatchRecord;
 
     if (isWinner) {
       wins++;
@@ -467,9 +467,7 @@ export function calculateCareerStats(records: Array<MatchRecord | EnrichedMatchR
       currentWinStreak = 0;
     }
 
-    const delta = Number.isFinite(r.myDeltaScore)
-      ? r.myDeltaScore
-      : (Number.isFinite((r as any).scoreDelta) ? (r as any).scoreDelta : 0);
+    const delta = matchDelta(r);
     if (delta !== 0) {
       totalScore += delta;
       if (isWinner && delta > maxWinScore) {
@@ -481,11 +479,15 @@ export function calculateCareerStats(records: Array<MatchRecord | EnrichedMatchR
       maxHu = r.hu;
     }
 
-    if (r.hunDi || enriched.myPiaoHun) {
+    // Shared predicates. `myPiaoHun` used to OR into this check, but nothing in
+    // the codebase ever writes that field, so it only made this page disagree
+    // with the profile page for no reason. `hasBaoZhuang` also fixes the
+    // truthiness check here, which counted an `undefined` record as a baoZhuang.
+    if (r.hunDi) {
       piaoHunCount++;
     }
 
-    if (r.baoZhuang) {
+    if (hasBaoZhuang(r)) {
       baoZhuangCount++;
     }
   }

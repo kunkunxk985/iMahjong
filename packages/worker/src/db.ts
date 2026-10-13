@@ -1,4 +1,5 @@
 import {
+  computeModeStats,
   DEFAULT_AVATAR,
   isValidUsername,
   normalizeUsername,
@@ -772,27 +773,10 @@ export class HubDatabase {
       scores: r.scores_json ? JSON.parse(r.scores_json) : [],
     }));
 
-    const totalMatches = matches.length;
-    const wins = matches.filter((m) => m.myIsWinner).length;
-    const draws = matches.filter((m) => m.liuju).length;
-    const losses = totalMatches - wins - draws;
-    const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 1000) / 10 : 0;
-    const totalScore = matches.reduce((acc, m) => acc + m.myDeltaScore, 0);
-    const maxHu = matches.reduce((acc, m) => Math.max(acc, m.hu), 0);
-    const piaoHunCount = matches.filter((m) => m.hunDi).length;
-    const baoZhuangCount = matches.filter((m) => m.baoZhuang !== null).length;
-
-    const stats: ModeStats = {
-      totalMatches,
-      wins,
-      draws,
-      losses,
-      winRate,
-      totalScore,
-      maxHu,
-      piaoHunCount,
-      baoZhuangCount,
-    };
+    // Shared aggregation: keeps the cloud copy identical to local history and
+    // the profile page. The inline version here had drifted on both
+    // legacy `scoreDelta` records and the `baoZhuang` undefined check.
+    const stats: ModeStats = computeModeStats(matches);
 
     return { matches, stats };
   }

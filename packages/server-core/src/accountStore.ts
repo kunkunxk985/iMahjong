@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { computeModeStats } from '@pizhou/shared';
 import {
   DEFAULT_AVATAR,
   DEFAULT_TITLE,
@@ -84,34 +85,14 @@ export interface AccountStore {
   getLeaderboard(): Promise<LeaderboardEntry[]>;
 }
 
-export function computeModeStats(matches: MatchRecord[]): ModeStats {
-  const totalMatches = matches.length;
-  const wins = matches.filter((m) => m.myIsWinner).length;
-  const draws = matches.filter((m) => m.liuju).length;
-  const losses = totalMatches - wins - draws;
-  const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 1000) / 10 : 0;
-  const totalScore = matches.reduce((acc, m) => {
-    const delta = Number.isFinite(m.myDeltaScore)
-      ? m.myDeltaScore
-      : (Number.isFinite((m as any).scoreDelta) ? (m as any).scoreDelta : 0);
-    return acc + delta;
-  }, 0);
-  const maxHu = matches.reduce((acc, m) => Math.max(acc, Number.isFinite(m.hu) ? m.hu : 0), 0);
-  const piaoHunCount = matches.filter((m) => m.hunDi).length;
-  const baoZhuangCount = matches.filter((m) => m.baoZhuang !== null && m.baoZhuang !== undefined).length;
-
-  return {
-    totalMatches,
-    wins,
-    draws,
-    losses,
-    winRate,
-    totalScore,
-    maxHu,
-    piaoHunCount,
-    baoZhuangCount,
-  };
-}
+/**
+ * Re-exported from `@pizhou/shared`.
+ *
+ * This was the correct one of the four copies — it honoured legacy `scoreDelta`
+ * and treated `undefined` as "no baoZhuang" — but keeping it here meant the other
+ * three could drift again. Consumers should import from `@pizhou/shared`.
+ */
+export { computeModeStats } from '@pizhou/shared';
 
 export class MemoryAccountStore implements AccountStore {
   protected users = new Map<string, UserRow>(); // id -> UserRow

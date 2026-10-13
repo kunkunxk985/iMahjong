@@ -1,4 +1,5 @@
-import type { GameMode, MatchPlayerScore, MatchRecord, ModeStats } from '@pizhou/shared';
+import type { GameMode, MatchPlayerScore, MatchRecord } from '@pizhou/shared';
+import { computeModeStats } from '@pizhou/shared';
 import { getStoredAuth } from '../api/auth.ts';
 
 export type { MatchPlayerScore, MatchRecord };
@@ -32,29 +33,16 @@ export function getMatchHistory(mode?: GameMode, userId?: string): MatchRecord[]
   return [];
 }
 
-export function calculateStats(records: MatchRecord[]): ModeStats {
-  const totalMatches = records.length;
-  const wins = records.filter((m) => m.myIsWinner).length;
-  const draws = records.filter((m) => m.liuju).length;
-  const losses = totalMatches - wins - draws;
-  const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 1000) / 10 : 0;
-  const totalScore = records.reduce((acc, m) => acc + (m.myDeltaScore || 0), 0);
-  const maxHu = records.reduce((acc, m) => Math.max(acc, m.hu || 0), 0);
-  const piaoHunCount = records.filter((m) => m.hunDi).length;
-  const baoZhuangCount = records.filter((m) => m.baoZhuang !== null).length;
-
-  return {
-    totalMatches,
-    wins,
-    draws,
-    losses,
-    winRate,
-    totalScore,
-    maxHu,
-    piaoHunCount,
-    baoZhuangCount,
-  };
-}
+/**
+ * Local-history aggregation.
+ *
+ * Delegates to the shared implementation so the match-history page and the
+ * profile page report identical numbers for the same matches. The local copy
+ * diverged in two ways that were both visible to the player:
+ *   - `myDeltaScore || 0` ignored legacy `scoreDelta` records (they counted 0)
+ *   - `baoZhuang !== null` counted `undefined` as a real baoZhuang
+ */
+export const calculateStats = computeModeStats;
 
 export function saveMatchToHistory(record: MatchRecord, userId?: string): void {
   try {
