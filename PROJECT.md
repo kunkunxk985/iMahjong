@@ -92,3 +92,13 @@
 - `apps/desktop/src/views/`: `Lobby.tsx`, `Settlement.tsx`, `Table.tsx`
 - `apps/desktop/src/styles/`: `core.css`, `table.css`, `interface.css`, `lobby.css`
 - `apps/desktop/src/utils/`: `canvasPoster.ts`
+
+### 当前职责拆分
+- `shared/password.ts`：唯一密码算法；Node 保留 120k 写入／1M 校验上限，Worker 保留 100k 平台上限。server-core 的旧路径仅转发，不迁移或降级现有账号。
+- `components/profile/`：外观、战绩、排行榜、成就、安全五个页签，以及头像编码和排序；ProfileModal 保留加载、编辑、保存状态。
+- `table/`：键盘／动作纯决策、交互 hook、动画 hook、顶部工具栏；Table 负责组装视图。
+- `views/settlement/`：结果、账单页签、四家牌面、纯展示计算；Settlement 保留战绩保存和海报操作。
+- `utils/poster/`：绘制基础、牌面、背景、标题、横幅、手牌、榜单、页脚和类型；canvasPoster 保留公开 API 与绘制顺序。
+- 验证：`npm run verify` 包含架构、CSS、类型、所有测试、联机 smoke、生产构建；另运行 `node apps/desktop/tests/run-table-interaction.mjs` 与 `run-table3d.mjs`。
+- 新增测试锁定 Profile／Table／Settlement DOM 和交互，以及海报绘制命令序列；命令一致不等于像素一致。
+- E2E helper 每个服务使用独立临时 stateDir，关闭后清理；不再复用项目默认账号／房间存储。

@@ -1,4 +1,7 @@
 import net from 'node:net';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
 import WebSocket from 'ws';
 import type { C2SMessage, ClientView, S2CMessage } from '@pizhou/shared';
 import { startMahjongServer, type StartedServer } from '@pizhou/server-core';
@@ -34,8 +37,15 @@ export async function createTestServer(customPort?: number): Promise<{
   url: string;
   close: () => Promise<void>;
 }> {
-  const port = customPort ?? (await getAvailablePort());
-  const server = await startMahjongServer({ port, host: '127.0.0.1', log: false });
+  const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), 'imahjong-e2e-'));
+  let server: StartedServer;
+  try {
+    server = await startMahjongServer({ port: customPort ?? 0, host: '127.0.0.1', log: false, stateDir });
+  } catch (error) {
+    await fs.rm(stateDir, { recursive: true, force: true });
+    throw error;
+  }
+  const port = server.port;
   const url = `ws://127.0.0.1:${port}`;
 
   return {
@@ -43,7 +53,8 @@ export async function createTestServer(customPort?: number): Promise<{
     port,
     url,
     close: async () => {
-      await server.close();
+      try { await server.close(); }
+      finally { await fs.rm(stateDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); }
     },
   };
 }
