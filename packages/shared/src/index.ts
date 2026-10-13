@@ -6,4 +6,5 @@ export * from './protocol.ts';
 export * from './seats.ts';
 export * from './auth.ts';
 export * from './stats.ts';
+export * from './password.ts';
 export * from './rank.ts';
