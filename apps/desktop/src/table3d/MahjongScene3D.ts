@@ -61,8 +61,11 @@ export class MahjongScene3D {
     // Camera: ergonomic mahjong perspective looking down at table center
     const aspect = container.clientWidth / container.clientHeight || 16 / 9;
     this.camera = new THREE.PerspectiveCamera(this.fovForAspect(aspect), aspect, 0.1, 1000);
-    this.camera.position.set(0, 36, 29);
-    this.camera.lookAt(0, -1, 3.5);
+    // A seated player's-eye 3/4 view: low enough that the standing hand tiles
+    // read as solid objects with visible side thickness instead of a flat strip,
+    // yet high enough to still take in the whole table layout.
+    this.camera.position.set(0, 24, 30);
+    this.camera.lookAt(0, -1, 4);
 
     // Renderer with soft shadow maps & PBR tone mapping
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
@@ -339,25 +342,34 @@ export class MahjongScene3D {
     const count = hand.length;
     if (count === 0) return;
 
-    const spacing = TILE_W + 0.12;
+    // Tighter spacing keeps a full 14-tile hand inside the frame at 1280px;
+    // the drawn 14th tile still gets its own separating gap below.
+    const spacing = TILE_W + 0.02;
     const totalWidth = (count - 1) * spacing;
     const startX = -totalWidth / 2;
+    const mid = (count - 1) / 2;
 
     hand.forEach((tile, index) => {
       const mesh = this.tiles.createTileMesh(tile);
       const isSelected = selectedId === tile.id;
 
-      // Base standing position: tilted backward 18 degrees, perpendicular to camera
       let posX = startX + index * spacing;
       if (index === count - 1 && count % 3 === 2) {
         // Newly drawn 14th tile is separated by gap
         posX += 0.65;
       }
 
-      const baseY = 1.5; // Exactly resting on table surface
-      const posZ = 13.6;
+      const baseY = 1.5; // Resting on the table surface
+      // Gentle fan: tiles away from the centre recede toward the player, so the
+      // hand arcs like a real held hand instead of a rigid flat strip. The arc
+      // lives in Z (not Y) so the hover/select lift animation on baseY is intact.
+      const arc = Math.abs(index - mid);
+      const posZ = 13.2 + arc * 0.55;
       mesh.position.set(posX, baseY + (isSelected ? 1.4 : 0.0), posZ);
-      mesh.rotation.set(-0.32, 0, 0); // Backward tilt facing camera sightline
+      // Lean the tiles back ~29° so their faces turn up toward the seated
+      // player and a sliver of the ivory side edge catches the light — the
+      // depth cue a flat, edge-on tile completely lacks.
+      mesh.rotation.set(-0.5, 0, 0);
 
       mesh.userData.baseY = baseY;
       mesh.userData.tileId = tile.id;
