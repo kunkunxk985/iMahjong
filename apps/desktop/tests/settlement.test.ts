@@ -5,12 +5,23 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { buildSync } from 'esbuild';
 
 const require = createRequire(import.meta.url);
 const scratch = mkdtempSync(join(tmpdir(), 'settlement-test-'));
+
+// `require('electron')` returns the `.app` bundle path, but spawning a `.app`
+// directory is rejected with EACCES on current macOS — only the inner Mach-O
+// binary is directly executable. Resolve to that binary for the headless run.
+function electronBinary(): string {
+  const electronPath = require('electron') as string;
+  return process.platform === 'darwin' && electronPath.endsWith('.app')
+    ? join(electronPath, 'Contents', 'MacOS', 'Electron')
+    : electronPath;
+}
 const snapshotPath = new URL('./settlement.snapshots.json', import.meta.url);
 const resultPath = join(scratch, 'result.json');
 const htmlPath = join(scratch, 'index.html');
@@ -24,7 +35,7 @@ buildSync({
 writeFileSync(htmlPath, '<div id="root"></div><script src="browser.js"></script><script>window.runSettlementBrowser=SettlementTests.runSettlementBrowser</script>');
 const env = { ...process.env, SETTLEMENT_TEST_HTML: htmlPath, SETTLEMENT_TEST_RESULT: resultPath, SETTLEMENT_TEST_USER_DATA: join(scratch, 'electron-data') };
 delete env.ELECTRON_RUN_AS_NODE;
-const run = spawnSync(require('electron'), [fileURLToPath(new URL('./helpers/settlementElectron.cjs', import.meta.url))], { env, encoding: 'utf8', timeout: 30000 });
+const run = spawnSync(electronBinary(), [fileURLToPath(new URL('./helpers/settlementElectron.cjs', import.meta.url))], { env, encoding: 'utf8', timeout: 30000 });
 assert.equal(run.status, 0, run.stderr || run.stdout);
 const result = JSON.parse(readFileSync(resultPath, 'utf8'));
 const hashes = Object.fromEntries(Object.entries(result.snapshots).map(([key, html]) => [key, createHash('sha256').update(String(html)).digest('hex')]));
