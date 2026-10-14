@@ -56,7 +56,7 @@ export class MahjongScene3D {
 
     // Scene
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x061811); // Deep night jade
+    this.scene.background = new THREE.Color(0x2ba7bd); // Tencent-style bright teal
 
     // Camera: ergonomic mahjong perspective looking down at table center
     const aspect = container.clientWidth / container.clientHeight || 16 / 9;
@@ -115,17 +115,16 @@ export class MahjongScene3D {
       }
     });
 
-    // Depth: the felt should fall away toward the rails instead of ending at a
-    // hard silhouette. Fog also softens the far tile walls.
-    this.scene.fog = new THREE.Fog(0x07231a, 58, 120);
+    // Bright, even game lighting — no warm casino tint, no depth fog. Tencent's
+    // table reads flat and luminous like a mobile game, not a dim card room.
+    this.scene.fog = null;
 
-    // Warm gentle ambient. Deliberately low now that IBL carries most of the
-    // fill; the directional lights below provide shape and shadows.
-    const ambient = new THREE.AmbientLight(0xfff8ee, 0.55);
+    // Neutral bright ambient so every face is evenly legible (mobile-game look).
+    const ambient = new THREE.AmbientLight(0xffffff, 0.9);
     this.scene.add(ambient);
 
     // Main downward spotlight with soft shadow
-    const mainSpot = new THREE.DirectionalLight(0xfff6e5, 2.1);
+    const mainSpot = new THREE.DirectionalLight(0xffffff, 1.6);
     mainSpot.position.set(0, 38, 14);
     mainSpot.castShadow = true;
     mainSpot.shadow.mapSize.width = 2048;
@@ -141,12 +140,12 @@ export class MahjongScene3D {
     this.scene.add(mainSpot);
 
     // Front fill light (illuminates player's standing tile faces directly)
-    const frontFill = new THREE.DirectionalLight(0xfef9c3, 1.4);
+    const frontFill = new THREE.DirectionalLight(0xffffff, 1.0);
     frontFill.position.set(0, 16, 32);
     this.scene.add(frontFill);
 
-    // Back rim light (creates beautiful golden edge rim on tiles)
-    const rimLight = new THREE.DirectionalLight(0xa7f3d0, 0.8);
+    // Back rim light (soft cool edge so tiles separate from the felt)
+    const rimLight = new THREE.DirectionalLight(0xd1f4ff, 0.6);
     rimLight.position.set(0, 22, -28);
     this.scene.add(rimLight);
   }
@@ -171,54 +170,94 @@ export class MahjongScene3D {
   }
 
   private setupTable(): void {
-    // Emerald felt. The project already ships a real 1024px felt photograph in
-    // public/assets/felt.jpg — it was only ever used by the old CSS table. Tiling
-    // it across the surface gives the woven texture and micro-sheen that a flat
-    // colour cannot, which is most of the distance to the reference look.
+    // Tencent-style bright teal felt. The woven felt texture still adds
+    // micro-detail, but the tint shifts from casino emerald to a luminous
+    // mobile-game teal and the roughness drops so it catches a soft sheen.
     const feltGeo = new THREE.CylinderGeometry(27.5, 27.5, 0.5, 96);
     const feltMat = new THREE.MeshStandardMaterial({
-      color: 0x2a8a63, // Multiplies the texture; carries the emerald hue
+      color: 0x36b8cc, // Bright luminous teal, multiplies the felt texture
       map: this.loadSurfaceTexture('./assets/felt.jpg', 4, true),
       normalMap: this.loadSurfaceTexture('./assets/felt-normal.png', 4, false),
       normalScale: new THREE.Vector2(0.35, 0.35),
       roughnessMap: this.loadSurfaceTexture('./assets/felt-rough.png', 4, false),
-      roughness: 0.94,
+      roughness: 0.55,
       metalness: 0.0,
-      envMapIntensity: 0.5,
+      envMapIntensity: 0.9,
     });
     const felt = new THREE.Mesh(feltGeo, feltMat);
     felt.position.y = -0.25;
     felt.receiveShadow = true;
     this.tableGroup.add(felt);
 
-    // Walnut rail. Same story as the felt: a real wood photograph already ships
-    // in public/assets/wood.jpg. Tiled around the rail it gives the grain and
-    // the warm specular streak that a flat brown cannot.
-    const railGeo = new THREE.CylinderGeometry(29.2, 29.6, 1.3, 96);
-    const railMat = new THREE.MeshStandardMaterial({
-      color: 0x8a5a34, // Tints the wood toward imperial walnut
-      map: this.loadSurfaceTexture('./assets/wood.jpg', 6, true),
-      roughness: 0.38,
-      metalness: 0.06,
-      envMapIntensity: 0.7,
+    // Deeper teal outer rim replaces the walnut rail — a flat tonal edge that
+    // frames the table without the warm wood, matching the mobile-game look.
+    const rimGeo = new THREE.CylinderGeometry(28.6, 29.0, 1.3, 96);
+    const rimMat = new THREE.MeshStandardMaterial({
+      color: 0x155e6e,
+      roughness: 0.55,
+      metalness: 0.0,
+      envMapIntensity: 0.5,
     });
-    const rail = new THREE.Mesh(railGeo, railMat);
-    // Keep the rail top below the felt; coplanar surfaces flicker across the table.
-    rail.position.y = -0.95;
-    rail.receiveShadow = true;
-    this.tableGroup.add(rail);
+    const rim = new THREE.Mesh(rimGeo, rimMat);
+    rim.position.y = -0.95;
+    rim.receiveShadow = true;
+    this.tableGroup.add(rim);
 
-    // Brass Inlay Ring
-    const brassGeo = new THREE.RingGeometry(27.2, 27.6, 64);
-    const brassMat = new THREE.MeshStandardMaterial({
-      color: 0xdfb15b,
-      metalness: 0.85,
-      roughness: 0.22,
+    // Central compass dial — the signature Tencent table marker. A flat octagonal
+    // pad sits at the table centre with the four winds printed around it.
+    this.buildCompass();
+  }
+
+  /**
+   * Builds the central octagonal compass: a slightly raised dark pad with the
+   * four winds (东南西北) laid out around a centre that the countdown occupies.
+   * The characters are baked into a canvas texture so no font loading is needed.
+   */
+  private buildCompass(): void {
+    const dialGeo = new THREE.CylinderGeometry(6.2, 6.2, 0.18, 8);
+    const dialMat = new THREE.MeshStandardMaterial({
+      color: 0x1d6b7d,
+      map: this.makeCompassTexture(),
+      roughness: 0.4,
+      metalness: 0.1,
+      envMapIntensity: 0.8,
     });
-    const brassRing = new THREE.Mesh(brassGeo, brassMat);
-    brassRing.rotation.x = -Math.PI / 2;
-    brassRing.position.y = 0.01;
-    this.tableGroup.add(brassRing);
+    const dial = new THREE.Mesh(dialGeo, dialMat);
+    dial.position.y = 0.05;
+    dial.receiveShadow = true;
+    this.tableGroup.add(dial);
+  }
+
+  /** Draws 东南西北 around the rim of the compass texture (2048², transparent bg). */
+  private makeCompassTexture(): THREE.Texture {
+    const size = 1024;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d')!;
+    ctx.clearRect(0, 0, size, size);
+    ctx.fillStyle = '#f2fbf7';
+    ctx.font = `bold ${Math.round(size * 0.17)}px "PingFang SC", "Heiti SC", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const cx = size / 2;
+    const cy = size / 2;
+    const r = size * 0.38;
+    // Winds at their compass positions: 東 top, 南 right, 西 bottom, 北 left.
+    const winds: Array<[string, number, number]> = [
+      ['東', cx, cy - r],
+      ['南', cx + r, cy],
+      ['西', cx, cy + r],
+      ['北', cx - r, cy],
+    ];
+    for (const [ch, x, y] of winds) {
+      ctx.fillText(ch, x, y);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 16;
+    this.ownedTextures.push(texture);
+    return texture;
   }
 
   private setupEventListeners(): void {
@@ -344,10 +383,11 @@ export class MahjongScene3D {
 
     // Tighter spacing keeps a full 14-tile hand inside the frame at 1280px;
     // the drawn 14th tile still gets its own separating gap below.
-    const spacing = TILE_W + 0.02;
+    // Tencent lays the hand out as a tight, even row — no fan. Spacing is the
+    // minimum that keeps neighbouring tile faces from touching.
+    const spacing = TILE_W - 0.05;
     const totalWidth = (count - 1) * spacing;
     const startX = -totalWidth / 2;
-    const mid = (count - 1) / 2;
 
     hand.forEach((tile, index) => {
       const mesh = this.tiles.createTileMesh(tile);
@@ -360,16 +400,13 @@ export class MahjongScene3D {
       }
 
       const baseY = 1.5; // Resting on the table surface
-      // Gentle fan: tiles away from the centre recede toward the player, so the
-      // hand arcs like a real held hand instead of a rigid flat strip. The arc
-      // lives in Z (not Y) so the hover/select lift animation on baseY is intact.
-      const arc = Math.abs(index - mid);
-      const posZ = 13.2 + arc * 0.55;
+      // Even row: every tile shares the same depth so the hand reads as one
+      // straight line, Tencent-style, rather than an arced fan.
+      const posZ = 13.2;
       mesh.position.set(posX, baseY + (isSelected ? 1.4 : 0.0), posZ);
-      // Lean the tiles back ~29° so their faces turn up toward the seated
-      // player and a sliver of the ivory side edge catches the light — the
-      // depth cue a flat, edge-on tile completely lacks.
-      mesh.rotation.set(-0.5, 0, 0);
+      // Lean back ~20° — upright enough to show the green top band and face the
+      // player, shallow enough to stay a flat standing row like the reference.
+      mesh.rotation.set(-0.35, 0, 0);
 
       mesh.userData.baseY = baseY;
       mesh.userData.tileId = tile.id;

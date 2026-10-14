@@ -40,6 +40,16 @@ export class TileMeshFactory {
     clearcoatRoughness: 0.15,
   });
 
+  // Tencent-style green top band. The +Y (top) face of every tile is this
+  // jade green, which is the signature read of the mobile-game tile silhouette.
+  private topMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0x2f9e6f,
+    roughness: 0.28,
+    metalness: 0.02,
+    clearcoat: 0.7,
+    clearcoatRoughness: 0.18,
+  });
+
   private backMaterial = new THREE.MeshPhysicalMaterial({
     color: 0x0a4230, // Royal emerald jadeite backing
     map: this.loadTileTexture('./assets/tile-back.png'),
@@ -73,11 +83,12 @@ export class TileMeshFactory {
 
     // Materials for the 6 faces:
     // 0: +x (right), 1: -x (left), 2: +y (top), 3: -y (bottom), 4: +z (front), 5: -z (back)
+    // Top and bottom faces carry the green band; the four vertical edges stay ivory.
     const materials: THREE.Material[] = [
       this.sideMaterial,
       this.sideMaterial,
-      this.sideMaterial,
-      this.sideMaterial,
+      this.topMaterial,
+      this.topMaterial,
       frontMat,
       this.backMaterial,
     ];
@@ -96,6 +107,7 @@ export class TileMeshFactory {
   dispose(): void {
     this.sharedTileGeometry.dispose();
     this.sideMaterial.dispose();
+    this.topMaterial.dispose();
     this.backMaterial.dispose();
     for (const material of this.faceMaterials.values()) material.dispose();
     for (const texture of this.textureCache.values()) texture.dispose();
