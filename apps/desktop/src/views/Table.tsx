@@ -23,6 +23,7 @@ import { BoardPlayer, ConcealedHand, DiscardRiver, relativeSeat } from '../table
 import { DiscardFlightLayer } from '../table/DiscardFlight';
 import { countVisibleTiles, TenpaiBar } from '../table/TenpaiBar';
 import { TableTopbar } from '../table/TableTopbar';
+import { SideActions } from '../table/SideActions';
 import { CenterCompass } from '../table/CenterCompass';
 import { useTableInteraction } from '../table/useTableInteraction';
 import { useTableAnimations } from '../table/useTableAnimations';
@@ -311,6 +312,14 @@ export function Table({
         onRules={onRules} onSettings={onSettings} onLeave={onLeave} onOpenProfile={onOpenProfile}
         toggleRenderMode={toggleRenderMode} setShowQuickChat={setShowQuickChat}
         setShowSettings={setShowSettings} setMuted={setMuted}
+      />
+
+      <SideActions
+        muted={muted}
+        onSettings={onSettings}
+        setShowQuickChat={setShowQuickChat}
+        setShowSettings={setShowSettings}
+        setMuted={setMuted}
       />
 
       {networkStatus && networkStatus !== 'open' ? (
