@@ -6,6 +6,14 @@ import '../styles/lobby.css';
 
 export type NetworkStatus = 'connecting' | 'open' | 'closed';
 
+function EntryArrow({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+      <path d="M4 12h15M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 interface LobbyProps {
   nickname: string;
   error: string;
@@ -127,7 +135,7 @@ export function Lobby({
       <img className="lobby-bg-artwork" src="./assets/lobby-bg.jpg" alt="" draggable={false} />
       <div className="lobby-vignette-overlay" aria-hidden="true" />
 
-      {/* Edge-to-Edge Frosted Jade Lacquer Header Bar */}
+      {/* Room header and account controls */}
       <header className="guofeng-nav-bar">
         <div className="guofeng-brand">
           <div className="guofeng-seal" aria-hidden="true">邳</div>
@@ -168,7 +176,7 @@ export function Lobby({
               <span className="guofeng-dossier-name">{user?.nickname || user?.username || nickname}</span>
               <span className="guofeng-dossier-rank">{user?.title || '初学雀友'}</span>
             </div>
-            <span className="guofeng-capsule-arrow" aria-hidden="true">›</span>
+            <EntryArrow className="guofeng-capsule-arrow" />
           </button>
 
           <button
@@ -182,9 +190,9 @@ export function Lobby({
         </div>
       </header>
 
-      {/* Main Stage: Asymmetric Oriental Guofeng Game Hub */}
+      {/* Scene lettering and game entry points */}
       <main className="lobby-main-layout">
-        {/* Left Side: Majestic Cultural Title & Philosophy */}
+        {/* Calligraphy and the existing rule identity */}
         <aside className="lobby-brand-hero">
           <h1 className="lobby-hero-title">
             邳州<span className="title-gold">麻将</span>
@@ -199,18 +207,18 @@ export function Lobby({
           </div>
         </aside>
 
-        {/* Right Side: Luxurious Game Mode Console */}
+        {/* Game modes */}
         <section className="lobby-modes-console">
           {activePanel === 'cards' ? (
             <div className="quiet-mode-list">
               <button type="button" className="quiet-mode" disabled={soloBusy} onClick={onStartLocal}>
-                <span><strong>{soloBusy ? '正在开局…' : '单机练习'}</strong><span>与 3 位电脑牌友对局</span></span><span aria-hidden="true">→</span>
+                <span><strong>{soloBusy ? '正在开局…' : '单机练习'}</strong><span>与 3 位电脑牌友对局</span></span><EntryArrow />
               </button>
               <button type="button" className="quiet-mode" disabled={!onlineReady} onClick={() => setShowCreateModal(true)}>
-                <span><strong>创建房间</strong><span>开一桌，邀请朋友</span></span><span aria-hidden="true">→</span>
+                <span><strong>创建房间</strong><span>开一桌，邀请朋友</span></span><EntryArrow />
               </button>
               <button type="button" className="quiet-mode" disabled={!onlineReady} onClick={() => setActivePanel('join')}>
-                <span><strong>加入房间</strong><span>输入朋友分享的 6 位房号</span></span><span aria-hidden="true">→</span>
+                <span><strong>加入房间</strong><span>输入朋友分享的 6 位房号</span></span><EntryArrow />
               </button>
               <button type="button" className="quiet-ranking" onClick={onOpenLeaderboard || onOpenProfile}>查看雀友榜</button>
             </div>
@@ -248,6 +256,7 @@ export function Lobby({
                       className="pin-digit-input"
                       type="text"
                       inputMode="numeric"
+                      aria-label={`房号第 ${idx + 1} 位`}
                       maxLength={1}
                       value={digit}
                       onChange={(e) => handlePinChange(idx, e.target.value)}
@@ -312,17 +321,17 @@ export function Lobby({
       {/* Custom Bot & Rate Room Creation Modal */}
       {showCreateModal ? (
         <div className="guofeng-modal-backdrop" onClick={() => setShowCreateModal(false)}>
-          <div className="guofeng-modal-card create-room-dialog" onClick={(e) => e.stopPropagation()}>
+          <div className="guofeng-modal-card create-room-dialog" role="dialog" aria-modal="true" aria-labelledby="create-room-title" onClick={(e) => e.stopPropagation()}>
             <div className="gold-line" />
             <div className="create-room-modal-header">
-              <span className="eyebrow">专属好友对局 · 房号直连</span>
-              <h2>创建对局房间</h2>
+              <h2 id="create-room-title">创建对局房间</h2>
+              <p className="sub">专属好友对局 · 房号直连</p>
               <p className="sub">支持自定义陪练人机数量，哪怕只有两个人也能与朋友痛快开打！</p>
             </div>
 
             <div className="create-room-section">
               <label className="create-section-label">
-                <span>🤖 补齐陪练人机</span>
+                <span>补齐陪练人机</span>
                 <small>缺人时自动替补，进入大厅后仍可随时增删</small>
               </label>
               <div className="create-bot-options-grid">
@@ -338,6 +347,7 @@ export function Lobby({
                       key={item.count}
                       type="button"
                       className={`create-bot-card ${active ? 'active' : ''}`}
+                      aria-pressed={active}
                       onClick={() => setCreateBotCount(item.count)}
                     >
                       <div className="create-bot-card-top">
@@ -353,7 +363,7 @@ export function Lobby({
 
             <div className="create-room-section">
               <label className="create-section-label">
-                <span>💰 结算底分单价</span>
+                <span>结算底分单价</span>
                 <small>开局后固定，终局将按此底分对账</small>
               </label>
               <div className="create-rate-chips">
@@ -370,6 +380,7 @@ export function Lobby({
                       key={opt.val}
                       type="button"
                       className={`create-rate-chip ${active ? 'active' : ''}`}
+                      aria-pressed={active}
                       onClick={() => setCreatePointRate(opt.val)}
                     >
                       {opt.label}
@@ -380,7 +391,6 @@ export function Lobby({
             </div>
 
             <div className="create-room-hint-box">
-              <span className="hint-icon">💡</span>
               <p>房主入座大厅后，点击空位或右侧面板可随时为朋友腾座或增添人机。</p>
             </div>
 
@@ -393,7 +403,7 @@ export function Lobby({
                   setShowCreateModal(false);
                 }}
               >
-                🀄 立即创建专属房间
+                立即创建专属房间
               </button>
               <button
                 type="button"

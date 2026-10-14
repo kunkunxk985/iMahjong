@@ -1,41 +1,4 @@
-/* Quiet presentation for the lobby, profile and round results. */
-.hall.lobby-grand-stage { background: #112820; }
-.hall .lobby-bg-artwork { opacity: .08; animation: none; }
-.hall .lobby-brand-hero, .hall .lobby-modes-console { animation: none; opacity: 1; }
-.hall .lobby-vignette-overlay { background: transparent; }
-.hall .guofeng-nav-bar { background: #142d24; box-shadow: none; border-bottom: 1px solid #314b40; }
-.hall .guofeng-title, .hall .lobby-hero-title, .hall .title-gold { background: none; color: #eee9da; -webkit-text-fill-color: currentColor; text-shadow: none; filter: none; }
-.hall .guofeng-seal, .hall .guofeng-dossier-capsule, .hall .guofeng-avatar-ring { box-shadow: none; }
-.hall .guofeng-ping-dot { animation: none; box-shadow: none; }
-.hall .lobby-hero-title { font-size: clamp(48px, 6vw, 76px); }
-.hall .hero-charms-row { color: #b3c5b9; text-shadow: none; font-size: 14px; }
-.hall .guofeng-dossier-rank { display: none; }
-.quiet-mode-list { width: 100%; display: flex; flex-direction: column; }
-.quiet-mode { appearance: none; display: flex; align-items: center; justify-content: space-between; width: 100%; text-align: left; padding: 26px 20px; background: transparent; color: #eee9da; border: 0; border-bottom: 1px solid #3b5145; border-radius: 0; cursor: pointer; transition: background .15s ease-out; }
-.quiet-mode > span:first-child { display: flex; flex-direction: column; gap: 8px; }
-.quiet-mode strong { font-size: 26px; font-weight: 600; }
-.quiet-mode > span > span { font-size: 14px; color: #b3c5b9; }
-.quiet-mode:hover:not(:disabled) { background: #203d30; }
-.quiet-mode:disabled { opacity: .5; cursor: default; }
-/* Error feedback. Lobby.tsx renders .lobby-error-toast but nothing ever styled
-   it, so a failed room join silently did nothing. Match the quiet palette and
-   keep it a single readable line rather than a decorative banner. */
-.lobby-error-toast {
-  display: block;
-  width: min(440px, 44vw);
-  margin: 14px 0 0;
-  padding: 12px 14px;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #f2d9d4;
-  background: #3a1f1c;
-  border: 1px solid #7c4a42;
-  border-radius: 4px;
-}
-.lobby-error-toast:empty { display: none; }
-
-.quiet-ranking { align-self: flex-end; margin-top: 22px; padding: 10px; color: #b3c5b9; background: transparent; border: 0; cursor: pointer; }
-.quiet-mode:focus-visible, .quiet-ranking:focus-visible { outline: 2px solid #d1bd8d; outline-offset: 3px; }
+/* Quiet presentation retained for the profile and round results. */
 .overlay > .modal.profile-modal.luxury-dossier, .settlement.quiet-settlement { background: #142b23; border: 1px solid #42594c; box-shadow: 0 18px 60px #0006; animation: none; }
 .profile-modal .quiet-avatar-options > summary { cursor: pointer; font-size: 14px; color: #d3d8ca; padding: 8px 0 16px; }
 .profile-modal .dossier-deck-tabs { border: 0; border-radius: 0; background: transparent; }
@@ -86,5 +49,4 @@
   .profile-modal .dossier-id-card { display: none; }
   .quiet-settlement .shenghun-podium-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .quiet-settlement .podium-player-card:nth-child(3) { border-left: 0; }
-  .quiet-mode { padding: 18px 12px; }
 }

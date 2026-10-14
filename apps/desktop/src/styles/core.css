@@ -1,4 +1,17 @@
+@font-face {
+  font-family: 'MahjongCalligraphy';
+  src: url('../../public/assets/fonts/mahjong-brush.woff') format('woff');
+  font-display: swap;
+  font-weight: 400;
+}
+
 :root {
+  --calligraphy: 'MahjongCalligraphy', 'Kaiti SC', 'STKaiti', serif;
+  --ui-text: #f4eddb;
+  --ui-muted: #b8c5b5;
+  --ui-brass: #c9ac72;
+  --ui-jade: #123e30;
+  --ui-surface: #102b22;
   --felt: #0b3d32;
   --felt-deep: #061c17;
   --gold: #c9a227;
@@ -49,6 +62,13 @@ html, body, #root {
 }
 
 button, input { font: inherit; }
+
+::selection { background: #c9ac72; color: #102b22; }
+input { caret-color: var(--ui-brass); }
+button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--ui-brass);
+  outline-offset: 4px;
+}
 
 .viewport {
   width: 100vw;
