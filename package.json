@@ -33,9 +33,6 @@
   "engines": {
     "node": ">=20"
   },
-  "dependencies": {
-    "electron": "^44.7.2"
-  },
   "allowScripts": {
     "electron@33.4.5": true,
     "electron@44.7.2": true,
